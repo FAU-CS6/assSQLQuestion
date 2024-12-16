@@ -252,7 +252,7 @@ class assSQLQuestion extends assQuestion
         $this->setComment((string) $data['description']);
         $this->setSuggestedSolution((string) $data['solution_hint']);
 
-        $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($data['question_text'], 1));
+        $this->setQuestion((string) ilRTE::_replaceMediaObjectImageSrc($data['question_text'], 1));
     }
 
     /**
@@ -525,7 +525,7 @@ class assSQLQuestion extends assQuestion
      *
      * @throws ilTestException
      */
-    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false): array|float
+    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false)
     {
         if ($returndetails) {
             throw new ilTestException('return details not implemented for '.__METHOD__);
