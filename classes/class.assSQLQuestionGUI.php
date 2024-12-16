@@ -82,7 +82,7 @@ class assSQLQuestionGUI extends assQuestionGUI
         $form->setTableWidth("100%");
         $form->setId("qpisql");
 
-        // Add basic fields (title, author, description, question and working time)
+        // Add basic fields (title, author, description and question)
         $this->addBasicQuestionFormProperties($form);
 
         // Add question specific fields

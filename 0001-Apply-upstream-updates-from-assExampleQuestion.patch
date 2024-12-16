@@ -1,0 +1,463 @@
+From 9fe830610b1576cf48df8bfc59dc1e195ac1d28b Mon Sep 17 00:00:00 2001
+From: Marco Angerer <marco.angerer@fau.de>
+Date: Mon, 16 Dec 2024 20:44:54 +0100
+Subject: [PATCH] Apply upstream updates from assExampleQuestion
+
+---
+ classes/class.assSQLQuestion.php              | 69 +++++++++++--------
+ classes/class.assSQLQuestionGUI.php           | 26 +++----
+ classes/class.ilassSQLQuestionPlugin.php      |  6 +-
+ .../qti12/class.assSQLQuestionExport.php      |  2 +-
+ .../qti12/class.assSQLQuestionImport.php      |  4 +-
+ .../GUI/GUIAreas/class.OutputArea.php         |  2 +-
+ .../GUI/GUIAreas/class.QuestionArea.php       |  2 +-
+ .../GUI/GUIAreas/class.ScoringArea.php        |  2 +-
+ .../GUI/GUIAreas/class.SequenceArea.php       |  2 +-
+ classes/internal/GUI/class.GUIArea.php        |  2 +-
+ plugin.php                                    |  6 +-
+ 11 files changed, 69 insertions(+), 54 deletions(-)
+
+diff --git a/classes/class.assSQLQuestion.php b/classes/class.assSQLQuestion.php
+index 49589cc..8165e35 100644
+--- a/classes/class.assSQLQuestion.php
++++ b/classes/class.assSQLQuestion.php
+@@ -96,11 +96,11 @@ class assSQLQuestion extends assQuestion
+      * @see assQuestion:assQuestion()
+      */
+     public function __construct(
+-        $title = '',
+-        $comment = '',
+-        $author = '',
+-        $owner = -1,
+-        $question = ''
++        string $title = "",
++		string $comment = "",
++		string $author = "",
++		int $owner = -1,
++		string $question = ""
+     ) {
+         // needed for excel export
+         $this->getPlugin()->loadLanguageModule();
+@@ -113,7 +113,7 @@ class assSQLQuestion extends assQuestion
+      *
+      * @return string The question type of the question
+      */
+-    public function getQuestionType()
++    public function getQuestionType(): string
+     {
+         return 'assSQLQuestion';
+     }
+@@ -123,7 +123,7 @@ class assSQLQuestion extends assQuestion
+      *
+      * @return array The names of the additional tables
+      */
+-    public function getAdditionalTableName()
++    public function getAdditionalTableName(): array
+     {
+         return array(
+             'il_qpl_qst_qpisql_qd',
+@@ -135,11 +135,11 @@ class assSQLQuestion extends assQuestion
+      * Collects all texts in the question which could contain media objects
+      * which were created with the Rich Text Editor
+      */
+-    protected function getRTETextWithMediaObjects()
++    protected function getRTETextWithMediaObjects(): string
+     {
+         $text = parent::getRTETextWithMediaObjects();
+ 
+-        return $text;
++        return (string) $text;
+     }
+ 
+     /**
+@@ -149,8 +149,12 @@ class assSQLQuestion extends assQuestion
+      */
+     public function getPlugin()
+     {
++        global $DIC;
++
+         if ($this->plugin == null) {
+-            $this->plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, 'TestQuestionPool', 'qst', 'assSQLQuestion');
++            /** @var ilComponentFactory $component_factory */
++			$component_factory = $DIC["component.factory"];
++			$this->plugin = $component_factory->getPlugin('qpisql');
+         }
+         return $this->plugin;
+     }
+@@ -160,7 +164,7 @@ class assSQLQuestion extends assQuestion
+      *
+      * @return boolean True, if the question is complete for use, otherwise false
+      */
+-    public function isComplete()
++    public function isComplete(): bool
+     {
+         // Check whether the question is complete
+         if (!empty($this->title) &&
+@@ -183,10 +187,14 @@ class assSQLQuestion extends assQuestion
+      * @access public
+      * @see assQuestion::saveToDb()
+      */
+-    public function saveToDb($original_id = '')
++    public function saveToDb($original_id = ''): void
+     {
+         // Save the basic data (implemented in assQuestion)
+-        $this->saveQuestionDataToDb($original_id);
++        if ($original_id == '') {
++			$this->saveQuestionDataToDb();
++		} else {
++			$this->saveQuestionDataToDb($original_id);
++		}
+ 
+         // Save the assSQLQuestion specific data to the database
+         $this->saveSpecificQuestionDataToDb();
+@@ -201,7 +209,7 @@ class assSQLQuestion extends assQuestion
+      * @param integer $question_id A unique key which defines the question in the database
+      * @see assQuestion::loadFromDb()
+      */
+-    public function loadFromDb($question_id)
++    public function loadFromDb(int $question_id): void
+     {
+         // Load the basic data
+         $this->loadQuestionDataFromDb($question_id);
+@@ -238,11 +246,11 @@ class assSQLQuestion extends assQuestion
+         $this->setObjId($data['obj_fi']);
+         $this->setOriginalId($data['original_id']);
+         $this->setOwner($data['owner']);
+-        $this->setTitle($data['title']);
++        $this->setTitle((string) $data['title']);
+         $this->setAuthor($data['author']);
+         $this->setPoints($data['points']);
+-        $this->setComment($data['description']);
+-        $this->setSuggestedSolution($data['solution_hint']);
++        $this->setComment((string) $data['description']);
++        $this->setSuggestedSolution((string) $data['solution_hint']);
+ 
+         $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($data['question_text'], 1));
+     }
+@@ -259,11 +267,11 @@ class assSQLQuestion extends assQuestion
+      *
+      * @return void|integer Id of the clone or nothing.
+      */
+-    public function duplicate($for_test = true, $title = '', $author = '', $owner = '', $testObjId = null)
++    public function duplicate($for_test = true, $title = '', $author = '', $owner = '', $testObjId = null): int
+     {
+         if ($this->getId() <= 0) {
+             // The question has not been saved. It cannot be duplicated
+-            return;
++            return 0;
+         }
+ 
+         // make a real clone to keep the actual object unchanged
+@@ -389,7 +397,7 @@ class assSQLQuestion extends assQuestion
+      *
+      * @access public
+      */
+-    public function syncWithOriginal()
++    public function syncWithOriginal(): void
+     {
+         parent::syncWithOriginal();
+     }
+@@ -517,7 +525,7 @@ class assSQLQuestion extends assQuestion
+      *
+      * @throws ilTestException
+      */
+-    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false)
++    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false): array|float
+     {
+         if ($returndetails) {
+             throw new ilTestException('return details not implemented for '.__METHOD__);
+@@ -572,7 +580,7 @@ class assSQLQuestion extends assQuestion
+      *
+      * @return boolean $status
+      */
+-    public function saveWorkingData($active_id, $pass = null, $authorized = true)
++    public function saveWorkingData($active_id, $pass = null, $authorized = true): bool
+     {
+         if (is_null($pass)) {
+             $pass = ilObjTest::_getPass($active_id);
+@@ -642,7 +650,7 @@ class assSQLQuestion extends assQuestion
+      *
+      * @return int
+      */
+-    public function setExportDetailsXLS($worksheet, $startrow, $active_id, $pass)
++	public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $active_id, int $pass): int
+     {
+         $worksheet->setFormattedExcelTitle($worksheet->getColumnCoord(0) . $startrow, $this->getPlugin()->txt('assSQLQuestion'));
+         $worksheet->setFormattedExcelTitle($worksheet->getColumnCoord(1) . $startrow, $this->getTitle());
+@@ -695,11 +703,12 @@ class assSQLQuestion extends assQuestion
+      * @param array $import_mapping An array containing references to included ILIAS objects
+      * @access public
+      */
+-    public function fromXML(&$item, &$questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping)
++	function fromXML($item, int $questionpool_id, ?int $tst_id, &$tst_object, int &$question_counter,  array $import_mapping, array &$solutionhints = []): array
+     {
+-        $this->getPlugin()->includeClass("import/qti12/class.assSQLQuestionImport.php");
+         $import = new assSQLQuestionImport($this);
+         $import->fromXML($item, $questionpool_id, $tst_id, $tst_object, $question_counter, $import_mapping);
++
++        return $import_mapping;
+     }
+ 
+     /**
+@@ -709,7 +718,13 @@ class assSQLQuestion extends assQuestion
+      * @return string The QTI xml representation of the question
+      * @access public
+      */
+-    public function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false)
++    function toXML(
++		bool $a_include_header = true,
++		bool $a_include_binary = true,
++		bool $a_shuffle = false,
++		bool $test_output = false,
++		bool $force_image_references = false
++	): string
+     {
+         $this->getPlugin()->includeClass("export/qti12/class.assSQLQuestionExport.php");
+         $export = new assSQLQuestionExport($this);
+@@ -898,7 +913,7 @@ class assSQLQuestion extends assQuestion
+      *
+      * @return integer The maxium possible points
+      */
+-    public function getMaximumPoints()
++    public function getMaximumPoints(): float
+     {
+         // Initialize with 0
+         $maximum_points = 0;
+diff --git a/classes/class.assSQLQuestionGUI.php b/classes/class.assSQLQuestionGUI.php
+index 1485de4..58f7e9e 100644
+--- a/classes/class.assSQLQuestionGUI.php
++++ b/classes/class.assSQLQuestionGUI.php
+@@ -29,7 +29,7 @@ class assSQLQuestionGUI extends assQuestionGUI
+     /**
+      * @var assSQLQuestion The question object
+      */
+-    public $object = null;
++    public assQuestion $object;
+ 
+     /**
+      * @const	string URL base path for including used javascript and css files
+@@ -48,10 +48,13 @@ class assSQLQuestionGUI extends assQuestionGUI
+     */
+     public function __construct($id = -1)
+     {
++        global $DIC;
++
+         parent::__construct();
+ 
+-        $this->plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, "TestQuestionPool", "qst", "assSQLQuestion");
+-        $this->plugin->includeClass("class.assSQLQuestion.php");
++       /** @var ilComponentFactory $component_factory */
++		$component_factory = $DIC["component.factory"];
++		$this->plugin = $component_factory->getPlugin('qpisql');
+         $this->object = new assSQLQuestion();
+         if ($id >= 0) {
+             $this->object->loadFromDb($id);
+@@ -128,7 +131,7 @@ class assSQLQuestionGUI extends assQuestionGUI
+      * @param bool $always
+      * @return integer A positive value, if one of the required fields wasn't set, else 0
+      */
+-    public function writePostData($always = false)
++    protected function writePostData($always = false): int
+     {
+         $hasErrors = (!$always) ? $this->editQuestion(true) : false;
+         if (!$hasErrors) {
+@@ -168,7 +171,7 @@ class assSQLQuestionGUI extends assQuestionGUI
+      * @param boolean $show_specific_inline_feedback	Show a specific inline feedback
+      * @return string
+      */
+-    public function getTestOutput($active_id, $pass = null, $is_postponed = false, $use_post_solutions = false, $show_specific_inline_feedback = false)
++	public function getTestOutput($active_id, $pass = NULL, $is_postponed = FALSE, $use_post_solutions = FALSE, $show_specific_inline_feedback = FALSE): string
+     {
+         // Get the stored solution
+         $solution = $this->object->getSolutionStored($active_id, $pass, null);
+@@ -262,7 +265,7 @@ class assSQLQuestionGUI extends assQuestionGUI
+         $show_correct_solution = false,
+         $show_manual_scoring = false,
+         $show_question_text = true
+-    ) {
++    ): string {
+         // If we want to show the pattern solution we have no participant input
+         $participant_input = null;
+ 
+@@ -299,7 +302,7 @@ class assSQLQuestionGUI extends assQuestionGUI
+     * @return string HTML Code with the answer specific feedback
+     * @access public
+     */
+-    public function getSpecificFeedbackOutput($userSolution)
++    public function getSpecificFeedbackOutput($userSolution): string
+     {
+         // By default no answer specific feedback is defined
+         $output = '';
+@@ -311,7 +314,7 @@ class assSQLQuestionGUI extends assQuestionGUI
+      * Sets the ILIAS tabs for this question type
+      * called from ilObjTestGUI and ilObjQuestionPoolGUI
+      */
+-    public function setQuestionTabs()
++    public function setQuestionTabs(): void
+     {
+         global $DIC;
+         $rbacsystem = $DIC->rbac()->system();
+@@ -333,14 +336,11 @@ class assSQLQuestionGUI extends assQuestionGUI
+                 $ilTabs->addTarget(
+                     "edit_page",
+                     $this->ctrl->getLinkTargetByClass("ilAssQuestionPageGUI", "edit"),
+-                    array("edit", "insert", "exec_pg"),
+-                    "",
+-                    "",
+-                    $force_active
++                    array("edit", "insert", "exec_pg")
+                 );
+             }
+ 
+-            $this->addTab_QuestionPreview($ilTabs);
++            $this->addTab_Question($ilTabs);
+         }
+ 
+         $force_active = false;
+diff --git a/classes/class.ilassSQLQuestionPlugin.php b/classes/class.ilassSQLQuestionPlugin.php
+index 6449d57..a4fc101 100644
+--- a/classes/class.ilassSQLQuestionPlugin.php
++++ b/classes/class.ilassSQLQuestionPlugin.php
+@@ -11,17 +11,17 @@ include_once "./Modules/TestQuestionPool/classes/class.ilQuestionsPlugin.php";
+ */
+ class ilassSQLQuestionPlugin extends ilQuestionsPlugin
+ {
+-    final public function getPluginName()
++    final public function getPluginName(): string
+     {
+         return "assSQLQuestion";
+     }
+ 
+-    final public function getQuestionType()
++    final public function getQuestionType(): string
+     {
+         return "assSQLQuestion";
+     }
+ 
+-    final public function getQuestionTypeTranslation()
++    final public function getQuestionTypeTranslation(): string
+     {
+         return $this->txt('gi_name');
+     }
+diff --git a/classes/export/qti12/class.assSQLQuestionExport.php b/classes/export/qti12/class.assSQLQuestionExport.php
+index 8c314a1..89fb0d6 100644
+--- a/classes/export/qti12/class.assSQLQuestionExport.php
++++ b/classes/export/qti12/class.assSQLQuestionExport.php
+@@ -10,7 +10,7 @@ class assSQLQuestionExport extends assQuestionExport
+     * @return string The QTI xml representation of the question
+     * @access public
+     */
+-    public function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false)
++    public function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false): string
+     {
+         global $ilias;
+ 
+diff --git a/classes/import/qti12/class.assSQLQuestionImport.php b/classes/import/qti12/class.assSQLQuestionImport.php
+index c8b427f..75419e0 100644
+--- a/classes/import/qti12/class.assSQLQuestionImport.php
++++ b/classes/import/qti12/class.assSQLQuestionImport.php
+@@ -17,7 +17,7 @@ class assSQLQuestionImport extends assQuestionImport
+      * @param array $import_mapping An array containing references to included ILIAS objects
+      * @access public
+      */
+-    public function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping)
++    public function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping): array
+     {
+         global $ilUser, $ilLog;
+ 
+@@ -115,7 +115,7 @@ class assSQLQuestionImport extends assQuestionImport
+                 }
+                 global $ilLog;
+                 $ilLog->write($importfile);
+-                $media_object =& ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, false);
++                $media_object = ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, FALSE);
+                 ilObjMediaObject::_saveUsage($media_object->getId(), "qpl:html", $this->object->getId());
+ 
+                 // Images in question text
+diff --git a/classes/internal/GUI/GUIAreas/class.OutputArea.php b/classes/internal/GUI/GUIAreas/class.OutputArea.php
+index 85b2754..f6786d5 100644
+--- a/classes/internal/GUI/GUIAreas/class.OutputArea.php
++++ b/classes/internal/GUI/GUIAreas/class.OutputArea.php
+@@ -62,7 +62,7 @@ class OutputArea extends GUIArea
+      * @return boolean True if input is ok, False if it is not
+      * @access public
+      */
+-    public function checkInput()
++    public function checkInput(): bool
+     {
+         if ((isset($_POST["error_bool"]) && $_POST["error_bool"] == "true") ||
+         (isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "false")) {
+diff --git a/classes/internal/GUI/GUIAreas/class.QuestionArea.php b/classes/internal/GUI/GUIAreas/class.QuestionArea.php
+index 0aa178e..504ed63 100644
+--- a/classes/internal/GUI/GUIAreas/class.QuestionArea.php
++++ b/classes/internal/GUI/GUIAreas/class.QuestionArea.php
+@@ -50,7 +50,7 @@ class QuestionArea extends GUIArea
+      * @return boolean True if input is ok, False if it is not
+      * @access public
+      */
+-    public function checkInput()
++    public function checkInput(): bool
+     {
+         // This includes no Input
+         return true;
+diff --git a/classes/internal/GUI/GUIAreas/class.ScoringArea.php b/classes/internal/GUI/GUIAreas/class.ScoringArea.php
+index aea48bd..8f66d12 100644
+--- a/classes/internal/GUI/GUIAreas/class.ScoringArea.php
++++ b/classes/internal/GUI/GUIAreas/class.ScoringArea.php
+@@ -58,7 +58,7 @@ class ScoringArea extends GUIArea
+      * @return boolean True if input is ok, False if it is not
+      * @access public
+      */
+-    public function checkInput()
++    public function checkInput(): bool
+     {
+         $points = 0;
+ 
+diff --git a/classes/internal/GUI/GUIAreas/class.SequenceArea.php b/classes/internal/GUI/GUIAreas/class.SequenceArea.php
+index c02c10f..814ac52 100644
+--- a/classes/internal/GUI/GUIAreas/class.SequenceArea.php
++++ b/classes/internal/GUI/GUIAreas/class.SequenceArea.php
+@@ -86,7 +86,7 @@ class SequenceArea extends GUIArea
+      * @return boolean True if input is ok, False if it is not
+      * @access public
+      */
+-    public function checkInput()
++    public function checkInput(): bool
+     {
+         if (isset($_POST["sequence_b"]) && $_POST["sequence_b"] == "") {
+             // $this->setAlert($this->plugin->txt('ai_sea_eo_error'));
+diff --git a/classes/internal/GUI/class.GUIArea.php b/classes/internal/GUI/class.GUIArea.php
+index 153bb2b..b34193b 100644
+--- a/classes/internal/GUI/class.GUIArea.php
++++ b/classes/internal/GUI/class.GUIArea.php
+@@ -156,7 +156,7 @@ abstract class GUIArea extends ilCustomInputGUI
+      * @return boolean True if input is ok, False if it is not
+      * @access public
+      */
+-    public function checkInput()
++    public function checkInput(): bool
+     {
+         throw new Exception("It is necessary to override checkInput in every GUIArea");
+ 
+diff --git a/plugin.php b/plugin.php
+index aef8ec5..ee6f1e9 100644
+--- a/plugin.php
++++ b/plugin.php
+@@ -4,11 +4,11 @@
+ $id = "qpisql";
+ 
+ // Version of the Plugin
+-$version = "0.0.78";
++$version = "0.0.79";
+ 
+ // Supported Ilias Versions
+-$ilias_min_version = "5.4.0";
+-$ilias_max_version = "7.5.999";
++$ilias_min_version = "8.0.0";
++$ilias_max_version = "9.999";
+ 
+ // Main Responsible Person
+ $responsible = "Dominik Probst";
+-- 
+2.39.5
+

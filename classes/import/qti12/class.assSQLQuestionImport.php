@@ -24,7 +24,6 @@ class assSQLQuestionImport extends assQuestionImport
         // Empty session variable for imported xhtml mobs
         unset($_SESSION["import_mob_xhtml"]);
         $presentation = $item->getPresentation();
-        $duration = $item->getDuration();
         $now = getdate();
         $created = sprintf("%04d%02d%02d%02d%02d%02d", $now['year'], $now['mon'], $now['mday'], $now['hours'], $now['minutes'], $now['seconds']);
 
@@ -76,7 +75,6 @@ class assSQLQuestionImport extends assQuestionImport
         $this->object->setOwner($ilUser->getId());
         $this->object->setQuestion($this->object->QTIMaterialToString($item->getQuestiontext()));
         $this->object->setObjId($questionpool_id);
-        $this->object->setEstimatedWorkingTime($duration["h"], $duration["m"], $duration["s"]);
         $this->object->setPoints($item->getMetadataEntry("POINTS"));
 
         // Set plugin specific information

@@ -245,7 +245,6 @@ class assSQLQuestion extends assQuestion
         $this->setSuggestedSolution($data['solution_hint']);
 
         $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($data['question_text'], 1));
-        $this->setEstimatedWorkingTime(substr($data['working_time'], 0, 2), substr($data['working_time'], 3, 2), substr($data['working_time'], 6, 2));
     }
 
     /**
