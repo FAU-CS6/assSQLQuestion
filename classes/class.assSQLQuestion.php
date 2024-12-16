@@ -96,11 +96,11 @@ class assSQLQuestion extends assQuestion
      * @see assQuestion:assQuestion()
      */
     public function __construct(
-        $title = '',
-        $comment = '',
-        $author = '',
-        $owner = -1,
-        $question = ''
+        string $title = "",
+		string $comment = "",
+		string $author = "",
+		int $owner = -1,
+		string $question = ""
     ) {
         // needed for excel export
         $this->getPlugin()->loadLanguageModule();
@@ -113,7 +113,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return string The question type of the question
      */
-    public function getQuestionType()
+    public function getQuestionType(): string
     {
         return 'assSQLQuestion';
     }
@@ -123,7 +123,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return array The names of the additional tables
      */
-    public function getAdditionalTableName()
+    public function getAdditionalTableName(): array
     {
         return array(
             'il_qpl_qst_qpisql_qd',
@@ -135,11 +135,11 @@ class assSQLQuestion extends assQuestion
      * Collects all texts in the question which could contain media objects
      * which were created with the Rich Text Editor
      */
-    protected function getRTETextWithMediaObjects()
+    protected function getRTETextWithMediaObjects(): string
     {
         $text = parent::getRTETextWithMediaObjects();
 
-        return $text;
+        return (string) $text;
     }
 
     /**
@@ -149,8 +149,12 @@ class assSQLQuestion extends assQuestion
      */
     public function getPlugin()
     {
+        global $DIC;
+
         if ($this->plugin == null) {
-            $this->plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, 'TestQuestionPool', 'qst', 'assSQLQuestion');
+            /** @var ilComponentFactory $component_factory */
+			$component_factory = $DIC["component.factory"];
+			$this->plugin = $component_factory->getPlugin('qpisql');
         }
         return $this->plugin;
     }
@@ -160,7 +164,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return boolean True, if the question is complete for use, otherwise false
      */
-    public function isComplete()
+    public function isComplete(): bool
     {
         // Check whether the question is complete
         if (!empty($this->title) &&
@@ -183,10 +187,14 @@ class assSQLQuestion extends assQuestion
      * @access public
      * @see assQuestion::saveToDb()
      */
-    public function saveToDb($original_id = '')
+    public function saveToDb($original_id = ''): void
     {
         // Save the basic data (implemented in assQuestion)
-        $this->saveQuestionDataToDb($original_id);
+        if ($original_id == '') {
+			$this->saveQuestionDataToDb();
+		} else {
+			$this->saveQuestionDataToDb($original_id);
+		}
 
         // Save the assSQLQuestion specific data to the database
         $this->saveSpecificQuestionDataToDb();
@@ -201,7 +209,7 @@ class assSQLQuestion extends assQuestion
      * @param integer $question_id A unique key which defines the question in the database
      * @see assQuestion::loadFromDb()
      */
-    public function loadFromDb($question_id)
+    public function loadFromDb(int $question_id): void
     {
         // Load the basic data
         $this->loadQuestionDataFromDb($question_id);
@@ -238,11 +246,11 @@ class assSQLQuestion extends assQuestion
         $this->setObjId($data['obj_fi']);
         $this->setOriginalId($data['original_id']);
         $this->setOwner($data['owner']);
-        $this->setTitle($data['title']);
+        $this->setTitle((string) $data['title']);
         $this->setAuthor($data['author']);
         $this->setPoints($data['points']);
-        $this->setComment($data['description']);
-        $this->setSuggestedSolution($data['solution_hint']);
+        $this->setComment((string) $data['description']);
+        $this->setSuggestedSolution((string) $data['solution_hint']);
 
         $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($data['question_text'], 1));
     }
@@ -259,11 +267,11 @@ class assSQLQuestion extends assQuestion
      *
      * @return void|integer Id of the clone or nothing.
      */
-    public function duplicate($for_test = true, $title = '', $author = '', $owner = '', $testObjId = null)
+    public function duplicate($for_test = true, $title = '', $author = '', $owner = '', $testObjId = null): int
     {
         if ($this->getId() <= 0) {
             // The question has not been saved. It cannot be duplicated
-            return;
+            return 0;
         }
 
         // make a real clone to keep the actual object unchanged
@@ -389,7 +397,7 @@ class assSQLQuestion extends assQuestion
      *
      * @access public
      */
-    public function syncWithOriginal()
+    public function syncWithOriginal(): void
     {
         parent::syncWithOriginal();
     }
@@ -517,7 +525,7 @@ class assSQLQuestion extends assQuestion
      *
      * @throws ilTestException
      */
-    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false)
+    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false): array|float
     {
         if ($returndetails) {
             throw new ilTestException('return details not implemented for '.__METHOD__);
@@ -572,7 +580,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return boolean $status
      */
-    public function saveWorkingData($active_id, $pass = null, $authorized = true)
+    public function saveWorkingData($active_id, $pass = null, $authorized = true): bool
     {
         if (is_null($pass)) {
             $pass = ilObjTest::_getPass($active_id);
@@ -642,7 +650,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return int
      */
-    public function setExportDetailsXLS($worksheet, $startrow, $active_id, $pass)
+	public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $active_id, int $pass): int
     {
         $worksheet->setFormattedExcelTitle($worksheet->getColumnCoord(0) . $startrow, $this->getPlugin()->txt('assSQLQuestion'));
         $worksheet->setFormattedExcelTitle($worksheet->getColumnCoord(1) . $startrow, $this->getTitle());
@@ -695,11 +703,12 @@ class assSQLQuestion extends assQuestion
      * @param array $import_mapping An array containing references to included ILIAS objects
      * @access public
      */
-    public function fromXML(&$item, &$questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping)
+	function fromXML($item, int $questionpool_id, ?int $tst_id, &$tst_object, int &$question_counter,  array $import_mapping, array &$solutionhints = []): array
     {
-        $this->getPlugin()->includeClass("import/qti12/class.assSQLQuestionImport.php");
         $import = new assSQLQuestionImport($this);
         $import->fromXML($item, $questionpool_id, $tst_id, $tst_object, $question_counter, $import_mapping);
+
+        return $import_mapping;
     }
 
     /**
@@ -709,7 +718,13 @@ class assSQLQuestion extends assQuestion
      * @return string The QTI xml representation of the question
      * @access public
      */
-    public function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false)
+    function toXML(
+		bool $a_include_header = true,
+		bool $a_include_binary = true,
+		bool $a_shuffle = false,
+		bool $test_output = false,
+		bool $force_image_references = false
+	): string
     {
         $this->getPlugin()->includeClass("export/qti12/class.assSQLQuestionExport.php");
         $export = new assSQLQuestionExport($this);
@@ -898,7 +913,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return integer The maxium possible points
      */
-    public function getMaximumPoints()
+    public function getMaximumPoints(): float
     {
         // Initialize with 0
         $maximum_points = 0;

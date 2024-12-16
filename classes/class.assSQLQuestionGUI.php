@@ -29,7 +29,7 @@ class assSQLQuestionGUI extends assQuestionGUI
     /**
      * @var assSQLQuestion The question object
      */
-    public $object = null;
+    public assQuestion $object;
 
     /**
      * @const	string URL base path for including used javascript and css files
@@ -48,10 +48,13 @@ class assSQLQuestionGUI extends assQuestionGUI
     */
     public function __construct($id = -1)
     {
+        global $DIC;
+
         parent::__construct();
 
-        $this->plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, "TestQuestionPool", "qst", "assSQLQuestion");
-        $this->plugin->includeClass("class.assSQLQuestion.php");
+       /** @var ilComponentFactory $component_factory */
+		$component_factory = $DIC["component.factory"];
+		$this->plugin = $component_factory->getPlugin('qpisql');
         $this->object = new assSQLQuestion();
         if ($id >= 0) {
             $this->object->loadFromDb($id);
@@ -128,7 +131,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param bool $always
      * @return integer A positive value, if one of the required fields wasn't set, else 0
      */
-    public function writePostData($always = false)
+    protected function writePostData($always = false): int
     {
         $hasErrors = (!$always) ? $this->editQuestion(true) : false;
         if (!$hasErrors) {
@@ -168,7 +171,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param boolean $show_specific_inline_feedback	Show a specific inline feedback
      * @return string
      */
-    public function getTestOutput($active_id, $pass = null, $is_postponed = false, $use_post_solutions = false, $show_specific_inline_feedback = false)
+	public function getTestOutput($active_id, $pass = NULL, $is_postponed = FALSE, $use_post_solutions = FALSE, $show_specific_inline_feedback = FALSE): string
     {
         // Get the stored solution
         $solution = $this->object->getSolutionStored($active_id, $pass, null);
@@ -262,7 +265,7 @@ class assSQLQuestionGUI extends assQuestionGUI
         $show_correct_solution = false,
         $show_manual_scoring = false,
         $show_question_text = true
-    ) {
+    ): string {
         // If we want to show the pattern solution we have no participant input
         $participant_input = null;
 
@@ -299,7 +302,7 @@ class assSQLQuestionGUI extends assQuestionGUI
     * @return string HTML Code with the answer specific feedback
     * @access public
     */
-    public function getSpecificFeedbackOutput($userSolution)
+    public function getSpecificFeedbackOutput($userSolution): string
     {
         // By default no answer specific feedback is defined
         $output = '';
@@ -311,7 +314,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * Sets the ILIAS tabs for this question type
      * called from ilObjTestGUI and ilObjQuestionPoolGUI
      */
-    public function setQuestionTabs()
+    public function setQuestionTabs(): void
     {
         global $DIC;
         $rbacsystem = $DIC->rbac()->system();
@@ -333,14 +336,11 @@ class assSQLQuestionGUI extends assQuestionGUI
                 $ilTabs->addTarget(
                     "edit_page",
                     $this->ctrl->getLinkTargetByClass("ilAssQuestionPageGUI", "edit"),
-                    array("edit", "insert", "exec_pg"),
-                    "",
-                    "",
-                    $force_active
+                    array("edit", "insert", "exec_pg")
                 );
             }
 
-            $this->addTab_QuestionPreview($ilTabs);
+            $this->addTab_Question($ilTabs);
         }
 
         $force_active = false;

@@ -50,7 +50,7 @@ class QuestionArea extends GUIArea
      * @return boolean True if input is ok, False if it is not
      * @access public
      */
-    public function checkInput()
+    public function checkInput(): bool
     {
         // This includes no Input
         return true;

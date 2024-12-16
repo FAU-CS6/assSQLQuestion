@@ -86,7 +86,7 @@ class SequenceArea extends GUIArea
      * @return boolean True if input is ok, False if it is not
      * @access public
      */
-    public function checkInput()
+    public function checkInput(): bool
     {
         if (isset($_POST["sequence_b"]) && $_POST["sequence_b"] == "") {
             // $this->setAlert($this->plugin->txt('ai_sea_eo_error'));

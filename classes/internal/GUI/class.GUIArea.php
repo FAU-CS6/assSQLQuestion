@@ -156,7 +156,7 @@ abstract class GUIArea extends ilCustomInputGUI
      * @return boolean True if input is ok, False if it is not
      * @access public
      */
-    public function checkInput()
+    public function checkInput(): bool
     {
         throw new Exception("It is necessary to override checkInput in every GUIArea");
 

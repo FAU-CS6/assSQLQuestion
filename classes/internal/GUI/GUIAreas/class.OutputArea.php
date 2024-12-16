@@ -62,7 +62,7 @@ class OutputArea extends GUIArea
      * @return boolean True if input is ok, False if it is not
      * @access public
      */
-    public function checkInput()
+    public function checkInput(): bool
     {
         if ((isset($_POST["error_bool"]) && $_POST["error_bool"] == "true") ||
         (isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "false")) {
