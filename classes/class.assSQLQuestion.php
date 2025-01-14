@@ -227,7 +227,6 @@ class assSQLQuestion extends assQuestion
         $this->setAuthor($data['author']);
         $this->setPoints($data['points']);
         $this->setComment((string) $data['description']);
-        $this->setSuggestedSolution((string) $data['solution_hint']);
 
         $this->setQuestion((string) ilRTE::_replaceMediaObjectImageSrc($data['question_text'], 1));
 
