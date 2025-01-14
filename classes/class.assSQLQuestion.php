@@ -1071,6 +1071,7 @@ class assSQLQuestion extends assQuestion
         $result_qd = $ilDB->query("SELECT * FROM il_qpl_qst_qpisql_qd WHERE question_fi = "
                 . $ilDB->quote($question_id, 'integer'));
 
+        if ($result_qd->numRows() > 0) {
         $data_qd = $ilDB->fetchAssoc($result_qd);
 
         $this->setSequence('sequence_a', $data_qd['sequence_a']);
