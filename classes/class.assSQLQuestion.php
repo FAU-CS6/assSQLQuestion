@@ -132,6 +132,17 @@ class assSQLQuestion extends assQuestion
     }
 
     /**
+     * Returns the name of the used answer table
+     *
+     * @return string The name of the answer table
+     */
+    public function getAnswerTableName(): string
+    {
+        return "il_qpl_a_qpisql";
+    }
+    
+
+    /**
      * Collects all texts in the question which could contain media objects
      * which were created with the Rich Text Editor
      */
