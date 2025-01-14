@@ -239,7 +239,7 @@ class assSQLQuestion extends assQuestion
         $this->setPoints($data['points']);
         $this->setComment((string) $data['description']);
 
-        $this->setQuestion((string) ilRTE::_replaceMediaObjectImageSrc($data['question_text'], 1));
+        $this->setQuestion((string) ilRTE::_replaceMediaObjectImageSrc((string) $data['question_text'], 1));
 
         // Load the assSQLQuestion specific data
         $this->loadSpecificQuestionDataFromDb($question_id);
@@ -523,7 +523,7 @@ class assSQLQuestion extends assQuestion
      *
      * @throws ilTestException
      */
-    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false)
+    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false): float
     {
         if ($returndetails) {
             throw new ilTestException('return details not implemented for '.__METHOD__);
@@ -1072,16 +1072,17 @@ class assSQLQuestion extends assQuestion
                 . $ilDB->quote($question_id, 'integer'));
 
         if ($result_qd->numRows() > 0) {
-        $data_qd = $ilDB->fetchAssoc($result_qd);
+            $data_qd = $ilDB->fetchAssoc($result_qd);
 
-        $this->setSequence('sequence_a', $data_qd['sequence_a']);
-        $this->setSequence('sequence_b', $data_qd['sequence_b']);
-        $this->setSequence('sequence_c', $data_qd['sequence_c']);
-        $this->setIntegrityCheck($data_qd['integrity_check']);
-        $this->setErrorBool($data_qd['error_bool']);
-        $this->setError($data_qd['error']);
-        $this->setExecutedBool($data_qd['executed_bool']);
-        $this->setOutputRelation($data_qd['output_relation']);
+            $this->setSequence('sequence_a', $data_qd['sequence_a']);
+            $this->setSequence('sequence_b', $data_qd['sequence_b']);
+            $this->setSequence('sequence_c', $data_qd['sequence_c']);
+            $this->setIntegrityCheck($data_qd['integrity_check']);
+            $this->setErrorBool($data_qd['error_bool']);
+            $this->setError($data_qd['error']);
+            $this->setExecutedBool($data_qd['executed_bool']);
+            $this->setOutputRelation($data_qd['output_relation']);
+        }
 
         // Set SolutionMetrics from il_qpl_qst_qpisql_qsm
         $result_qsm = $ilDB->query("SELECT * FROM il_qpl_qst_qpisql_qsm WHERE question_fi = "
