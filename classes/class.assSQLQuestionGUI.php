@@ -420,9 +420,6 @@ class assSQLQuestionGUI extends assQuestionGUI
         // SQL.js
         $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/lib/sql.js/sql.js');
 
-        // JThread
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/lib/jThread/jThread.js');
-
         // Add custom js code
 
         // Add path to the plugin file to be accessible in js, too
