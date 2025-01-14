@@ -410,16 +410,6 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         // Add JS files
 
-        // Minified JS file
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/js/min.js.php');
-
-        // Codemirror
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/lib/codemirror/lib/codemirror.js');
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/lib/codemirror/mode/sql/sql.js');
-
-        // SQL.js
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/lib/sql.js/sql.js');
-
         // Add custom js code
 
         // Add path to the plugin file to be accessible in js, too

@@ -46,7 +46,7 @@ class ScoringArea extends GUIArea
         // Set Title, Information and Required
         $this->setTitle($this->plugin->txt('ai_sca_eo_name'));
         $this->setRequired(true);
-        $this->setHTML($this->getEditOutput());
+        $this->setHtml($this->getJavascriptAreaCode() . $this->getEditOutput());
     }
 
     /**

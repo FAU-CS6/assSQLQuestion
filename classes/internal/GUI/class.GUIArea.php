@@ -162,4 +162,11 @@ abstract class GUIArea extends ilCustomInputGUI
 
         return false;
     }
+
+    protected function getJavascriptAreaCode(): string {
+        return '<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/js/min.js.php"></script>
+<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/codemirror/lib/codemirror.js"></script>
+<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/codemirror/mode/sql/sql.js"></script>
+<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/sql.js/sql.js"></script>';
+    }
 }

@@ -46,7 +46,7 @@ class OutputArea extends GUIArea
         // Set Title, Information and Required
         $this->setTitle($this->plugin->txt('ai_oa_name'));
         $this->setRequired(true);
-        $this->setHtml($this->getEditOutput());
+        $this->setHtml($this->getJavascriptAreaCode() . $this->getEditOutput());
     }
 
     /*

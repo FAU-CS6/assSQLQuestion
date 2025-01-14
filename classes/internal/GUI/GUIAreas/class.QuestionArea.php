@@ -38,7 +38,7 @@ class QuestionArea extends GUIArea
 
         // Set Title and HTML to "" as this should not be displayed on the edit question page
         $this->setTitle("");
-        $this->setHtml($this->getEditOutput());
+        $this->setHtml($this->getJavascriptAreaCode() . $this->getEditOutput());
     }
 
     /**
