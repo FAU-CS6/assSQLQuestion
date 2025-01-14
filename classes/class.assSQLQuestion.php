@@ -212,29 +212,6 @@ class assSQLQuestion extends assQuestion
     public function loadFromDb(int $question_id): void
     {
         // Load the basic data
-        $this->loadQuestionDataFromDb($question_id);
-
-        // Load the assSQLQuestion specific data
-        $this->loadSpecificQuestionDataFromDb($question_id);
-
-        try {
-            $this->setAdditionalContentEditingMode($data['add_cont_edit_mode']);
-        } catch (ilTestQuestionPoolException $e) {
-        }
-
-        // loads additional stuff like suggested solutions
-        parent::loadFromDb($question_id);
-    }
-
-    /**
-     * Helper function for loadFromDb().
-     * Loads the basic data from the database
-     *
-     * @param integer $question_id A unique key which defines the question in the database
-     * @access private
-     */
-    private function loadQuestionDataFromDb($question_id)
-    {
         global $DIC;
         $ilDB = $DIC->database();
 
@@ -253,6 +230,17 @@ class assSQLQuestion extends assQuestion
         $this->setSuggestedSolution((string) $data['solution_hint']);
 
         $this->setQuestion((string) ilRTE::_replaceMediaObjectImageSrc($data['question_text'], 1));
+
+        // Load the assSQLQuestion specific data
+        $this->loadSpecificQuestionDataFromDb($question_id);
+
+        try {
+            $this->setAdditionalContentEditingMode($data['add_cont_edit_mode']);
+        } catch (ilTestQuestionPoolException $e) {
+        }
+
+        // loads additional stuff like suggested solutions
+        parent::loadFromDb($question_id);
     }
 
     /**
