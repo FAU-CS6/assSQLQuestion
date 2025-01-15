@@ -425,10 +425,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @access private
      */
     private function addSpecificQuestionFormProperties(\ilPropertyFormGUI $form)
-    {
-        global $lng;
-
-        // Insert the different GUIAreas
+    {        // Insert the different GUIAreas
         $guiAreas = array();
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
