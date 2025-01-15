@@ -551,7 +551,9 @@ class assSQLQuestion extends assQuestion
     */
     public function setReachedPoints($active_id, $points, $pass = null)
     {
-        global $ilDB;
+        global $DIC;
+
+        $ilDB = $DIC->database();
 
         if (($points > 0) && ($points <= $this->getPoints())) {
             if (is_null($pass)) {
@@ -1005,7 +1007,9 @@ class assSQLQuestion extends assQuestion
      */
     public function saveSpecificQuestionDataToDb()
     {
-        global $ilDB;
+        global $DIC;
+
+        $ilDB = $DIC->database();
 
         // Update "il_qpl_qst_qpisql_qd"
 
