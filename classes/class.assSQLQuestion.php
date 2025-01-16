@@ -321,8 +321,7 @@ class assSQLQuestion extends assQuestion
     public function copyObject($target_questionpool_id, $title = '')
     {
         if ($this->getId() <= 0) {
-            // The question has not been saved. It cannot be duplicated
-            return;
+            throw new RuntimeException('The question has not been saved. It cannot be duplicated');
         }
 
         // make a real clone to keep the object unchanged
