@@ -269,7 +269,7 @@ class assSQLQuestion extends assQuestion
     {
         if ($this->getId() <= 0) {
             // The question has not been saved. It cannot be duplicated
-            return 0;
+            return -1;
         }
 
         // make a real clone to keep the actual object unchanged
