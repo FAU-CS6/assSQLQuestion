@@ -1,15 +1,15 @@
 <?php
 /**
-* SQL question export
-*/
+ * SQL question export
+ */
 class assSQLQuestionExport extends assQuestionExport
 {
     /**
-    * Returns a QTI xml representation of the question
-    *
-    * @return string The QTI xml representation of the question
-    * @access public
-    */
+     * Returns a QTI xml representation of the question
+     *
+     * @return string The QTI xml representation of the question
+     * @access public
+     */
     public function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false): string
     {
         global $ilias;
@@ -17,11 +17,11 @@ class assSQLQuestionExport extends assQuestionExport
         include_once("./Services/Xml/classes/class.ilXmlWriter.php");
         $a_xml_writer = new ilXmlWriter;
 
-        // Set XMl header
+        // Set XML header
         $a_xml_writer->xmlHeader();
         $a_xml_writer->xmlStartTag("questestinterop");
         $attrs = array(
-            "ident" => "il_".IL_INST_ID."_qst_".$this->object->getId(),
+            "ident" => "il_" . IL_INST_ID . "_qst_" . $this->object->getId(),
             "title" => $this->object->getTitle(),
             "maxattempts" => $this->object->getNrOfTries()
         );
