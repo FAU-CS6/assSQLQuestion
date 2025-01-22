@@ -1,8 +1,13 @@
 <?php
+
 /**
  * SQL question import
  */
-class assSQLQuestionImport extends assQuestionImport
+
+include_once "./Services/MediaObjects/classes/class.ilObjMediaObject.php";
+include_once "./Services/RTE/classes/class.ilRTE.php";
+
+ class assSQLQuestionImport extends assQuestionImport
 {
     /**
      * Creates a question from a QTI file
@@ -25,7 +30,8 @@ class assSQLQuestionImport extends assQuestionImport
         $ilLog = $DIC->logger()->root();
 
         // Empty session variable for imported xhtml mobs
-        unset($_SESSION["import_mob_xhtml"]);
+        ilSession::clear('import_mob_xhtml');
+
         $presentation = $item->getPresentation();
         $now = getdate();
         $created = sprintf("%04d%02d%02d%02d%02d%02d", $now['year'], $now['mon'], $now['mday'], $now['hours'], $now['minutes'], $now['seconds']);
@@ -107,10 +113,8 @@ class assSQLQuestionImport extends assQuestionImport
 
         // Handle the import of media objects in XHTML code
         $questiontext = $this->object->getQuestion();
-        if (is_array($_SESSION["import_mob_xhtml"])) {
-            include_once "./Services/MediaObjects/classes/class.ilObjMediaObject.php";
-            include_once "./Services/RTE/classes/class.ilRTE.php";
-            foreach ($_SESSION["import_mob_xhtml"] as $mob) {
+        if (is_array(ilSession::get("import_mob_xhtml"))) {
+            foreach (ilSession::get("import_mob_xhtml") as $mob) {
                 if ($tst_id > 0) {
                     $importfile = $this->getTstImportArchivDirectory() . '/' . $mob["uri"];
                 } else {
