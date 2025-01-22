@@ -169,3 +169,15 @@ if ($ilDB->tableExists('il_qpl_qst_qpisql_qd')) {
    $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_c', array('type' => 'clob'));
 }
 ?>
+<#5>
+<?php
+/**
+ * Insert plugin name into qpl_qst_type
+ * The `id` (c.f. plugin.php) is added automatically, but not the `plugin_name`.
+ * Without it, question imports fail, as ilAssQuestionType::getPluginName() fails.
+ */
+if($ilDB->tableColumnExists('qpl_qst_type', 'plugin_name'))
+{
+    $ilDB->manipulate("UPDATE qpl_qst_type set plugin_name = type_tag WHERE type_tag ='assSQLQuestion'");
+}
+?>
