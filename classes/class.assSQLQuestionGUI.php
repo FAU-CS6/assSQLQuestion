@@ -41,20 +41,20 @@ class assSQLQuestionGUI extends assQuestionGUI
      */
 
     /**
-    * Constructor
-    *
-    * @param integer $id The database id of a question object
-    * @access public
-    */
+     * Constructor
+     *
+     * @param integer $id The database id of a question object
+     * @access public
+     */
     public function __construct($id = -1)
     {
         global $DIC;
 
         parent::__construct();
 
-       /** @var ilComponentFactory $component_factory */
-		$component_factory = $DIC["component.factory"];
-		$this->plugin = $component_factory->getPlugin('qpisql');
+        /** @var ilComponentFactory $component_factory */
+        $component_factory = $DIC["component.factory"];
+        $this->plugin = $component_factory->getPlugin('qpisql');
         $this->object = new assSQLQuestion();
         if ($id >= 0) {
             $this->object->loadFromDb($id);
@@ -171,7 +171,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param boolean $show_specific_inline_feedback	Show a specific inline feedback
      * @return string
      */
-	public function getTestOutput($active_id, $pass = NULL, $is_postponed = FALSE, $use_post_solutions = FALSE, $show_specific_inline_feedback = FALSE): string
+    public function getTestOutput($active_id, $pass = null, $is_postponed = false, $use_post_solutions = false, $show_specific_inline_feedback = false): string
     {
         // Get the stored solution
         $solution = $this->object->getSolutionStored($active_id, $pass, null);
@@ -296,12 +296,12 @@ class assSQLQuestionGUI extends assQuestionGUI
     }
 
     /**
-    * Returns the answer specific feedback for the question
-    *
-    * @param array $userSolution ($userSolution[<value1>] = <value2>)
-    * @return string HTML Code with the answer specific feedback
-    * @access public
-    */
+     * Returns the answer specific feedback for the question
+     *
+     * @param array $userSolution ($userSolution[<value1>] = <value2>)
+     * @return string HTML Code with the answer specific feedback
+     * @access public
+     */
     public function getSpecificFeedbackOutput($userSolution): string
     {
         // By default no answer specific feedback is defined
@@ -402,18 +402,18 @@ class assSQLQuestionGUI extends assQuestionGUI
     {
         // Add CSS files
 
-        // Custom css
-        $this->tpl->addCss(self::QPISQL_URL_PATH.'/css/custom.css');
+        // Custom CSS
+        $this->tpl->addCss(self::QPISQL_URL_PATH . '/css/custom.css');
 
-        // Codemirror
-        $this->tpl->addCss(self::QPISQL_URL_PATH.'/lib/codemirror/lib/codemirror.css');
+        // CodeMirror
+        $this->tpl->addCss(self::QPISQL_URL_PATH . '/lib/codemirror/lib/codemirror.css');
 
         // Add JS files
 
-        // Add custom js code
+        // Add custom JS code
 
-        // Add path to the plugin file to be accessible in js, too
-        $this->tpl->addOnLoadCode("window.QPISQL_URL_PATH = \"".self::QPISQL_URL_PATH."\"");
+        // Add path to the plugin file to be accessible in JS, too
+        $this->tpl->addOnLoadCode("window.QPISQL_URL_PATH = \"" . self::QPISQL_URL_PATH . "\"");
 
     }
 
