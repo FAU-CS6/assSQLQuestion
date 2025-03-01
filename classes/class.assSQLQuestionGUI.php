@@ -1,9 +1,6 @@
 <?php
-require_once "internal/GUI/GUIAreas/class.QuestionArea.php";
-require_once "internal/GUI/GUIAreas/class.SequenceArea.php";
-require_once "internal/GUI/GUIAreas/class.OutputArea.php";
-require_once "internal/GUI/GUIAreas/class.ScoringArea.php";
-require_once "internal/DataStructures/class.ParticipantInput.php";
+
+declare(strict_types=1);
 
 /**
  * GUI class of the SQLQuestion plugin

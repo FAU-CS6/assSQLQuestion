@@ -1,12 +1,6 @@
 <?php
-require_once __DIR__.'/../class.GUIArea.php';
 
-require_once __DIR__.'/../GUIElements/SequenceArea/class.SequenceInfo.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.SequenceA.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.SequenceB.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.SequenceC.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.IntegrityCheck.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.ExecuteButton.php';
+declare(strict_types=1);
 
 /**
  * Represents the sequence area used in assSQLQuestionGUI

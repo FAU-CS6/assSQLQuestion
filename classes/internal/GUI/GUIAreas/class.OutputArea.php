@@ -1,8 +1,6 @@
 <?php
-require_once __DIR__.'/../class.GUIArea.php';
 
-require_once __DIR__.'/../GUIElements/OutputArea/class.OutputInfo.php';
-require_once __DIR__.'/../GUIElements/OutputArea/class.Output.php';
+declare(strict_types=1);
 
 /**
  * Represents the output area used in assSQLQuestionGUI
