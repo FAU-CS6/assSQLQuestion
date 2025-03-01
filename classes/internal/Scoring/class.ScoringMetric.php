@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__.'/class.SolutionMetric.php';
-require_once __DIR__.'/class.ParticipantMetric.php';
+
+declare(strict_types=1);
 
 /**
  * An abstract scoring metric - implementing functions to save and load

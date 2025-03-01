@@ -1,7 +1,6 @@
 <?php
-require_once __DIR__.'/../class.GUIArea.php';
 
-require_once __DIR__.'/../GUIElements/QuestionArea/class.QuestionText.php';
+declare(strict_types=1);
 
 /**
  * Represents the area used in assSQLQuestionGUI to display the question

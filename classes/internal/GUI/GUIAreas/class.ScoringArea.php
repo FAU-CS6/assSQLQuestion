@@ -1,8 +1,6 @@
 <?php
-require_once __DIR__.'/../class.GUIArea.php';
 
-require_once __DIR__.'/../GUIElements/ScoringArea/class.ScoringInfo.php';
-require_once __DIR__.'/../GUIElements/ScoringArea/class.ScoringMetrics.php';
+declare(strict_types=1);
 
 /**
  * Represents the scoring area used in assSQLQuestionGUI

@@ -1,15 +1,6 @@
 <?php
-require_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
-require_once "internal/Scoring/class.ScoringMetric.php";
-require_once "internal/Scoring/class.SolutionMetric.php";
-require_once "internal/DataStructures/class.ParticipantInput.php";
-require_once "internal/GUI/GUIAreas/class.QuestionArea.php";
-require_once "internal/GUI/GUIAreas/class.SequenceArea.php";
-require_once "internal/GUI/GUIAreas/class.OutputArea.php";
-require_once "internal/GUI/GUIAreas/class.ScoringArea.php";
-require_once "internal/Scoring/ScoringMetrics/ResultLines/class.ResultLines.php";
-require_once "internal/Scoring/ScoringMetrics/ColumnNames/class.ColumnNames.php";
-require_once "internal/Scoring/ScoringMetrics/FunctionalDependencies/class.FunctionalDependencies.php";
+
+declare(strict_types=1);
 
 /**
  * Main defintion of the SQLQuestion plugin

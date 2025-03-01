@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__.'/../../class.GUIElement.php';
+
+declare(strict_types=1);
 
 /**
  * Represents the integrityCheck GUIElement
