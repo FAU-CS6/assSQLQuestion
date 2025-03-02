@@ -45,6 +45,10 @@ ai_sea_eo_ic#:#Integritätsprüfung:
 // The error messages as shown if the edit forms of the sequence area are not complete
 ai_sea_eo_error#:#Um eine Frage anzulegen, muss Sequenz B einen Inhalt haben.
 
+// -description-
+ai_sea_eo_syntax_help_title#:#-title-
+ai_sea_eo_syntax_help_text#:#-text-
+
 ////////////////////////////////////////////////////////////////////////////////
 // Strings used in the output mode of the sequence area ("ai_sea_qo_" prefix) //
 ////////////////////////////////////////////////////////////////////////////////

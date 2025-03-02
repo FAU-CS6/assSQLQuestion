@@ -46,6 +46,10 @@ ai_sea_eo_ic#:#Integrity Check:
 // The error messages as shown if the edit forms of the sequence area are not complete
 ai_sea_eo_error#:#To create a question, sequence B is not allowed to be empty.
 
+// -description-
+ai_sea_eo_syntax_help_title#:#-title-
+ai_sea_eo_syntax_help_text#:#-text-
+
 ////////////////////////////////////////////////////////////////////////////////
 // Strings used in the output mode of the sequence area ("ai_sea_qo_" prefix) //
 ////////////////////////////////////////////////////////////////////////////////
