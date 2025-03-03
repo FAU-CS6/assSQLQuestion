@@ -114,7 +114,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return array The names of the additional tables
      */
-    public function getAdditionalTableName(): array
+    public function getAdditionalTableName(): array|string
     {
         return array(
             'il_qpl_qst_qpisql_qd',
@@ -127,9 +127,9 @@ class assSQLQuestion extends assQuestion
      *
      * @return string The name of the answer table
      */
-    public function getAnswerTableName(): string
+    public function getAnswerTableName(): array|string
     {
-        return "il_qpl_a_qpisql";
+        return array();
     }
     
 
@@ -266,7 +266,8 @@ class assSQLQuestion extends assQuestion
         // make a real clone to keep the actual object unchanged
         $clone = clone $this;
 
-        $original_id = assQuestion::_getOriginalId($this->getId());
+        global $DIC;
+        $original_id = $DIC->testQuestionPool()->questionInfo()->getOriginalId($this->getId());
         $clone->setId(-1);
 
         if ((int) $testObjId > 0) {
@@ -318,7 +319,8 @@ class assSQLQuestion extends assQuestion
         // make a real clone to keep the object unchanged
         $clone = clone $this;
 
-        $original_id = assQuestion::_getOriginalId($this->getId());
+        global $DIC;
+        $original_id = $DIC->testQuestionPool()->questionInfo()->getOriginalId($this->getId());
         $source_questionpool_id = $this->getObjId();
         $clone->setId(-1);
         $clone->setObjId($target_questionpool_id);
