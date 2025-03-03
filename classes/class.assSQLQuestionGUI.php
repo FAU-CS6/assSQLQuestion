@@ -303,7 +303,7 @@ class assSQLQuestionGUI extends assQuestionGUI
     {
         // By default no answer specific feedback is defined
         $output = '';
-        return $this->object->prepareTextareaOutput($output, true);
+        return self::prepareTextareaOutput($output, true);
     }
     
     
