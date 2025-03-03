@@ -3,14 +3,11 @@
 declare(strict_types=1);
 
 /**
- * Represents the area used in assSQLQuestionGUI to display the question
+ * Represents the JS block area used in assSQLQuestionGUI
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
- *
- * @ilctrl_iscalledby QuestionArea: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
- * @ilCtrl_Calls QuestionArea: ilFormPropertyDispatchGUI
+ * @author Marco Angerer <marco.angerer@fau.de>
  */
-class QuestionArea extends GUIArea
+class JsBlockArea extends GUIArea
 {
     /**
     * Constructor
@@ -30,15 +27,20 @@ class QuestionArea extends GUIArea
         // Set the subelements
 
         // Info area
-        $this->addSubElement(new QuestionText(
+        $this->addSubElement(new JsBlock(
             $plugin, // Plugin
             $object // Object
         ));
 
-        // Set Title and HTML to "" as this should not be displayed on the edit question page
+        // Set Title, Information and Required
         $this->setTitle("");
+        $this->setRequired(true);
         $this->setHtml($this->getEditOutput());
     }
+
+    /*
+     * Functions originaly implemented in ilCustomInputGUI that need to be overwritten
+     */
 
     /**
      * Checks the input of the edit page
@@ -51,7 +53,12 @@ class QuestionArea extends GUIArea
      */
     public function checkInput(): bool
     {
-        // This includes no Input
+        if ((isset($_POST["error_bool"]) && $_POST["error_bool"] == "true") ||
+        (isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "false")) {
+            // $this->setAlert($this->plugin->txt('ai_oa_eo_error'));
+            return false;
+        }
+
         return true;
     }
 }

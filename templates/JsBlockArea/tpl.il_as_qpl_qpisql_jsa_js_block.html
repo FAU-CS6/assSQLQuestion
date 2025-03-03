@@ -1,0 +1,22 @@
+<p class="js-is-loading" style="color: #6c757d;">{LOADING_TEXT}</p>
+<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/js/min.js.php"></script>
+<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/codemirror/lib/codemirror.js"></script>
+<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/codemirror/mode/sql/sql.js"></script>
+<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/sql.js/sql.js"></script>
+<script>
+  /* Here, we regularly check for elements that only exist after CodeMirror is done loading */
+  function hide(elem) {
+    elem.style.display = 'none';
+  }
+  var callbackTimer = setInterval(function() {
+    var exists = false;
+    try {
+      exists = document.getElementsByClassName('CodeMirror-gutter-filler');
+    } catch (e) {}
+
+    if (exists) {
+      clearInterval(callbackTimer);
+      document.getElementsByClassName('js-is-loading').forEach(hide);
+    }
+  }, 100);
+</script>

@@ -137,6 +137,7 @@ class assSQLQuestionGUI extends assQuestionGUI
 
             // Insert the different GUIAreas
             $guiAreas = array();
+            array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
             array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
             array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
             array_push($guiAreas, new OutputArea($this->plugin, $this->object));
@@ -186,6 +187,7 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         // Insert the different GUIAreas
         $guiAreas = array();
+        array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
         array_push($guiAreas, new OutputArea($this->plugin, $this->object));
@@ -226,6 +228,7 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         // Insert the different GUIAreas
         $guiAreas = array();
+        array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
         array_push($guiAreas, new OutputArea($this->plugin, $this->object));
@@ -280,6 +283,7 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         // Insert the different GUIAreas
         $guiAreas = array();
+        array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
         array_push($guiAreas, new OutputArea($this->plugin, $this->object));
@@ -347,6 +351,7 @@ class assSQLQuestionGUI extends assQuestionGUI
     {
         // Insert the different GUIAreas
         $guiAreas = array();
+        array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
         array_push($guiAreas, new OutputArea($this->plugin, $this->object));
