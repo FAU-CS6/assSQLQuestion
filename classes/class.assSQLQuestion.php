@@ -266,7 +266,8 @@ class assSQLQuestion extends assQuestion
         // make a real clone to keep the actual object unchanged
         $clone = clone $this;
 
-        $original_id = assQuestion::_getOriginalId($this->getId());
+        global $DIC;
+        $original_id = $DIC->testQuestionPool()->questionInfo()->getOriginalId($this->getId());
         $clone->setId(-1);
 
         if ((int) $testObjId > 0) {
@@ -318,7 +319,8 @@ class assSQLQuestion extends assQuestion
         // make a real clone to keep the object unchanged
         $clone = clone $this;
 
-        $original_id = assQuestion::_getOriginalId($this->getId());
+        global $DIC;
+        $original_id = $DIC->testQuestionPool()->questionInfo()->getOriginalId($this->getId());
         $source_questionpool_id = $this->getObjId();
         $clone->setId(-1);
         $clone->setObjId($target_questionpool_id);
