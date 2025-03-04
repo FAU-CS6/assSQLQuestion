@@ -718,7 +718,6 @@ class assSQLQuestion extends assQuestion
 		bool $force_image_references = false
 	): string
     {
-        $this->getPlugin()->includeClass("export/qti12/class.assSQLQuestionExport.php");
         $export = new assSQLQuestionExport($this);
         return $export->toXML($a_include_header, $a_include_binary, $a_shuffle, $test_output, $force_image_references);
     }
