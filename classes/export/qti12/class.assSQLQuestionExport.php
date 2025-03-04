@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * SQL question export
  */
@@ -14,7 +17,6 @@ class assSQLQuestionExport extends assQuestionExport
     {
         global $ilias;
 
-        include_once("./Services/Xml/classes/class.ilXmlWriter.php");
         $a_xml_writer = new ilXmlWriter;
 
         // Set XML header

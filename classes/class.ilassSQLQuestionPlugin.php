@@ -1,6 +1,6 @@
 <?php
 
-include_once "./Modules/TestQuestionPool/classes/class.ilQuestionsPlugin.php";
+declare(strict_types=1);
 
 /**
 * Main plugin file of the SQLQuestion plugin

@@ -1,11 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * SQL question import
  */
-
-include_once "./Services/MediaObjects/classes/class.ilObjMediaObject.php";
-include_once "./Services/RTE/classes/class.ilRTE.php";
 
  class assSQLQuestionImport extends assQuestionImport
 {
