@@ -114,7 +114,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return array The names of the additional tables
      */
-    public function getAdditionalTableName(): array|string
+    public function getAdditionalTableName(): array
     {
         return array(
             'il_qpl_qst_qpisql_qd',
@@ -125,9 +125,9 @@ class assSQLQuestion extends assQuestion
     /**
      * Returns the name of the used answer table
      *
-     * @return string The name of the answer table
+     * @return array The names of the answer table
      */
-    public function getAnswerTableName(): array|string
+    public function getAnswerTableName(): array
     {
         return array();
     }
