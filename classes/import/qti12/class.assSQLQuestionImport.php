@@ -81,7 +81,15 @@ declare(strict_types=1);
         $this->object->setComment($item->getComment());
         $this->object->setAuthor($item->getAuthor());
         $this->object->setOwner($ilUser->getId());
-        $this->object->setQuestion($this->QTIMaterialToString($item->getQuestiontext()));
+        
+        // Temporary workaround to support ILIAS 8 and 9+
+        if(method_exists($this->object, "QTIMaterialToString")) {
+            // ILIAS 8
+            $this->object->setQuestion($this->object->QTIMaterialToString($item->getQuestiontext()));
+        } else {
+            // ILIAS 9
+            $this->object->setQuestion($this->QTIMaterialToString($item->getQuestiontext()));
+        }
         $this->object->setObjId($questionpool_id);
         $this->object->setPoints($item->getMetadataEntry("POINTS"));
 
@@ -106,7 +114,15 @@ declare(strict_types=1);
 
         // Convert the generic feedback
         foreach ($feedbacksgeneric as $correctness => $material) {
-            $m = $this->QTIMaterialToString($material);
+            // Temporary workaround to support ILIAS 8 and 9+
+            if(method_exists($this->object, "QTIMaterialToString")) {
+                // ILIAS 8
+                $m = $this->object->QTIMaterialToString($material);
+            } else {
+                // ILIAS 9
+                $m = $this->QTIMaterialToString($material);
+            }
+            $m = $this->object->QTIMaterialToString($material);
             $feedbacksgeneric[$correctness] = $m;
         }
 
