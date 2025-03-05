@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * GUI class of the SQLQuestion plugin
  *

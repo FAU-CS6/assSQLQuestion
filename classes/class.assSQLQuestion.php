@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * Main defintion of the SQLQuestion plugin
  *
