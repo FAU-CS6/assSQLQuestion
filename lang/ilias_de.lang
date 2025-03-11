@@ -45,6 +45,10 @@ ai_sea_eo_ic#:#Integritätsprüfung:
 // The error messages as shown if the edit forms of the sequence area are not complete
 ai_sea_eo_error#:#Um eine Frage anzulegen, muss Sequenz B einen Inhalt haben.
 
+// The expandable help text for SQL.JS (SQLite) syntax
+ai_sea_eo_syntax_help_title#:#Infos zur Syntax
+ai_sea_eo_syntax_help_text#:#<p>-- Die Unterstützung von Fremdschluesseln muss in SQLite seperat aktiviert werden<br />PRAGMA foreign_keys = ON;</p>
+
 ////////////////////////////////////////////////////////////////////////////////
 // Strings used in the output mode of the sequence area ("ai_sea_qo_" prefix) //
 ////////////////////////////////////////////////////////////////////////////////

@@ -35,6 +35,12 @@ class SequenceArea extends GUIArea
             $object // Object
         ));
 
+        // Syntax help area
+        $this->addSubElement(new SyntaxHelp(
+            $plugin, // Plugin
+            $object // Object
+        ));
+
         // Sequence A
         $this->addSubElement(new SequenceA(
             $plugin, // Plugin
