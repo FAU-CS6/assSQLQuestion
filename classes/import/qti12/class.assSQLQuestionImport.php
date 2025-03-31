@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * SQL question import
  */
@@ -9,9 +11,10 @@
     /**
      * Creates a question from a QTI file
      *
-     * Receives parameters from a QTI parser and creates a valid ILIAS question object
+     * Receives parameters from a QTI parser and creates a valid ILIAS question object.
+     * As in `ilQTIItem` all variables are of type string, we need to typecast some of them.
      *
-     * @param object $item The QTI item object
+     * @param ilQtiItem $item The QTI item object
      * @param integer $questionpool_id The id of the parent questionpool
      * @param integer $tst_id The id of the parent test if the question is part of a test
      * @param object $tst_object A reference to the parent test object
@@ -75,10 +78,10 @@
         // Set generic question properties
         $this->addGeneralMetadata($item);
         $this->object->setTitle($item->getTitle());
-        $this->object->setNrOfTries($item->getMaxattempts());
+        $this->object->setNrOfTries((int) $item->getMaxattempts());
         $this->object->setComment($item->getComment());
         $this->object->setAuthor($item->getAuthor());
-        $this->object->setOwner($ilUser->getId());
+        $this->object->setOwner((int) $ilUser->getId());
         
         // Temporary workaround to support ILIAS 8 and 9+
         if(method_exists($this->object, "QTIMaterialToString")) {
@@ -89,16 +92,16 @@
             $this->object->setQuestion($this->QTIMaterialToString($item->getQuestiontext()));
         }
         $this->object->setObjId($questionpool_id);
-        $this->object->setPoints($item->getMetadataEntry("POINTS"));
+        $this->object->setPoints((float) $item->getMetadataEntry("POINTS"));
 
         // Set plugin specific information
         $this->object->setSequence("sequence_a", $item->getMetadataEntry("SEQUENCE_A"));
         $this->object->setSequence("sequence_b", $item->getMetadataEntry("SEQUENCE_B"));
         $this->object->setSequence("sequence_c", $item->getMetadataEntry("SEQUENCE_C"));
-        $this->object->setIntegrityCheck($item->getMetadataEntry("INTEGRITY_CHECK"));
-        $this->object->setErrorBool($item->getMetadataEntry("ERROR_BOOL"));
+        $this->object->setIntegrityCheck((bool) $item->getMetadataEntry("INTEGRITY_CHECK"));
+        $this->object->setErrorBool((bool) $item->getMetadataEntry("ERROR_BOOL"));
         $this->object->setError($item->getMetadataEntry("ERROR"));
-        $this->object->setExecutedBool($item->getMetadataEntry("EXECUTED_BOOL"));
+        $this->object->setExecutedBool((bool) $item->getMetadataEntry("EXECUTED_BOOL"));
         $this->object->setOutputRelation($item->getMetadataEntry("OUTPUT_RELATION"));
         $this->object->setAllSolutionMetricsFromJSON($item->getMetadataEntry("SOLUTION_METRICS"));
 

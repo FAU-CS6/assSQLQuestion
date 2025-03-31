@@ -12,17 +12,17 @@ class FunctionalDependencies extends ScoringMetric
     /**
      * @var string The type identifier of the scoring metric (e.g. "functional_dependency")
      */
-    protected static $type = "functional_dependencies";
+    protected static string $type = "functional_dependencies";
 
     /**
      * @var string The Javascript funtion to get the value of the sm out of a result
      */
-    protected static $getter = "function(result) { return result.getAllMinimalFunctionalDependenciesAsJSON(); }";
+    protected static string $getter = "function(result) { return result.getAllMinimalFunctionalDependenciesAsJSON(); }";
 
     /**
      * @var string The Javascript to beautifiy (make it more readable) the getter string
      */
-    protected static $beautifier = "function(stringToBeautify) {
+    protected static string $beautifier = "function(stringToBeautify) {
       var decoded_json = '';
 
       try {
@@ -74,7 +74,7 @@ class FunctionalDependencies extends ScoringMetric
      * @return string The info text shown at the edit page
      * @access protected
      */
-    protected static function getEditPageInfo($plugin)
+    protected static function getEditPageInfo($plugin): string
     {
         return $plugin->txt('ai_sca_eo_sm_fd_info');
     }
@@ -85,7 +85,7 @@ class FunctionalDependencies extends ScoringMetric
      * @return string The info text shown at the solution page
      * @access protected
      */
-    protected static function getSolutionPageInfo($plugin)
+    protected static function getSolutionPageInfo($plugin): string
     {
         return $plugin->txt('ai_sca_so_sm_fd_info');
     }
@@ -96,11 +96,11 @@ class FunctionalDependencies extends ScoringMetric
      * @param SolutionMetric[] $solution_metrics The suiting solution metric array (with the pattern solution values)
      * @param ParticipantMetric[] $participant_metrics The participant metric array to be evaluated
      *
-     * @return float The reached points
+     * @return int The reached points
      *
      * @access public
      */
-    public static function calculateReachedPoints($solution_metrics, $participant_metrics)
+    public static function calculateReachedPoints($solution_metrics, $participant_metrics): int
     {
         // Get the suiting solution and participant metric
         $solution_metric = static::getSolutionMetric($solution_metrics);
@@ -208,7 +208,7 @@ class FunctionalDependencies extends ScoringMetric
      *
      * @access public
      */
-    public static function compareFunctionalDependencies($a_json, $b_json)
+    public static function compareFunctionalDependencies($a_json, $b_json): bool
     {
       $a = json_decode($a_json, TRUE);
       $b = json_decode($b_json, TRUE);

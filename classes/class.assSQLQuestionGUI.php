@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * GUI class of the SQLQuestion plugin
  *
@@ -19,7 +21,7 @@ class assSQLQuestionGUI extends assQuestionGUI
     /**
      * @var ilassSQLQuestionPlugin The plugin object
      */
-    public $plugin = null;
+    public ilassSQLQuestionPlugin $plugin;
 
     /**
      * @var assSQLQuestion The question object
@@ -27,9 +29,9 @@ class assSQLQuestionGUI extends assQuestionGUI
     public assQuestion $object;
 
     /**
-     * @const	string URL base path for including used javascript and css files
+     * @const string URL base path for including used javascript and css files
      */
-    const QPISQL_URL_PATH = "./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion";
+    private const QPISQL_URL_PATH = "./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion";
 
     /**
      * Member functions that have to be part of every assQuestionGUI
@@ -62,7 +64,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param bool $checkonly
      * @return bool
      */
-    public function editQuestion($checkonly = false)
+    public function editQuestion($checkonly = false): bool
     {
         // Initialize the Language module
         global $DIC;
@@ -207,7 +209,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param boolean	$show_question_only
      * @return string
      */
-    public function getPreview($show_question_only = false, $showInlineFeedback = false)
+    public function getPreview($show_question_only = false, $showInlineFeedback = false): string
     {
         if (is_object($this->getPreviewSession())) {
             $solution = $this->getPreviewSession()->getParticipantsSolution();
@@ -319,7 +321,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      *
      * @access private
      */
-    private function prepareTemplate()
+    private function prepareTemplate(): void
     {
         // Add CSS files
 
@@ -345,7 +347,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param ilPropertyFormGUI $form The form the fields should be added to
      * @access private
      */
-    private function addSpecificQuestionFormProperties(\ilPropertyFormGUI $form)
+    private function addSpecificQuestionFormProperties(\ilPropertyFormGUI $form): void
     {
         // Insert the different GUIAreas
         $guiAreas = array();

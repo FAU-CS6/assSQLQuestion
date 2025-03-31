@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Main defintion of the SQLQuestion plugin
  *
@@ -13,9 +15,9 @@ class assSQLQuestion extends assQuestion
      */
 
     /**
-     * @var ilassSQLQuestionPlugin The plugin object
+     * @var ?ilassSQLQuestionPlugin The plugin object
      */
-    protected $plugin = null;
+    protected ?ilassSQLQuestionPlugin $plugin = null;
 
     /**
      * Custom member variables/constants for an assSQLQuestion
@@ -24,47 +26,47 @@ class assSQLQuestion extends assQuestion
     /**
      * @var string The first sql sequence of the question
      */
-    public $sequence_a = "";
+    public string $sequence_a = "";
 
     /**
      * @var string The second sql sequence of the question
      */
-    public $sequence_b = "";
+    public string $sequence_b = "";
 
     /**
      * @var string The third sql sequence of the question
      */
-    public $sequence_c = "";
+    public string $sequence_c = "";
 
     /**
      * @var boolean A boolean indicating whether the question includes an integrity check (true) or not (false)
      */
-    public $integrity_check = false;
+    public bool $integrity_check = false;
 
     /**
      * @var boolean A boolean indicating whether the questions sequences contain errors (true) or not (false)
      */
-    public $error_bool = false;
+    public bool $error_bool = false;
 
     /**
      * @var string A json string containing the error of the current sql sequences
      */
-    public $error = "";
+    public string $error = "";
 
     /**
      * @var boolean A boolean indicating whether the current questions sequences have been executed (true) or not (false)
      */
-    public $executed_bool = false;
+    public bool $executed_bool = false;
 
     /**
      * @var string A json string containg the output relation of the current sql sequences
      */
-    public $output_relation = "";
+    public string $output_relation = "";
 
     /**
      * @var SolutionMetric[] An array containg all pattern solution SolutionMetrics used in this question
      */
-    public $solution_metrics = array();
+    public array $solution_metrics = array();
 
     /**
      * Member functions that have to be part of every assQuestion
@@ -147,7 +149,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return object The plugin object
      */
-    public function getPlugin()
+    public function getPlugin(): ilassSQLQuestionPlugin
     {
         global $DIC;
 
@@ -219,13 +221,13 @@ class assSQLQuestion extends assQuestion
                 . $ilDB->quote($question_id, 'integer'));
 
         $data = $ilDB->fetchAssoc($result);
-        $this->setId($question_id);
-        $this->setObjId($data['obj_fi']);
-        $this->setOriginalId($data['original_id']);
-        $this->setOwner($data['owner']);
+        $this->setId((int) $question_id);
+        $this->setObjId((int) $data['obj_fi']);
+        $this->setOriginalId((int) $data['original_id']);
+        $this->setOwner((int)$data['owner']);
         $this->setTitle((string) $data['title']);
-        $this->setAuthor($data['author']);
-        $this->setPoints($data['points']);
+        $this->setAuthor((string) $data['author']);
+        $this->setPoints((float) $data['points']);
         $this->setComment((string) $data['description']);
 
         $this->setQuestion((string) ilRTE::_replaceMediaObjectImageSrc((string) $data['question_text'], 1));
@@ -234,7 +236,7 @@ class assSQLQuestion extends assQuestion
         $this->loadSpecificQuestionDataFromDb($question_id);
 
         try {
-            $this->setAdditionalContentEditingMode($data['add_cont_edit_mode']);
+            $this->setAdditionalContentEditingMode(((string) $data['add_cont_edit_mode']) ?? null);
         } catch (ilTestQuestionPoolException $e) {
         }
 
@@ -254,7 +256,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return void|integer Id of the clone or nothing.
      */
-    public function duplicate($for_test = true, $title = '', $author = '', $owner = '', $testObjId = null): int
+    public function duplicate(bool $for_test = true, string $title = '', string $author = '', int $owner = -1, $testObjId = null): int
     {
         if ($this->getId() <= 0) {
             // The question has not been saved. It cannot be duplicated
@@ -403,7 +405,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return array ('value1' => string|null, 'value2' => float|null) - 'value1' contains the ParticipantInput object serialized to JSON
      */
-    protected function getSolutionSubmit()
+    protected function getSolutionSubmit(): array
     {
         // Create a new ParticipantInput
         $participant_input = new ParticipantInput();
@@ -439,7 +441,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return	array	('value1' => string|null, 'value2' => float|null)
      */
-    public function getSolutionStored($active_id, $pass, $authorized = null)
+    public function getSolutionStored($active_id, $pass, $authorized = null): array
     {
         // This provides an array with records from tst_solution
         // The example question should only store one record per answer
@@ -734,7 +736,7 @@ class assSQLQuestion extends assQuestion
     * @param string $sequence_name The name of the requested sequence
     * @return string The requested sql sequence
     */
-    public function getSequence($sequence_name)
+    public function getSequence($sequence_name): string
     {
         switch ($sequence_name) {
             case "sequence_a":
@@ -754,7 +756,7 @@ class assSQLQuestion extends assQuestion
      * @param string $sequence_name The name of the sequence
      * @param string $sequence The requested sql sequence
      */
-    public function setSequence($sequence_name, $sequence)
+    public function setSequence($sequence_name, $sequence): void
     {
         switch ($sequence_name) {
             case "sequence_a":
@@ -776,7 +778,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return boolean The integrity_check boolean
      */
-    public function getIntegrityCheck()
+    public function getIntegrityCheck(): bool
     {
         return $this->integrity_check;
     }
@@ -786,7 +788,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param boolean $integrity_check The integrity_check boolean
      */
-    public function setIntegrityCheck($integrity_check)
+    public function setIntegrityCheck(bool $integrity_check): void
     {
         $this->integrity_check = $integrity_check;
     }
@@ -796,7 +798,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return boolean The error state
      */
-    public function getErrorBool()
+    public function getErrorBool(): bool
     {
         return $this->error_bool;
     }
@@ -806,7 +808,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param boolean $error_bool The error state of the execution
      */
-    public function setErrorBool($error_bool)
+    public function setErrorBool(bool $error_bool): void
     {
         $this->error_bool = $error_bool;
     }
@@ -816,7 +818,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return string The error json
      */
-    public function getError()
+    public function getError(): string
     {
         return $this->error;
     }
@@ -826,7 +828,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param string $error The error json
      */
-    public function setError($error)
+    public function setError(string $error): void
     {
         $this->error = $error;
     }
@@ -846,7 +848,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param boolean $executed_bool The execution state
      */
-    public function setExecutedBool($executed_bool)
+    public function setExecutedBool(bool $executed_bool): void
     {
         $this->executed_bool = $executed_bool;
     }
@@ -856,7 +858,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return string The output relation
      */
-    public function getOutputRelation()
+    public function getOutputRelation(): string
     {
         return $this->output_relation;
     }
@@ -866,7 +868,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param string $output_relation The output relation
      */
-    public function setOutputRelation($output_relation)
+    public function setOutputRelation(string $output_relation): void
     {
         $this->output_relation = $output_relation;
     }
@@ -876,7 +878,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return SolutionMetric[] A array containing all SolutionMetrics
      */
-    public function getAllSolutionMetrics()
+    public function getAllSolutionMetrics(): array
     {
         return $this->solution_metrics;
     }
@@ -886,7 +888,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return string A JSON string containing all SolutionMetrics
      */
-    public function getAllSolutionMetricsAsJSON()
+    public function getAllSolutionMetricsAsJSON(): string
     {
         $solution_metrics_json = array();
 
@@ -919,7 +921,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param SolutionMetric[] $solution_metrics An array containg all SolutionMetrics to be set
      */
-    public function setAllSolutionMetrics($solution_metrics)
+    public function setAllSolutionMetrics(array $solution_metrics): void
     {
         $this->solution_metrics = $solution_metrics;
     }
@@ -929,7 +931,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param string $json A JSON string containg all SolutionMetrics to be set
      */
-    public function setAllSolutionMetricsFromJSON($json)
+    public function setAllSolutionMetricsFromJSON(string $json): void
     {
         $json_decoded = json_decode($json, true);
 
@@ -938,9 +940,9 @@ class assSQLQuestion extends assQuestion
             $solution_metric_decoded = json_decode($solution_metric, true);
 
             $this->setSingleSolutionMetric(new SolutionMetric(
-                $solution_metric_decoded['type'],
-                $solution_metric_decoded['points'],
-                $solution_metric_decoded['value']
+                (string) $solution_metric_decoded['type'],
+                (int) $solution_metric_decoded['points'],
+                (string) $solution_metric_decoded['value']
             ));
         }
     }
@@ -951,7 +953,7 @@ class assSQLQuestion extends assQuestion
      * @param string $type The type of the searched SolutionMetric
      * @return SolutionMetric[] A array containing all metrics with this type
      */
-    public function getSolutionMetricsWithType($type)
+    public function getSolutionMetricsWithType($type): array
     {
         $found_metrics = array();
 
@@ -969,7 +971,7 @@ class assSQLQuestion extends assQuestion
      *
    * @param SolutionMetric $solution_metric The SolutionMetric to be set
      */
-    public function setSingleSolutionMetric($solution_metric)
+    public function setSingleSolutionMetric(SolutionMetric $solution_metric): void
     {
         if (is_a($solution_metric, "SolutionMetric")) {
             // Remove existing SolutionMetric with the same type
@@ -994,7 +996,7 @@ class assSQLQuestion extends assQuestion
      * Save all data that is specific to assSQLQuestion into the database
      * (See dpupdate.php for more informations on used tables)
      */
-    public function saveSpecificQuestionDataToDb()
+    public function saveSpecificQuestionDataToDb(): void
     {
         global $DIC;
 
@@ -1067,14 +1069,14 @@ class assSQLQuestion extends assQuestion
         if ($result_qd->numRows() > 0) {
             $data_qd = $ilDB->fetchAssoc($result_qd);
 
-            $this->setSequence('sequence_a', $data_qd['sequence_a']);
-            $this->setSequence('sequence_b', $data_qd['sequence_b']);
-            $this->setSequence('sequence_c', $data_qd['sequence_c']);
-            $this->setIntegrityCheck($data_qd['integrity_check']);
-            $this->setErrorBool($data_qd['error_bool']);
-            $this->setError($data_qd['error']);
-            $this->setExecutedBool($data_qd['executed_bool']);
-            $this->setOutputRelation($data_qd['output_relation']);
+            $this->setSequence('sequence_a', (string) $data_qd['sequence_a']);
+            $this->setSequence('sequence_b', (string) $data_qd['sequence_b']);
+            $this->setSequence('sequence_c', (string) $data_qd['sequence_c']);
+            $this->setIntegrityCheck((bool) $data_qd['integrity_check']);
+            $this->setErrorBool((bool) $data_qd['error_bool']);
+            $this->setError((string) $data_qd['error']);
+            $this->setExecutedBool((bool) $data_qd['executed_bool']);
+            $this->setOutputRelation((string) $data_qd['output_relation']);
         }
 
         // Set SolutionMetrics from il_qpl_qst_qpisql_qsm
@@ -1084,9 +1086,9 @@ class assSQLQuestion extends assQuestion
         while ($data_qsm = $ilDB->fetchAssoc($result_qsm)) {
             $this->setSingleSolutionMetric(
                 new SolutionMetric(
-                    $data_qsm['type'],
-                    $data_qsm['points'],
-                    $data_qsm['value']
+                    (string) $data_qsm['type'],
+                    (int) $data_qsm['points'],
+                    (string) $data_qsm['value']
                 )
             );
         }
