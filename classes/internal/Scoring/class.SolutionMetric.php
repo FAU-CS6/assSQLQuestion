@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * A internal helper class to define a solid structure for the pattern solution
  * of a ScoringMetric
@@ -10,17 +13,17 @@ class SolutionMetric
     /**
      * @var string The type of the ScoringMetric (e.g. "functional_dependency")
      */
-    public $type = "";
+    public string $type = "";
 
     /**
      * @var integer The maximum points that are given to a candidate if his solution meets the metric
      */
-    public $points = 0;
+    public int $points = 0;
 
     /**
      * @var string The pattern solution value of the ScoringMetric
      */
-    public $value = "";
+    public string $value = "";
 
     /**
      * Constructor
@@ -32,7 +35,7 @@ class SolutionMetric
      * @param string $value The pattern solution value of the ScoringMetric
      * @access public
      */
-    public function __construct($type, $points, $value)
+    public function __construct(string $type, int $points, string $value)
     {
         $this->type = $type;
         $this->points = $points;
@@ -44,7 +47,7 @@ class SolutionMetric
      *
      * @return string The JSON string
      */
-    public function toJSON()
+    public function toJSON(): string
     {
         // To use json_encode we need an array containing the values of the object
         $arr = array('type' => $this->type, 'points' => $this->points, 'value' => $this->value);
@@ -57,7 +60,7 @@ class SolutionMetric
      *
      * @return string The type of the ScoringMetric
      */
-    public function getType()
+    public function getType(): string
     {
         return $this->type;
     }
@@ -67,7 +70,7 @@ class SolutionMetric
      *
      * @return integer The points of the ScoringMetric
      */
-    public function getPoints()
+    public function getPoints(): int
     {
         return $this->points;
     }
@@ -77,7 +80,7 @@ class SolutionMetric
      *
      * @return string The value of the ScoringMetric
      */
-    public function getValue()
+    public function getValue(): string
     {
         return $this->value;
     }

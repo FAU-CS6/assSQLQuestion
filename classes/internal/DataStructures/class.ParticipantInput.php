@@ -1,6 +1,9 @@
 <?php
+
+declare(strict_types=1);
+
 /**
- * A internal helper class to define a solid structure for the participants input
+ * An internal helper class to define a solid structure for the participants input
  *
  * @author Dominik Probst <dominik.probst@studium.fau.de>
  */
@@ -9,32 +12,32 @@ class ParticipantInput
     /**
      * @var string The sql sequence the participant entered
      */
-    public $sequence = "";
+    public string $sequence = "";
 
     /**
      * @var boolean A boolean indicating whether the participants sequence(s) contain errors (true) or not (false)
      */
-    public $error_bool = false;
+    public bool $error_bool = false;
 
     /**
      * @var string A json string containing the error of the current sql sequences
      */
-    public $error = "";
+    public string $error = "";
 
     /**
      * @var boolean A boolean indicating whether the participants sequence(s) have been executed (true) or not (false)
      */
-    public $executed_bool = false;
+    public bool $executed_bool = false;
 
     /**
      * @var string A json string containg the output relation of the participants sequence(s)
      */
-    public $output_relation = "";
+    public string $output_relation = "";
 
     /**
      * @var ParticipantMetric[] An array containg all pattern solution ParticipantMetrics used in this question
      */
-    public $participant_metrics = array();
+    public array $participant_metrics = array();
 
     /**
      * Constructor
@@ -53,7 +56,7 @@ class ParticipantInput
      *
      * @return string The JSON string
      */
-    public function toJSON()
+    public function toJSON(): string
     {
         // To use json_encode we need an array containing the values of the object
         $arr = array('sequence' => $this->sequence,
@@ -80,7 +83,7 @@ class ParticipantInput
      * @param string $json The json string that should be transformed into a ParticipantInput
      * @return ParticipantInput The resulting ParticipantInput
      */
-    public static function fromJSON($json)
+    public static function fromJSON(string $json): ParticipantInput
     {
         // At first we decode the JSON
         $decoded_json = null;
@@ -153,7 +156,7 @@ class ParticipantInput
      *
      * @return string The sql sequence
      */
-    public function getSequence()
+    public function getSequence(): string
     {
         return $this->sequence;
     }
@@ -163,7 +166,7 @@ class ParticipantInput
      *
      * @param string $sequence The sql sequence
      */
-    public function setSequence($sequence)
+    public function setSequence(string $sequence): void
     {
         $this->sequence = $sequence;
     }
@@ -173,7 +176,7 @@ class ParticipantInput
      *
      * @return boolean The error state
      */
-    public function getErrorBool()
+    public function getErrorBool(): bool
     {
         return $this->error_bool;
     }
@@ -183,7 +186,7 @@ class ParticipantInput
      *
      * @param boolean $error_bool The error state of the execution
      */
-    public function setErrorBool($error_bool)
+    public function setErrorBool(bool $error_bool): void
     {
         $this->error_bool = $error_bool;
     }
@@ -193,7 +196,7 @@ class ParticipantInput
      *
      * @return string The error json
      */
-    public function getError()
+    public function getError(): string
     {
         return $this->error;
     }
@@ -203,7 +206,7 @@ class ParticipantInput
      *
      * @param string $error The error json
      */
-    public function setError($error)
+    public function setError(string $error): void
     {
         $this->error = $error;
     }
@@ -213,7 +216,7 @@ class ParticipantInput
      *
      * @return boolean The execution state
      */
-    public function getExecutedBool()
+    public function getExecutedBool(): bool
     {
         return $this->executed_bool;
     }
@@ -223,7 +226,7 @@ class ParticipantInput
      *
      * @param boolean $executed_bool The execution state
      */
-    public function setExecutedBool($executed_bool)
+    public function setExecutedBool(bool $executed_bool): void
     {
         $this->executed_bool = $executed_bool;
     }
@@ -233,7 +236,7 @@ class ParticipantInput
      *
      * @return string The output relation
      */
-    public function getOutputRelation()
+    public function getOutputRelation(): string
     {
         return $this->output_relation;
     }
@@ -243,7 +246,7 @@ class ParticipantInput
      *
      * @param string $output_relation The output relation
      */
-    public function setOutputRelation($output_relation)
+    public function setOutputRelation(string $output_relation): void
     {
         $this->output_relation = $output_relation;
     }
@@ -253,7 +256,7 @@ class ParticipantInput
      *
      * @return ParticipantMetric[] A array containing all ParticipantMetrics
      */
-    public function getAllParticipantMetrics()
+    public function getAllParticipantMetrics(): array
     {
         return $this->participant_metrics;
     }
@@ -263,7 +266,7 @@ class ParticipantInput
      *
      * @param ParticipantMetric[] $participant_metrics An array containg all ParticipantMetrics to be set
      */
-    public function setAllPartcipantMetrics($participant_metrics)
+    public function setAllPartcipantMetrics(array $participant_metrics): void
     {
         $this->participant_metrics = $participant_metrics;
     }
@@ -274,7 +277,7 @@ class ParticipantInput
      * @param string $type The type of the searched ParticipantMetric
      * @return ParticipantMetric[] A array containing all metrics with this type
      */
-    public function getParticipantMetricsWithType($type)
+    public function getParticipantMetricsWithType($type): array
     {
         $found_metrics = array();
 
@@ -292,7 +295,7 @@ class ParticipantInput
      *
      * @param ParticipantMetric $participant_metric The ParticipantMetric to be set
      */
-    public function setSingleParticipantMetric($participant_metric)
+    public function setSingleParticipantMetric($participant_metric): void
     {
         if (is_a($participant_metric, "ParticipantMetric")) {
             // Remove existing SolutionMetric with the same type

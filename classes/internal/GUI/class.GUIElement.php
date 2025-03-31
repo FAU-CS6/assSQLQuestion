@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Represents an abstract GUIArea implemented by the different GUIElements of assSQLQuestionGUI.
  *
