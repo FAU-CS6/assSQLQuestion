@@ -13,12 +13,12 @@ declare(strict_types=1);
 class OutputArea extends GUIArea
 {
     /**
-    * Constructor
-    *
-    * @param ilassSQLQuestionPlugin $plugin The plugin object
-    * @param assSQLQuestion $object The question object
-    * @access public
-    */
+     * Constructor
+     *
+     * @param ilassSQLQuestionPlugin $plugin The plugin object
+     * @param assSQLQuestion $object The question object
+     * @access public
+     */
     public function __construct($plugin, $object)
     {
         // Use the GUIArea constructor
@@ -62,8 +62,10 @@ class OutputArea extends GUIArea
      */
     public function checkInput(): bool
     {
-        if ((isset($_POST["error_bool"]) && $_POST["error_bool"] == "true") ||
-        (isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "false")) {
+        if (
+            (isset($_POST["error_bool"]) && $_POST["error_bool"] == "true") ||
+            (isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "false")
+        ) {
             // $this->setAlert($this->plugin->txt('ai_oa_eo_error'));
             return false;
         }

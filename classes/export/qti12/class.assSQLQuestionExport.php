@@ -67,11 +67,11 @@ class assSQLQuestionExport extends assQuestionExport
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "INTEGRITY_CHECK");
-        $a_xml_writer->xmlElement("fieldentry", null, (string)(int) $this->object->getIntegrityCheck());  // all booleans are serialized as 0/1
+        $a_xml_writer->xmlElement("fieldentry", null, (string) (int) $this->object->getIntegrityCheck());  // all booleans are serialized as 0/1
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "ERROR_BOOL");
-        $a_xml_writer->xmlElement("fieldentry", null, (string)(int) $this->object->getErrorBool());
+        $a_xml_writer->xmlElement("fieldentry", null, (string) (int) $this->object->getErrorBool());
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "ERROR");
@@ -79,7 +79,7 @@ class assSQLQuestionExport extends assQuestionExport
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "EXECUTED_BOOL");
-        $a_xml_writer->xmlElement("fieldentry", null, (string)(int) $this->object->getExecutedBool());
+        $a_xml_writer->xmlElement("fieldentry", null, (string) (int) $this->object->getExecutedBool());
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "OUTPUT_RELATION");

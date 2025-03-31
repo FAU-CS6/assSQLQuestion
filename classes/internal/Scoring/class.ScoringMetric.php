@@ -113,22 +113,36 @@ abstract class ScoringMetric
         // Set default values
         $value = $solution_metric->getValue();
 
-        if (isset($_POST["value_".static::$type])) {
-            $value = (string) $_POST["value_".static::$type];
+        if (isset($_POST["value_" . static::$type])) {
+            $value = (string) $_POST["value_" . static::$type];
         }
 
         $points = $solution_metric->getPoints();
 
-        if (isset($_POST["points_".static::$type])) {
-            $points = (integer) $_POST["points_".static::$type];
+        if (isset($_POST["points_" . static::$type])) {
+            $points = (integer) $_POST["points_" . static::$type];
         }
 
         $tpl->setVariable("VALUE", $value);
 
-        $default_points = array("" /* 0 */, "" /* 1 */, "" /* 2 */, "" /* 3 */, "" /* 4 */,
-                                                        "" /* 5 */, "" /* 6 */, "" /* 7 */, "" /* 8 */, "" /* 9 */,
-                                                      "" /* 10 */, "" /* 11 */, "" /* 12 */, "" /* 13 */, "" /* 14 */,
-                                                        "" /* 15 */);
+        $default_points = array(
+            "" /* 0 */ ,
+            "" /* 1 */ ,
+            "" /* 2 */ ,
+            "" /* 3 */ ,
+            "" /* 4 */ ,
+            "" /* 5 */ ,
+            "" /* 6 */ ,
+            "" /* 7 */ ,
+            "" /* 8 */ ,
+            "" /* 9 */ ,
+            "" /* 10 */ ,
+            "" /* 11 */ ,
+            "" /* 12 */ ,
+            "" /* 13 */ ,
+            "" /* 14 */ ,
+            "" /* 15 */
+        );
         $default_points[$points] = "selected='selected'";
 
         $tpl->setVariable("DEFAULT_POINTS_0", $default_points[0]);
@@ -149,8 +163,10 @@ abstract class ScoringMetric
         $tpl->setVariable("DEFAULT_POINTS_15", $default_points[15]);
 
         // Set the executed placeholder
-        if ((isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "true") ||
-       !isset($_POST["executed_bool"]) && $object->getExecutedBool()) {
+        if (
+            (isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "true") ||
+            !isset($_POST["executed_bool"]) && $object->getExecutedBool()
+        ) {
             $tpl->setVariable("EXECUTED", "true");
         } else {
             $tpl->setVariable("EXECUTED", "false");
@@ -183,8 +199,8 @@ abstract class ScoringMetric
         $value = $participant_metric->getValue();
 
         // If there exsists a POST value use that instead
-        if (isset($_POST["value_".static::$type])) {
-            $value = (string) $_POST["value_".static::$type];
+        if (isset($_POST["value_" . static::$type])) {
+            $value = (string) $_POST["value_" . static::$type];
         }
 
         $tpl = $plugin->getTemplate('ScoringArea/tpl.il_as_qpl_qpisql_sca_sm_hidden.html');
@@ -217,9 +233,9 @@ abstract class ScoringMetric
         $tpl->setVariable("BEAUTIFIER", static::$beautifier);
 
         if (!is_null($participant_input)) {
-          $tpl->setVariable("ID", $id = "id" . $object->getId() . "cor0");
+            $tpl->setVariable("ID", $id = "id" . $object->getId() . "cor0");
         } else {
-          $tpl->setVariable("ID", $id = "id" . $object->getId() . "cor1");
+            $tpl->setVariable("ID", $id = "id" . $object->getId() . "cor1");
         }
 
         // Set the headers
@@ -264,10 +280,12 @@ abstract class ScoringMetric
     public static function writePostData($plugin, $object): void
     {
         $object->setSingleSolutionMetric(
-        new SolutionMetric(static::$type, // type
-                          (integer) $_POST["points_".static::$type], // points
-                          (string) $_POST["value_".static::$type]) // value
-    );
+            new SolutionMetric(
+                static::$type, // type
+                (integer) $_POST["points_" . static::$type], // points
+                (string) $_POST["value_" . static::$type]
+            ) // value
+        );
     }
 
     /**
@@ -279,9 +297,11 @@ abstract class ScoringMetric
     public static function writeParticipantInput($participant_input): void
     {
         $participant_input->setSingleParticipantMetric(
-        new ParticipantMetric(static::$type, // type
-                             (string) $_POST["value_".static::$type]) // value
-    );
+            new ParticipantMetric(
+                static::$type, // type
+                (string) $_POST["value_" . static::$type]
+            ) // value
+        );
     }
 
     /**

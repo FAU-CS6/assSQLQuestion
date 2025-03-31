@@ -31,8 +31,10 @@ class Output extends GUIElement
         $output_relation = $this->object->getOutputRelation();
 
         // If there is $_POST data use that
-        if (isset($_POST["error_bool"]) && isset($_POST["error"]) &&
-       isset($_POST["executed_bool"]) && isset($_POST["output_relation"])) {
+        if (
+            isset($_POST["error_bool"]) && isset($_POST["error"]) &&
+            isset($_POST["executed_bool"]) && isset($_POST["output_relation"])
+        ) {
             $error_bool = $_POST["error_bool"];
             $error = $_POST["error"];
             $executed_bool = $_POST["executed_bool"];
@@ -69,8 +71,10 @@ class Output extends GUIElement
         $output_relation = $participant_input->getOutputRelation();
 
         // If there is $_POST data use that
-        if (isset($_POST["error_bool"]) && isset($_POST["error"]) &&
-       isset($_POST["executed_bool"]) && isset($_POST["output_relation"])) {
+        if (
+            isset($_POST["error_bool"]) && isset($_POST["error"]) &&
+            isset($_POST["executed_bool"]) && isset($_POST["output_relation"])
+        ) {
             $error_bool = $_POST["error_bool"];
             $error = $_POST["error"];
             $executed_bool = $_POST["executed_bool"];
