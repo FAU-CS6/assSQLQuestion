@@ -36,7 +36,7 @@ declare(strict_types=1);
         $now = getdate();
         $created = sprintf("%04d%02d%02d%02d%02d%02d", $now['year'], $now['mon'], $now['mday'], $now['hours'], $now['minutes'], $now['seconds']);
 
-        // Get the generic feedbach
+        // Get the generic feedback
         $feedbacksgeneric = array();
         if (isset($item->itemfeedback)) {
             foreach ($item->itemfeedback as $ifb) {
