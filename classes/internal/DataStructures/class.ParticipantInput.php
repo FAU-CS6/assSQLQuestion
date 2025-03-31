@@ -59,11 +59,13 @@ class ParticipantInput
     public function toJSON(): string
     {
         // To use json_encode we need an array containing the values of the object
-        $arr = array('sequence' => $this->sequence,
-                 'error_bool' => $this->error_bool,
-                 'error' => $this->error,
-                 'executed_bool' => $this->executed_bool,
-                 'output_relation' => $this->output_relation);
+        $arr = array(
+            'sequence' => $this->sequence,
+            'error_bool' => $this->error_bool,
+            'error' => $this->error,
+            'executed_bool' => $this->executed_bool,
+            'output_relation' => $this->output_relation
+        );
 
         // Additionally we of course need the ParticipantMetrics
         $participant_metrics_json = array();

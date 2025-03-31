@@ -13,12 +13,12 @@ declare(strict_types=1);
 class SequenceArea extends GUIArea
 {
     /**
-    * Constructor
-    *
-    * @param ilassSQLQuestionPlugin $plugin The plugin object
-    * @param assSQLQuestion $object The question object
-    * @access public
-    */
+     * Constructor
+     *
+     * @param ilassSQLQuestionPlugin $plugin The plugin object
+     * @param assSQLQuestion $object The question object
+     * @access public
+     */
     public function __construct($plugin, $object)
     {
         // Use the GUIArea constructor

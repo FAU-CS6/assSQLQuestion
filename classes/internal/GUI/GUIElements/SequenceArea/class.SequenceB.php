@@ -71,8 +71,8 @@ class SequenceB extends GUIElement
     public function getSolutionOutput($participant_input)
     {
         // Get any default data
-    $id = "id" . $this->object->getId() . "cor1"; // Helper to get unique ids for every div - cor1 is pattern solution
-    $sequence_b = $this->object->getSequence('sequence_b');
+        $id = "id" . $this->object->getId() . "cor1"; // Helper to get unique ids for every div - cor1 is pattern solution
+        $sequence_b = $this->object->getSequence('sequence_b');
 
         if (!is_null($participant_input)) {
             $id = "id" . $this->object->getId() . "cor0"; // Helper to get unique ids for every div - cor0 is participant solution

@@ -13,12 +13,12 @@ declare(strict_types=1);
 class ScoringArea extends GUIArea
 {
     /**
-    * Constructor
-    *
-    * @param ilassSQLQuestionPlugin $plugin The plugin object
-    * @param assSQLQuestion $object The question object
-    * @access public
-    */
+     * Constructor
+     *
+     * @param ilassSQLQuestionPlugin $plugin The plugin object
+     * @param assSQLQuestion $object The question object
+     * @access public
+     */
     public function __construct($plugin, $object)
     {
         // Use the GUIArea constructor
@@ -60,19 +60,16 @@ class ScoringArea extends GUIArea
     {
         $points = 0;
 
-        if(isset($_POST["points_result_lines"]))
-        {
-          $points += $_POST["points_result_lines"];
+        if (isset($_POST["points_result_lines"])) {
+            $points += $_POST["points_result_lines"];
         }
 
-        if(isset($_POST["points_functional_dependencies"]))
-        {
-          $points += $_POST["points_functional_dependencies"];
+        if (isset($_POST["points_functional_dependencies"])) {
+            $points += $_POST["points_functional_dependencies"];
         }
 
-        if(isset($_POST["points_column_names"]))
-        {
-          $points += $_POST["points_column_names"];
+        if (isset($_POST["points_column_names"])) {
+            $points += $_POST["points_column_names"];
         }
 
         if ($points <= 0) {

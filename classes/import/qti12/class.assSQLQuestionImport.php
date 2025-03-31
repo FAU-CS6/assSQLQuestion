@@ -6,7 +6,7 @@ declare(strict_types=1);
  * SQL question import
  */
 
- class assSQLQuestionImport extends assQuestionImport
+class assSQLQuestionImport extends assQuestionImport
 {
     /**
      * Creates a question from a QTI file
@@ -25,7 +25,7 @@ declare(strict_types=1);
     public function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, $import_mapping): array
     {
         global $DIC;
-        
+
         $ilUser = $DIC->user();
         $ilLog = $DIC->logger()->root();
 
@@ -82,9 +82,9 @@ declare(strict_types=1);
         $this->object->setComment($item->getComment());
         $this->object->setAuthor($item->getAuthor());
         $this->object->setOwner((int) $ilUser->getId());
-        
+
         // Temporary workaround to support ILIAS 8 and 9+
-        if(method_exists($this->object, "QTIMaterialToString")) {
+        if (method_exists($this->object, "QTIMaterialToString")) {
             // ILIAS 8
             $this->object->setQuestion($this->object->QTIMaterialToString($item->getQuestiontext()));
         } else {
@@ -116,7 +116,7 @@ declare(strict_types=1);
         // Convert the generic feedback
         foreach ($feedbacksgeneric as $correctness => $material) {
             // Temporary workaround to support ILIAS 8 and 9+
-            if(method_exists($this->object, "QTIMaterialToString")) {
+            if (method_exists($this->object, "QTIMaterialToString")) {
                 // ILIAS 8
                 $m = $this->object->QTIMaterialToString($material);
             } else {

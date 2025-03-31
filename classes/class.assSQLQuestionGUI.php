@@ -309,8 +309,7 @@ class assSQLQuestionGUI extends assQuestionGUI
         $output = '';
         return self::prepareTextareaOutput($output, true);
     }
-    
-    
+
     /**
      * Custom member functions only needed in an assSQLQuestionGUI
      */

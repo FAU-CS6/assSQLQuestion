@@ -56,44 +56,44 @@ if ($res->numRows() == 0) {
  */
 if (!$ilDB->tableExists('il_qpl_qst_qpisql_qd')) {
     $fields = array(
-    // The id of the question (primary key and foreign key)
-    'question_fi' => array(
-      'type' => 'integer',
-      'length' => 4
-    ),
-    // The sql sequences
-    'sequence_a' => array(
-      'type' => 'text'
-    ),
-    'sequence_b' => array(
-      'type' => 'text'
-    ),
-    'sequence_c' => array(
-      'type' => 'text'
-    ),
-    // The booleans - Data type is integer(1) due to ilDB not supporting
-    // boolean and recommending this instead
-    'integrity_check' => array(
-      'type' => 'integer',
-      'length' => 1
-    ),
-    'error_bool' => array(
-      'type' => 'integer',
-      'length' => 1
-    ),
-    // The error coded as json array
-    'error' => array(
-      'type' => 'clob'
-    ),
-    'executed_bool' => array(
-      'type' => 'integer',
-      'length' => 1
-    ),
-    // The output relation coded as json array
-    'output_relation' => array(
-      'type' => 'clob'
-    )
-  );
+        // The id of the question (primary key and foreign key)
+        'question_fi' => array(
+            'type' => 'integer',
+            'length' => 4
+        ),
+        // The sql sequences
+        'sequence_a' => array(
+            'type' => 'text'
+        ),
+        'sequence_b' => array(
+            'type' => 'text'
+        ),
+        'sequence_c' => array(
+            'type' => 'text'
+        ),
+        // The booleans - Data type is integer(1) due to ilDB not supporting
+        // boolean and recommending this instead
+        'integrity_check' => array(
+            'type' => 'integer',
+            'length' => 1
+        ),
+        'error_bool' => array(
+            'type' => 'integer',
+            'length' => 1
+        ),
+        // The error coded as json array
+        'error' => array(
+            'type' => 'clob'
+        ),
+        'executed_bool' => array(
+            'type' => 'integer',
+            'length' => 1
+        ),
+        // The output relation coded as json array
+        'output_relation' => array(
+            'type' => 'clob'
+        )
+    );
 
     $ilDB->createTable("il_qpl_qst_qpisql_qd", $fields);
     $ilDB->addPrimaryKey("il_qpl_qst_qpisql_qd", array("question_fi"));
@@ -109,23 +109,23 @@ if (!$ilDB->tableExists('il_qpl_qst_qpisql_qd')) {
  */
 if (!$ilDB->tableExists('il_qpl_qst_qpisql_qsm')) {
     $fields = array(
-    // The id of the question (first part of primary key and foreign key)
-    'question_fi' => array(
-      'type' => 'integer',
-      'length' => 4
-    ),
-    // The type of the scoring metric (second part of the primary key - has to be unique for a single question)
-    'type' => array(
-      'type' => 'text',
-      'length' => 128
-    ),
-    'points' => array(
-      'type' => 'integer'
-    ),
-    'value' => array(
-      'type' => 'clob'
-    ),
-  );
+        // The id of the question (first part of primary key and foreign key)
+        'question_fi' => array(
+            'type' => 'integer',
+            'length' => 4
+        ),
+        // The type of the scoring metric (second part of the primary key - has to be unique for a single question)
+        'type' => array(
+            'type' => 'text',
+            'length' => 128
+        ),
+        'points' => array(
+            'type' => 'integer'
+        ),
+        'value' => array(
+            'type' => 'clob'
+        ),
+    );
 
     $ilDB->createTable("il_qpl_qst_qpisql_qsm", $fields);
     $ilDB->addPrimaryKey("il_qpl_qst_qpisql_qsm", array("question_fi","type"));
@@ -145,10 +145,10 @@ if (!$ilDB->tableExists('il_qpl_qst_qpisql_qsm')) {
  * Table "il_qpl_qst_qpisql_qd"
  */
 if ($ilDB->tableExists('il_qpl_qst_qpisql_qd')) {
-   $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_a', array('type' => 'clob'));
-   $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_b', array('type' => 'clob'));
-   $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_c', array('type' => 'clob'));
-}
+    $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_a', array('type' => 'clob'));
+    $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_b', array('type' => 'clob'));
+    $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_c', array('type' => 'clob'));
+    }
 ?>
 <#4>
 <?php
@@ -164,9 +164,9 @@ if ($ilDB->tableExists('il_qpl_qst_qpisql_qd')) {
  * Table "il_qpl_qst_qpisql_qd"
  */
 if ($ilDB->tableExists('il_qpl_qst_qpisql_qd')) {
-   $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_a', array('type' => 'clob'));
-   $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_b', array('type' => 'clob'));
-   $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_c', array('type' => 'clob'));
+    $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_a', array('type' => 'clob'));
+    $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_b', array('type' => 'clob'));
+    $ilDB->modifyTableColumn('il_qpl_qst_qpisql_qd', 'sequence_c', array('type' => 'clob'));
 }
 ?>
 <#5>
