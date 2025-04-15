@@ -36,7 +36,7 @@
    onExecution()
    {
      // Disable the input
-     this.editor.setOption("readOnly", true);
+     this.editor.setReadOnly(true);
    }
 
    /**
@@ -47,7 +47,7 @@
    onError(error)
    {
      // Enable the input
-     this.editor.setOption("readOnly", false);
+     this.editor.setReadOnly(false);
    }
 
    /**
@@ -58,7 +58,7 @@
    onResult(result)
    {
      // Enable the input
-     this.editor.setOption("readOnly", false);
+     this.editor.setReadOnly(false);
    }
 
  }

@@ -1,8 +1,16 @@
 /**
  * Custom CSS for used plugins
  */
-.CodeMirror {
+.cm-editor {
   border: 1px solid rgb(204,204,204);
+}
+
+.cm-editor .cm-gutter {
+  min-height: 200px;
+}
+
+.cm-editor .cm-content {
+  min-height: 200px;
 }
 
 /**

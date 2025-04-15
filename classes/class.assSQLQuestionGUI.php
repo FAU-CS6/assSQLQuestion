@@ -327,9 +327,6 @@ class assSQLQuestionGUI extends assQuestionGUI
         // Custom CSS
         $this->tpl->addCss(self::QPISQL_URL_PATH . '/css/custom.css');
 
-        // CodeMirror
-        $this->tpl->addCss(self::QPISQL_URL_PATH . '/lib/codemirror/lib/codemirror.css');
-
         // Add JS files
 
         // Add custom JS code
