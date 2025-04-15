@@ -168,6 +168,6 @@ class ColumnNames extends ScoringMetric
         }
 
         // Compute 1 - Jaccard distance
-        return (1 - ((sizeof($union) - sizeof($intersect))/sizeof($union))) * $solution_metric->getPoints();
+        return (int)(1 - ((sizeof($union) - sizeof($intersect))/sizeof($union))) * $solution_metric->getPoints();
     }
 }
