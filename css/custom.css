@@ -3,6 +3,7 @@
  */
 .cm-editor {
   border: 1px solid rgb(204,204,204);
+  max-height: 800px;
 }
 
 .cm-editor .cm-gutter {
