@@ -46,8 +46,8 @@ ai_sea_eo_ic#:#Integritätsprüfung:
 ai_sea_eo_error#:#Um eine Frage anzulegen, muss Sequenz B einen Inhalt haben.
 
 // The expandable help text for SQL.JS (SQLite) syntax
-ai_sea_eo_syntax_help_title#:#Infos zur Syntax
-ai_sea_eo_syntax_help_text#:#<p>-- Die Unterstützung von Fremdschluesseln muss in SQLite separat aktiviert werden<br />PRAGMA foreign_keys = ON;</p>
+ai_sea_eo_syntax_help_title#:#Infos zur Syntax (SQLite)
+ai_sea_eo_syntax_help_text#:#<p>-- Die Unterstützung von Fremdschluesseln muss in SQLite separat aktiviert werden<br />PRAGMA foreign_keys = ON;<br /><br />-- SQLite unterstützt <a href="https://sqlite.org/omitted.html">nicht alle SQL-Features</a><br />-- Speziell wird nicht unterstützt: ALTER TABLE table ADD CONSTRAINT<br /><br />-- Vollständige Syntax-Dokumentation: <a href="https://sqlite.org/lang.html">https://sqlite.org/lang.html</a></p>
 
 ////////////////////////////////////////////////////////////////////////////////
 // Strings used in the output mode of the sequence area ("ai_sea_qo_" prefix) //
