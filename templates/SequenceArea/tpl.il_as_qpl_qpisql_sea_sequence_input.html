@@ -8,16 +8,12 @@
   <textarea id="{ID}" name="{NAME}" data-contains-code class="qpisql-code-input-box noRTEditor" cols="80" rows="10">{CONTENT}</textarea>
 
   <script>
-    // Create a coding box out of the textarea
-    var editor_{ID} = CodeMirror.fromTextArea(document.getElementById('{ID}'), {
-      lineNumbers: true,
-      mode: 'text/x-sql'
-    });
-
-    // Insert an onChange handler (all results have reset)
-    editor_{ID}.on('change',function(){
-      window.EXECUTE_HANDLER.onChange();
-    })
+    // Create a coding box out of the textarea with a corresponding onChange handler
+    var editor_{ID} = codemirror_sqlquestion.editorFromTextArea(
+      document.getElementById('{ID}'),
+      window.EXECUTE_HANDLER.onChange(),
+      false
+    );
 
     // Create an ExecutionInput out of this
     window.EXECUTE_HANDLER.registerInput(new SequenceTextareaInput('{NAME}', editor_{ID}));
@@ -25,15 +21,7 @@
     // Create an ExecutionOutput out of this
     window.EXECUTE_HANDLER.registerOutput(new SequenceTextareaOutput(editor_{ID}));
 
-    // Fix conflicts with RTEditor
-    if (editor_{ID}.display.input.textarea)  {
-        editor_{ID}.display.input.textarea.className = "noRTEditor"
-    }
     document.getElementById('{ID}').setAttribute('data-has-editor', true)
-
-    editor_{ID}.on('change',function(cMirror){
-        document.getElementById('{ID}').value = cMirror.getValue();
-    })
   </script>
 
 </div>
