@@ -62,8 +62,14 @@ class Minifier
     }
 }
 
-// Set the correct MIME TYPE
-header('Content-Type: application/javascript');
+// This file is meant to be accessed directly by the browser (as opposed to the other files, which are
+// autoloaded into ILIAS) in a <script src="..."> manner.
+// This is the reason why we need the "require_once" up in this file.
+// In case the script is run during `composer dump-autoload`, we do not want to echo anything!
+if (basename(__FILE__) === basename($_SERVER['PHP_SELF'])) {
+    // Set the correct MIME TYPE
+    header('Content-Type: application/javascript');
 
-// Display the minfied JS code
-echo Minifier::getMinifiedJSPath();
+    // Display the minfied JS code
+    echo Minifier::getMinifiedJSPath();
+}
