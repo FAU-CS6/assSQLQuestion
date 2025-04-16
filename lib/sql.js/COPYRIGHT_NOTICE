@@ -3,7 +3,7 @@ Copyright notice
 ================
 
 The code in this subdirectory is licensed under MIT license and
-was obtained from https://github.com/kripken/sql.js at 2018-11-22
+was first obtained from https://github.com/kripken/sql.js at 2018-11-22
 (commit 9e69650ae099f9d5130ca5f7bea4fd19a9b41d5a).
 
 The original license text can be found in the LICENSE file included in this subfolder.

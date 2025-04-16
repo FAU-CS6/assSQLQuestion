@@ -1,15 +1,20 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * SQL question import
  */
+
 class assSQLQuestionImport extends assQuestionImport
 {
     /**
      * Creates a question from a QTI file
      *
-     * Receives parameters from a QTI parser and creates a valid ILIAS question object
+     * Receives parameters from a QTI parser and creates a valid ILIAS question object.
+     * As in `ilQTIItem` all variables are of type string, we need to typecast some of them.
      *
-     * @param object $item The QTI item object
+     * @param ilQtiItem $item The QTI item object
      * @param integer $questionpool_id The id of the parent questionpool
      * @param integer $tst_id The id of the parent test if the question is part of a test
      * @param object $tst_object A reference to the parent test object
@@ -17,18 +22,21 @@ class assSQLQuestionImport extends assQuestionImport
      * @param array $import_mapping An array containing references to included ILIAS objects
      * @access public
      */
-    public function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping)
+    public function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, $import_mapping): array
     {
-        global $ilUser, $ilLog;
+        global $DIC;
+
+        $ilUser = $DIC->user();
+        $ilLog = $DIC->logger()->root();
 
         // Empty session variable for imported xhtml mobs
-        unset($_SESSION["import_mob_xhtml"]);
+        ilSession::clear('import_mob_xhtml');
+
         $presentation = $item->getPresentation();
-        $duration = $item->getDuration();
         $now = getdate();
         $created = sprintf("%04d%02d%02d%02d%02d%02d", $now['year'], $now['mon'], $now['mday'], $now['hours'], $now['minutes'], $now['seconds']);
 
-        // Get the generic feedbach
+        // Get the generic feedback
         $feedbacksgeneric = array();
         if (isset($item->itemfeedback)) {
             foreach ($item->itemfeedback as $ifb) {
@@ -70,23 +78,30 @@ class assSQLQuestionImport extends assQuestionImport
         // Set generic question properties
         $this->addGeneralMetadata($item);
         $this->object->setTitle($item->getTitle());
-        $this->object->setNrOfTries($item->getMaxattempts());
+        $this->object->setNrOfTries((int) $item->getMaxattempts());
         $this->object->setComment($item->getComment());
         $this->object->setAuthor($item->getAuthor());
-        $this->object->setOwner($ilUser->getId());
-        $this->object->setQuestion($this->object->QTIMaterialToString($item->getQuestiontext()));
+        $this->object->setOwner((int) $ilUser->getId());
+
+        // Temporary workaround to support ILIAS 8 and 9+
+        if (method_exists($this->object, "QTIMaterialToString")) {
+            // ILIAS 8
+            $this->object->setQuestion($this->object->QTIMaterialToString($item->getQuestiontext()));
+        } else {
+            // ILIAS 9
+            $this->object->setQuestion($this->QTIMaterialToString($item->getQuestiontext()));
+        }
         $this->object->setObjId($questionpool_id);
-        $this->object->setEstimatedWorkingTime($duration["h"], $duration["m"], $duration["s"]);
-        $this->object->setPoints($item->getMetadataEntry("POINTS"));
+        $this->object->setPoints((float) $item->getMetadataEntry("POINTS"));
 
         // Set plugin specific information
         $this->object->setSequence("sequence_a", $item->getMetadataEntry("SEQUENCE_A"));
         $this->object->setSequence("sequence_b", $item->getMetadataEntry("SEQUENCE_B"));
         $this->object->setSequence("sequence_c", $item->getMetadataEntry("SEQUENCE_C"));
-        $this->object->setIntegrityCheck($item->getMetadataEntry("INTEGRITY_CHECK"));
-        $this->object->setErrorBool($item->getMetadataEntry("ERROR_BOOL"));
+        $this->object->setIntegrityCheck((bool) $item->getMetadataEntry("INTEGRITY_CHECK"));
+        $this->object->setErrorBool((bool) $item->getMetadataEntry("ERROR_BOOL"));
         $this->object->setError($item->getMetadataEntry("ERROR"));
-        $this->object->setExecutedBool($item->getMetadataEntry("EXECUTED_BOOL"));
+        $this->object->setExecutedBool((bool) $item->getMetadataEntry("EXECUTED_BOOL"));
         $this->object->setOutputRelation($item->getMetadataEntry("OUTPUT_RELATION"));
         $this->object->setAllSolutionMetricsFromJSON($item->getMetadataEntry("SOLUTION_METRICS"));
 
@@ -100,24 +115,29 @@ class assSQLQuestionImport extends assQuestionImport
 
         // Convert the generic feedback
         foreach ($feedbacksgeneric as $correctness => $material) {
+            // Temporary workaround to support ILIAS 8 and 9+
+            if (method_exists($this->object, "QTIMaterialToString")) {
+                // ILIAS 8
+                $m = $this->object->QTIMaterialToString($material);
+            } else {
+                // ILIAS 9
+                $m = $this->QTIMaterialToString($material);
+            }
             $m = $this->object->QTIMaterialToString($material);
             $feedbacksgeneric[$correctness] = $m;
         }
 
         // Handle the import of media objects in XHTML code
         $questiontext = $this->object->getQuestion();
-        if (is_array($_SESSION["import_mob_xhtml"])) {
-            include_once "./Services/MediaObjects/classes/class.ilObjMediaObject.php";
-            include_once "./Services/RTE/classes/class.ilRTE.php";
-            foreach ($_SESSION["import_mob_xhtml"] as $mob) {
+        if (is_array(ilSession::get("import_mob_xhtml"))) {
+            foreach (ilSession::get("import_mob_xhtml") as $mob) {
                 if ($tst_id > 0) {
                     $importfile = $this->getTstImportArchivDirectory() . '/' . $mob["uri"];
                 } else {
                     $importfile = $this->getQplImportArchivDirectory() . '/' . $mob["uri"];
                 }
-                global $ilLog;
                 $ilLog->write($importfile);
-                $media_object =& ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, false);
+                $media_object = ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, FALSE);
                 ilObjMediaObject::_saveUsage($media_object->getId(), "qpl:html", $this->object->getId());
 
                 // Images in question text
@@ -150,5 +170,7 @@ class assSQLQuestionImport extends assQuestionImport
         } else {
             $import_mapping[$item->getIdent()] = array("pool" => $this->object->getId(), "test" => 0);
         }
+
+        return $import_mapping;
     }
 }

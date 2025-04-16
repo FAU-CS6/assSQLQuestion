@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__.'/class.SolutionMetric.php';
-require_once __DIR__.'/class.ParticipantMetric.php';
+
+declare(strict_types=1);
 
 /**
  * An abstract scoring metric - implementing functions to save and load
@@ -17,17 +17,17 @@ abstract class ScoringMetric
     /**
      * @var string The type identifier of the scoring metric (e.g. "functional_dependency")
      */
-    protected static $type = "abstract";
+    protected static string $type = "abstract";
 
     /**
      * @var string The Javascript funtion to get the value of the sm out of a result
      */
-    protected static $getter = "function(result) { return 'abstract'; }";
+    protected static string $getter = "function(result) { return 'abstract'; }";
 
     /**
      * @var string The Javascript to beautifiy (make it more readable) the getter string
      */
-    protected static $beautifier = "function(stringToBeautify) { return stringToBeautify; }";
+    protected static string $beautifier = "function(stringToBeautify) { return stringToBeautify; }";
 
     /**
      * Get the info text of for the edit page
@@ -35,7 +35,7 @@ abstract class ScoringMetric
      * @return string The info text shown at the edit page
      * @access protected
      */
-    protected static function getEditPageInfo($plugin)
+    protected static function getEditPageInfo($plugin): string
     {
         throw new Exception("This is an abstract method that should never be used - Has to be implemented by a subclass");
     }
@@ -46,7 +46,7 @@ abstract class ScoringMetric
      * @return string The info text shown at the solution page
      * @access protected
      */
-    protected static function getSolutionPageInfo($plugin)
+    protected static function getSolutionPageInfo($plugin): string
     {
         throw new Exception("This is an abstract method that should never be used - Has to be implemented by a subclass");
     }
@@ -59,7 +59,7 @@ abstract class ScoringMetric
      * @return SolutionMetric The solution metric suiting the type of the ScoringMetric
      * @access protected
      */
-    protected static function getSolutionMetric($solution_metrics)
+    protected static function getSolutionMetric($solution_metrics): SolutionMetric
     {
         foreach ($solution_metrics as $solution_metric) {
             if ($solution_metric->getType() == static::$type) {
@@ -78,7 +78,7 @@ abstract class ScoringMetric
      * @return ParticipantMetric The solution metric suiting the type of the ParticipantMetric
      * @access protected
      */
-    protected static function getParticipantMetric($participant_metrics)
+    protected static function getParticipantMetric($participant_metrics): ParticipantMetric
     {
         foreach ($participant_metrics as $participant_metric) {
             if ($participant_metric->getType() == static::$type) {
@@ -97,7 +97,7 @@ abstract class ScoringMetric
      * @return string The html code of the GUI element
      * @access public
      */
-    public static function getEditOutput($plugin, $object)
+    public static function getEditOutput($plugin, $object): string
     {
         // Get the SolutionMetric
         $solution_metric = static::getSolutionMetric($object->getAllSolutionMetrics());
@@ -113,22 +113,36 @@ abstract class ScoringMetric
         // Set default values
         $value = $solution_metric->getValue();
 
-        if (isset($_POST["value_".static::$type])) {
-            $value = (string) $_POST["value_".static::$type];
+        if (isset($_POST["value_" . static::$type])) {
+            $value = (string) $_POST["value_" . static::$type];
         }
 
         $points = $solution_metric->getPoints();
 
-        if (isset($_POST["points_".static::$type])) {
-            $points = (integer) $_POST["points_".static::$type];
+        if (isset($_POST["points_" . static::$type])) {
+            $points = (integer) $_POST["points_" . static::$type];
         }
 
         $tpl->setVariable("VALUE", $value);
 
-        $default_points = array("" /* 0 */, "" /* 1 */, "" /* 2 */, "" /* 3 */, "" /* 4 */,
-                                                        "" /* 5 */, "" /* 6 */, "" /* 7 */, "" /* 8 */, "" /* 9 */,
-                                                      "" /* 10 */, "" /* 11 */, "" /* 12 */, "" /* 13 */, "" /* 14 */,
-                                                        "" /* 15 */);
+        $default_points = array(
+            "" /* 0 */ ,
+            "" /* 1 */ ,
+            "" /* 2 */ ,
+            "" /* 3 */ ,
+            "" /* 4 */ ,
+            "" /* 5 */ ,
+            "" /* 6 */ ,
+            "" /* 7 */ ,
+            "" /* 8 */ ,
+            "" /* 9 */ ,
+            "" /* 10 */ ,
+            "" /* 11 */ ,
+            "" /* 12 */ ,
+            "" /* 13 */ ,
+            "" /* 14 */ ,
+            "" /* 15 */
+        );
         $default_points[$points] = "selected='selected'";
 
         $tpl->setVariable("DEFAULT_POINTS_0", $default_points[0]);
@@ -149,8 +163,10 @@ abstract class ScoringMetric
         $tpl->setVariable("DEFAULT_POINTS_15", $default_points[15]);
 
         // Set the executed placeholder
-        if ((isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "true") ||
-       !isset($_POST["executed_bool"]) && $object->getExecutedBool()) {
+        if (
+            (isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "true") ||
+            !isset($_POST["executed_bool"]) && $object->getExecutedBool()
+        ) {
             $tpl->setVariable("EXECUTED", "true");
         } else {
             $tpl->setVariable("EXECUTED", "false");
@@ -174,7 +190,7 @@ abstract class ScoringMetric
      * @return string The html code of the GUI element
      * @access public
      */
-    public static function getQuestionOutput($plugin, $object, $participant_input)
+    public static function getQuestionOutput($plugin, $object, $participant_input): string
     {
         // Get the suiting participant_metric
         $participant_metric = static::getParticipantMetric($participant_input->getAllParticipantMetrics());
@@ -183,8 +199,8 @@ abstract class ScoringMetric
         $value = $participant_metric->getValue();
 
         // If there exsists a POST value use that instead
-        if (isset($_POST["value_".static::$type])) {
-            $value = (string) $_POST["value_".static::$type];
+        if (isset($_POST["value_" . static::$type])) {
+            $value = (string) $_POST["value_" . static::$type];
         }
 
         $tpl = $plugin->getTemplate('ScoringArea/tpl.il_as_qpl_qpisql_sca_sm_hidden.html');
@@ -208,7 +224,7 @@ abstract class ScoringMetric
      * @return string The html code of the GUI element
      * @access public
      */
-    public static function getSolutionOutput($plugin, $object, $participant_input)
+    public static function getSolutionOutput($plugin, $object, $participant_input): string
     {
         $tpl = $plugin->getTemplate('ScoringArea/tpl.il_as_qpl_qpisql_sca_sm_output.html');
 
@@ -217,9 +233,9 @@ abstract class ScoringMetric
         $tpl->setVariable("BEAUTIFIER", static::$beautifier);
 
         if (!is_null($participant_input)) {
-          $tpl->setVariable("ID", $id = "id" . $object->getId() . "cor0");
+            $tpl->setVariable("ID", $id = "id" . $object->getId() . "cor0");
         } else {
-          $tpl->setVariable("ID", $id = "id" . $object->getId() . "cor1");
+            $tpl->setVariable("ID", $id = "id" . $object->getId() . "cor1");
         }
 
         // Set the headers
@@ -261,13 +277,15 @@ abstract class ScoringMetric
      * @param assSQLQuestion $object The question object
      * @access public
      */
-    public static function writePostData($plugin, $object)
+    public static function writePostData($plugin, $object): void
     {
         $object->setSingleSolutionMetric(
-        new SolutionMetric(static::$type, // type
-                          (integer) $_POST["points_".static::$type], // points
-                          (string) $_POST["value_".static::$type]) // value
-    );
+            new SolutionMetric(
+                static::$type, // type
+                (integer) $_POST["points_" . static::$type], // points
+                (string) $_POST["value_" . static::$type]
+            ) // value
+        );
     }
 
     /**
@@ -276,12 +294,14 @@ abstract class ScoringMetric
      * @param ParticipantInput $participant_input The ParticipantInput object the POST data is written to
      * @access public
      */
-    public static function writeParticipantInput($participant_input)
+    public static function writeParticipantInput($participant_input): void
     {
         $participant_input->setSingleParticipantMetric(
-        new ParticipantMetric(static::$type, // type
-                             (string) $_POST["value_".static::$type]) // value
-    );
+            new ParticipantMetric(
+                static::$type, // type
+                (string) $_POST["value_" . static::$type]
+            ) // value
+        );
     }
 
     /**
@@ -292,7 +312,7 @@ abstract class ScoringMetric
      * @return float The reached points
      * @access protected
      */
-    public static function calculateReachedPoints($solution_metrics, $participant_metrics)
+    public static function calculateReachedPoints($solution_metrics, $participant_metrics): int
     {
         throw new Exception("This is an abstract method that should never be used - Has to be implemented by a subclass");
     }

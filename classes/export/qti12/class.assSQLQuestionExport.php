@@ -1,27 +1,29 @@
 <?php
+
+declare(strict_types=1);
+
 /**
-* SQL question export
-*/
+ * SQL question export
+ */
 class assSQLQuestionExport extends assQuestionExport
 {
     /**
-    * Returns a QTI xml representation of the question
-    *
-    * @return string The QTI xml representation of the question
-    * @access public
-    */
-    public function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false)
+     * Returns a QTI xml representation of the question
+     *
+     * @return string The QTI xml representation of the question
+     * @access public
+     */
+    public function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false): string
     {
         global $ilias;
 
-        include_once("./Services/Xml/classes/class.ilXmlWriter.php");
         $a_xml_writer = new ilXmlWriter;
 
-        // Set XMl header
+        // Set XML header
         $a_xml_writer->xmlHeader();
         $a_xml_writer->xmlStartTag("questestinterop");
         $attrs = array(
-            "ident" => "il_".IL_INST_ID."_qst_".$this->object->getId(),
+            "ident" => "il_" . IL_INST_ID . "_qst_" . $this->object->getId(),
             "title" => $this->object->getTitle(),
             "maxattempts" => $this->object->getNrOfTries()
         );
@@ -29,11 +31,6 @@ class assSQLQuestionExport extends assQuestionExport
 
         // Add question description
         $a_xml_writer->xmlElement("qticomment", null, $this->object->getComment());
-
-        // Add estimated working time
-        $workingtime = $this->object->getEstimatedWorkingTime();
-        $duration = sprintf("P0Y0M0DT%dH%dM%dS", $workingtime["h"], $workingtime["m"], $workingtime["s"]);
-        $a_xml_writer->xmlElement("duration", null, $duration);
 
         // Add other Ilias specific metadata
         $a_xml_writer->xmlStartTag("itemmetadata");
@@ -70,11 +67,11 @@ class assSQLQuestionExport extends assQuestionExport
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "INTEGRITY_CHECK");
-        $a_xml_writer->xmlElement("fieldentry", null, $this->object->getIntegrityCheck());
+        $a_xml_writer->xmlElement("fieldentry", null, (string) (int) $this->object->getIntegrityCheck());  // all booleans are serialized as 0/1
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "ERROR_BOOL");
-        $a_xml_writer->xmlElement("fieldentry", null, $this->object->getErrorBool());
+        $a_xml_writer->xmlElement("fieldentry", null, (string) (int) $this->object->getErrorBool());
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "ERROR");
@@ -82,7 +79,7 @@ class assSQLQuestionExport extends assQuestionExport
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "EXECUTED_BOOL");
-        $a_xml_writer->xmlElement("fieldentry", null, $this->object->getExecutedBool());
+        $a_xml_writer->xmlElement("fieldentry", null, (string) (int) $this->object->getExecutedBool());
         $a_xml_writer->xmlEndTag("qtimetadatafield");
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "OUTPUT_RELATION");
@@ -109,7 +106,7 @@ class assSQLQuestionExport extends assQuestionExport
         $a_xml_writer->xmlStartTag("flow");
 
         // Add material with question text to presentation
-        $this->object->addQTIMaterial($a_xml_writer, $this->object->getQuestion());
+        $this->addQTIMaterial($a_xml_writer, $this->object->getQuestion());
         $a_xml_writer->xmlEndTag("flow");
         $a_xml_writer->xmlEndTag("presentation");
 
@@ -144,7 +141,7 @@ class assSQLQuestionExport extends assQuestionExport
 
             // QTI flow_mat
             $a_xml_writer->xmlStartTag("flow_mat");
-            $this->object->addQTIMaterial($a_xml_writer, $feedback_allcorrect);
+            $this->addQTIMaterial($a_xml_writer, $feedback_allcorrect);
             $a_xml_writer->xmlEndTag("flow_mat");
             $a_xml_writer->xmlEndTag("itemfeedback");
         }
@@ -157,7 +154,7 @@ class assSQLQuestionExport extends assQuestionExport
 
             // QTI flow_mat
             $a_xml_writer->xmlStartTag("flow_mat");
-            $this->object->addQTIMaterial($a_xml_writer, $feedback_onenotcorrect);
+            $this->addQTIMaterial($a_xml_writer, $feedback_onenotcorrect);
             $a_xml_writer->xmlEndTag("flow_mat");
             $a_xml_writer->xmlEndTag("itemfeedback");
         }

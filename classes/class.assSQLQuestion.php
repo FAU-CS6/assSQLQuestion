@@ -1,15 +1,6 @@
 <?php
-require_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
-require_once "internal/Scoring/class.ScoringMetric.php";
-require_once "internal/Scoring/class.SolutionMetric.php";
-require_once "internal/DataStructures/class.ParticipantInput.php";
-require_once "internal/GUI/GUIAreas/class.QuestionArea.php";
-require_once "internal/GUI/GUIAreas/class.SequenceArea.php";
-require_once "internal/GUI/GUIAreas/class.OutputArea.php";
-require_once "internal/GUI/GUIAreas/class.ScoringArea.php";
-require_once "internal/Scoring/ScoringMetrics/ResultLines/class.ResultLines.php";
-require_once "internal/Scoring/ScoringMetrics/ColumnNames/class.ColumnNames.php";
-require_once "internal/Scoring/ScoringMetrics/FunctionalDependencies/class.FunctionalDependencies.php";
+
+declare(strict_types=1);
 
 /**
  * Main defintion of the SQLQuestion plugin
@@ -24,9 +15,9 @@ class assSQLQuestion extends assQuestion
      */
 
     /**
-     * @var ilassSQLQuestionPlugin The plugin object
+     * @var ?ilassSQLQuestionPlugin The plugin object
      */
-    protected $plugin = null;
+    protected ?ilassSQLQuestionPlugin $plugin = null;
 
     /**
      * Custom member variables/constants for an assSQLQuestion
@@ -35,47 +26,47 @@ class assSQLQuestion extends assQuestion
     /**
      * @var string The first sql sequence of the question
      */
-    public $sequence_a = "";
+    public string $sequence_a = "";
 
     /**
      * @var string The second sql sequence of the question
      */
-    public $sequence_b = "";
+    public string $sequence_b = "";
 
     /**
      * @var string The third sql sequence of the question
      */
-    public $sequence_c = "";
+    public string $sequence_c = "";
 
     /**
      * @var boolean A boolean indicating whether the question includes an integrity check (true) or not (false)
      */
-    public $integrity_check = false;
+    public bool $integrity_check = false;
 
     /**
      * @var boolean A boolean indicating whether the questions sequences contain errors (true) or not (false)
      */
-    public $error_bool = false;
+    public bool $error_bool = false;
 
     /**
      * @var string A json string containing the error of the current sql sequences
      */
-    public $error = "";
+    public string $error = "";
 
     /**
      * @var boolean A boolean indicating whether the current questions sequences have been executed (true) or not (false)
      */
-    public $executed_bool = false;
+    public bool $executed_bool = false;
 
     /**
      * @var string A json string containg the output relation of the current sql sequences
      */
-    public $output_relation = "";
+    public string $output_relation = "";
 
     /**
      * @var SolutionMetric[] An array containg all pattern solution SolutionMetrics used in this question
      */
-    public $solution_metrics = array();
+    public array $solution_metrics = array();
 
     /**
      * Member functions that have to be part of every assQuestion
@@ -96,11 +87,11 @@ class assSQLQuestion extends assQuestion
      * @see assQuestion:assQuestion()
      */
     public function __construct(
-        $title = '',
-        $comment = '',
-        $author = '',
-        $owner = -1,
-        $question = ''
+        string $title = "",
+        string $comment = "",
+        string $author = "",
+        int $owner = -1,
+        string $question = ""
     ) {
         // needed for excel export
         $this->getPlugin()->loadLanguageModule();
@@ -113,7 +104,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return string The question type of the question
      */
-    public function getQuestionType()
+    public function getQuestionType(): string
     {
         return 'assSQLQuestion';
     }
@@ -123,7 +114,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return array The names of the additional tables
      */
-    public function getAdditionalTableName()
+    public function getAdditionalTableName(): array
     {
         return array(
             'il_qpl_qst_qpisql_qd',
@@ -132,14 +123,24 @@ class assSQLQuestion extends assQuestion
     }
 
     /**
+     * Returns the name of the used answer table
+     *
+     * @return array The names of the answer table
+     */
+    public function getAnswerTableName(): array
+    {
+        return array();
+    }
+
+    /**
      * Collects all texts in the question which could contain media objects
      * which were created with the Rich Text Editor
      */
-    protected function getRTETextWithMediaObjects()
+    protected function getRTETextWithMediaObjects(): string
     {
         $text = parent::getRTETextWithMediaObjects();
 
-        return $text;
+        return (string) $text;
     }
 
     /**
@@ -147,10 +148,14 @@ class assSQLQuestion extends assQuestion
      *
      * @return object The plugin object
      */
-    public function getPlugin()
+    public function getPlugin(): ilassSQLQuestionPlugin
     {
+        global $DIC;
+
         if ($this->plugin == null) {
-            $this->plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, 'TestQuestionPool', 'qst', 'assSQLQuestion');
+            /** @var ilComponentFactory $component_factory */
+            $component_factory = $DIC["component.factory"];
+            $this->plugin = $component_factory->getPlugin('qpisql');
         }
         return $this->plugin;
     }
@@ -160,17 +165,19 @@ class assSQLQuestion extends assQuestion
      *
      * @return boolean True, if the question is complete for use, otherwise false
      */
-    public function isComplete()
+    public function isComplete(): bool
     {
         // Check whether the question is complete
-        if (!empty($this->title) &&
-             !empty($this->author) &&
-             !empty($this->question) &&
-             $this->getSequence('sequence_b') != "" &&
-             $this->getExecutedBool() &&
-             !$this->getErrorBool() &&
-             $this->getMaximumPoints() > 0) {
-               return true;
+        if (
+            !empty($this->title) &&
+            !empty($this->author) &&
+            !empty($this->question) &&
+            $this->getSequence('sequence_b') != "" &&
+            $this->getExecutedBool() &&
+            !$this->getErrorBool() &&
+            $this->getMaximumPoints() > 0
+        ) {
+            return true;
         }
 
         return false;
@@ -183,10 +190,14 @@ class assSQLQuestion extends assQuestion
      * @access public
      * @see assQuestion::saveToDb()
      */
-    public function saveToDb($original_id = '')
+    public function saveToDb($original_id = ''): void
     {
         // Save the basic data (implemented in assQuestion)
-        $this->saveQuestionDataToDb($original_id);
+        if ($original_id == '') {
+            $this->saveQuestionDataToDb();
+        } else {
+            $this->saveQuestionDataToDb($original_id);
+        }
 
         // Save the assSQLQuestion specific data to the database
         $this->saveSpecificQuestionDataToDb();
@@ -201,51 +212,37 @@ class assSQLQuestion extends assQuestion
      * @param integer $question_id A unique key which defines the question in the database
      * @see assQuestion::loadFromDb()
      */
-    public function loadFromDb($question_id)
+    public function loadFromDb(int $question_id): void
     {
         // Load the basic data
-        $this->loadQuestionDataFromDb($question_id);
+        global $DIC;
+        $ilDB = $DIC->database();
+
+        $result = $ilDB->query("SELECT qpl_questions.* FROM qpl_questions WHERE question_id = "
+            . $ilDB->quote($question_id, 'integer'));
+
+        $data = $ilDB->fetchAssoc($result);
+        $this->setId((int) $question_id);
+        $this->setObjId((int) $data['obj_fi']);
+        $this->setOriginalId((int) $data['original_id']);
+        $this->setOwner((int) $data['owner']);
+        $this->setTitle((string) $data['title']);
+        $this->setAuthor((string) $data['author']);
+        $this->setPoints((float) $data['points']);
+        $this->setComment((string) $data['description']);
+
+        $this->setQuestion((string) ilRTE::_replaceMediaObjectImageSrc((string) $data['question_text'], 1));
 
         // Load the assSQLQuestion specific data
         $this->loadSpecificQuestionDataFromDb($question_id);
 
         try {
-            $this->setAdditionalContentEditingMode($data['add_cont_edit_mode']);
+            $this->setAdditionalContentEditingMode(((string) $data['add_cont_edit_mode']) ?? null);
         } catch (ilTestQuestionPoolException $e) {
         }
 
         // loads additional stuff like suggested solutions
         parent::loadFromDb($question_id);
-    }
-
-    /**
-     * Helper function for loadFromDb().
-     * Loads the basic data from the database
-     *
-     * @param integer $question_id A unique key which defines the question in the database
-     * @access private
-     */
-    private function loadQuestionDataFromDb($question_id)
-    {
-        global $DIC;
-        $ilDB = $DIC->database();
-
-        $result = $ilDB->query("SELECT qpl_questions.* FROM qpl_questions WHERE question_id = "
-                . $ilDB->quote($question_id, 'integer'));
-
-        $data = $ilDB->fetchAssoc($result);
-        $this->setId($question_id);
-        $this->setObjId($data['obj_fi']);
-        $this->setOriginalId($data['original_id']);
-        $this->setOwner($data['owner']);
-        $this->setTitle($data['title']);
-        $this->setAuthor($data['author']);
-        $this->setPoints($data['points']);
-        $this->setComment($data['description']);
-        $this->setSuggestedSolution($data['solution_hint']);
-
-        $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc($data['question_text'], 1));
-        $this->setEstimatedWorkingTime(substr($data['working_time'], 0, 2), substr($data['working_time'], 3, 2), substr($data['working_time'], 6, 2));
     }
 
     /**
@@ -260,17 +257,18 @@ class assSQLQuestion extends assQuestion
      *
      * @return void|integer Id of the clone or nothing.
      */
-    public function duplicate($for_test = true, $title = '', $author = '', $owner = '', $testObjId = null)
+    public function duplicate(bool $for_test = true, string $title = '', string $author = '', int $owner = -1, $testObjId = null): int
     {
         if ($this->getId() <= 0) {
             // The question has not been saved. It cannot be duplicated
-            return;
+            return -1;
         }
 
         // make a real clone to keep the actual object unchanged
         $clone = clone $this;
 
-        $original_id = assQuestion::_getOriginalId($this->getId());
+        global $DIC;
+        $original_id = $DIC->testQuestionPool()->questionInfo()->getOriginalId($this->getId());
         $clone->setId(-1);
 
         if ((int) $testObjId > 0) {
@@ -316,14 +314,14 @@ class assSQLQuestion extends assQuestion
     public function copyObject($target_questionpool_id, $title = '')
     {
         if ($this->getId() <= 0) {
-            // The question has not been saved. It cannot be duplicated
-            return;
+            throw new RuntimeException('The question has not been saved. It cannot be duplicated');
         }
 
         // make a real clone to keep the object unchanged
         $clone = clone $this;
 
-        $original_id = assQuestion::_getOriginalId($this->getId());
+        global $DIC;
+        $original_id = $DIC->testQuestionPool()->questionInfo()->getOriginalId($this->getId());
         $source_questionpool_id = $this->getObjId();
         $clone->setId(-1);
         $clone->setObjId($target_questionpool_id);
@@ -390,7 +388,7 @@ class assSQLQuestion extends assQuestion
      *
      * @access public
      */
-    public function syncWithOriginal()
+    public function syncWithOriginal(): void
     {
         parent::syncWithOriginal();
     }
@@ -408,7 +406,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return array ('value1' => string|null, 'value2' => float|null) - 'value1' contains the ParticipantInput object serialized to JSON
      */
-    protected function getSolutionSubmit()
+    protected function getSolutionSubmit(): array
     {
         // Create a new ParticipantInput
         $participant_input = new ParticipantInput();
@@ -429,7 +427,7 @@ class assSQLQuestion extends assQuestion
         $value1 = $participant_input->toJSON();
 
         return array(
-            'value1' => empty($value1)? null : (string) $value1,
+            'value1' => empty($value1) ? null : (string) $value1,
             'value2' => null
         );
     }
@@ -444,7 +442,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return	array	('value1' => string|null, 'value2' => float|null)
      */
-    public function getSolutionStored($active_id, $pass, $authorized = null)
+    public function getSolutionStored($active_id, $pass, $authorized = null): array
     {
         // This provides an array with records from tst_solution
         // The example question should only store one record per answer
@@ -474,8 +472,8 @@ class assSQLQuestion extends assQuestion
         }
 
         return array(
-            'value1' => empty($value1)? null : (string) $value1,
-            'value2' => empty($value2)? null : (float) $value2
+            'value1' => empty($value1) ? null : (string) $value1,
+            'value2' => empty($value2) ? null : (float) $value2
         );
     }
 
@@ -518,10 +516,10 @@ class assSQLQuestion extends assQuestion
      *
      * @throws ilTestException
      */
-    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false)
+    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false): float
     {
         if ($returndetails) {
-            throw new ilTestException('return details not implemented for '.__METHOD__);
+            throw new ilTestException('return details not implemented for ' . __METHOD__);
         }
 
         if (is_null($pass)) {
@@ -536,17 +534,19 @@ class assSQLQuestion extends assQuestion
     }
 
     /**
-    * Sets the points, a learner has reached answering the question
-    *
-    * @param integer $user_id The database ID of the learner
-    * @param integer $test_id The database Id of the test containing the question
-    * @param integer $points The points the user has reached answering the question
-    * @return boolean true on success, otherwise false
-    * @access public
-    */
+     * Sets the points, a learner has reached answering the question
+     *
+     * @param integer $user_id The database ID of the learner
+     * @param integer $test_id The database Id of the test containing the question
+     * @param integer $points The points the user has reached answering the question
+     * @return boolean true on success, otherwise false
+     * @access public
+     */
     public function setReachedPoints($active_id, $points, $pass = null)
     {
-        global $ilDB;
+        global $DIC;
+
+        $ilDB = $DIC->database();
 
         if (($points > 0) && ($points <= $this->getPoints())) {
             if (is_null($pass)) {
@@ -554,7 +554,7 @@ class assSQLQuestion extends assQuestion
             }
             $affectedRows = $ilDB->manipulateF(
                 "UPDATE tst_test_result SET points = %s WHERE active_fi = %s AND question_fi = %s AND pass = %s",
-                array('float','integer','integer','integer'),
+                array('float', 'integer', 'integer', 'integer'),
                 array($points, $active_id, $this->getId(), $pass)
             );
             self::_updateTestPassResults($active_id, $pass);
@@ -573,7 +573,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return boolean $status
      */
-    public function saveWorkingData($active_id, $pass = null, $authorized = true)
+    public function saveWorkingData($active_id, $pass = null, $authorized = true): bool
     {
         if (is_null($pass)) {
             $pass = ilObjTest::_getPass($active_id);
@@ -606,10 +606,10 @@ class assSQLQuestion extends assQuestion
         if (ilObjAssessmentFolder::_enabledAssessmentLogging()) {
             assQuestion::logAction(
                 $this->lng->txtlng(
-                'assessment',
-                $entered_values ? 'log_user_entered_values' : 'log_user_not_entered_values',
-                ilObjAssessmentFolder::_getLogLanguage()
-            ),
+                    'assessment',
+                    $entered_values ? 'log_user_entered_values' : 'log_user_not_entered_values',
+                    ilObjAssessmentFolder::_getLogLanguage()
+                ),
                 $active_id,
                 $this->getId()
             );
@@ -643,7 +643,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return int
      */
-    public function setExportDetailsXLS($worksheet, $startrow, $active_id, $pass)
+    public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $active_id, int $pass): int
     {
         $worksheet->setFormattedExcelTitle($worksheet->getColumnCoord(0) . $startrow, $this->getPlugin()->txt('assSQLQuestion'));
         $worksheet->setFormattedExcelTitle($worksheet->getColumnCoord(1) . $startrow, $this->getTitle());
@@ -696,11 +696,12 @@ class assSQLQuestion extends assQuestion
      * @param array $import_mapping An array containing references to included ILIAS objects
      * @access public
      */
-    public function fromXML(&$item, &$questionpool_id, &$tst_id, &$tst_object, &$question_counter, &$import_mapping)
+    function fromXML($item, int $questionpool_id, ?int $tst_id, &$tst_object, int &$question_counter, array $import_mapping, array &$solutionhints = []): array
     {
-        $this->getPlugin()->includeClass("import/qti12/class.assSQLQuestionImport.php");
         $import = new assSQLQuestionImport($this);
-        $import->fromXML($item, $questionpool_id, $tst_id, $tst_object, $question_counter, $import_mapping);
+        $import_mapping = $import->fromXML($item, $questionpool_id, $tst_id, $tst_object, $question_counter, $import_mapping);
+
+        return $import_mapping;
     }
 
     /**
@@ -710,9 +711,13 @@ class assSQLQuestion extends assQuestion
      * @return string The QTI xml representation of the question
      * @access public
      */
-    public function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false)
-    {
-        $this->getPlugin()->includeClass("export/qti12/class.assSQLQuestionExport.php");
+    function toXML(
+        bool $a_include_header = true,
+        bool $a_include_binary = true,
+        bool $a_shuffle = false,
+        bool $test_output = false,
+        bool $force_image_references = false
+    ): string {
         $export = new assSQLQuestionExport($this);
         return $export->toXML($a_include_header, $a_include_binary, $a_shuffle, $test_output, $force_image_references);
     }
@@ -726,12 +731,12 @@ class assSQLQuestion extends assQuestion
      */
 
     /**
-    * Returns the requested sequence (Either sequence_a, sequence_b or sequence_c)
-    *
-    * @param string $sequence_name The name of the requested sequence
-    * @return string The requested sql sequence
-    */
-    public function getSequence($sequence_name)
+     * Returns the requested sequence (Either sequence_a, sequence_b or sequence_c)
+     *
+     * @param string $sequence_name The name of the requested sequence
+     * @return string The requested sql sequence
+     */
+    public function getSequence($sequence_name): string
     {
         switch ($sequence_name) {
             case "sequence_a":
@@ -751,7 +756,7 @@ class assSQLQuestion extends assQuestion
      * @param string $sequence_name The name of the sequence
      * @param string $sequence The requested sql sequence
      */
-    public function setSequence($sequence_name, $sequence)
+    public function setSequence($sequence_name, $sequence): void
     {
         switch ($sequence_name) {
             case "sequence_a":
@@ -773,7 +778,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return boolean The integrity_check boolean
      */
-    public function getIntegrityCheck()
+    public function getIntegrityCheck(): bool
     {
         return $this->integrity_check;
     }
@@ -783,7 +788,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param boolean $integrity_check The integrity_check boolean
      */
-    public function setIntegrityCheck($integrity_check)
+    public function setIntegrityCheck(bool $integrity_check): void
     {
         $this->integrity_check = $integrity_check;
     }
@@ -793,7 +798,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return boolean The error state
      */
-    public function getErrorBool()
+    public function getErrorBool(): bool
     {
         return $this->error_bool;
     }
@@ -803,7 +808,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param boolean $error_bool The error state of the execution
      */
-    public function setErrorBool($error_bool)
+    public function setErrorBool(bool $error_bool): void
     {
         $this->error_bool = $error_bool;
     }
@@ -813,7 +818,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return string The error json
      */
-    public function getError()
+    public function getError(): string
     {
         return $this->error;
     }
@@ -823,7 +828,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param string $error The error json
      */
-    public function setError($error)
+    public function setError(string $error): void
     {
         $this->error = $error;
     }
@@ -843,7 +848,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param boolean $executed_bool The execution state
      */
-    public function setExecutedBool($executed_bool)
+    public function setExecutedBool(bool $executed_bool): void
     {
         $this->executed_bool = $executed_bool;
     }
@@ -853,7 +858,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return string The output relation
      */
-    public function getOutputRelation()
+    public function getOutputRelation(): string
     {
         return $this->output_relation;
     }
@@ -863,7 +868,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param string $output_relation The output relation
      */
-    public function setOutputRelation($output_relation)
+    public function setOutputRelation(string $output_relation): void
     {
         $this->output_relation = $output_relation;
     }
@@ -873,7 +878,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return SolutionMetric[] A array containing all SolutionMetrics
      */
-    public function getAllSolutionMetrics()
+    public function getAllSolutionMetrics(): array
     {
         return $this->solution_metrics;
     }
@@ -883,7 +888,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return string A JSON string containing all SolutionMetrics
      */
-    public function getAllSolutionMetricsAsJSON()
+    public function getAllSolutionMetricsAsJSON(): string
     {
         $solution_metrics_json = array();
 
@@ -899,7 +904,7 @@ class assSQLQuestion extends assQuestion
      *
      * @return integer The maxium possible points
      */
-    public function getMaximumPoints()
+    public function getMaximumPoints(): float
     {
         // Initialize with 0
         $maximum_points = 0;
@@ -916,7 +921,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param SolutionMetric[] $solution_metrics An array containg all SolutionMetrics to be set
      */
-    public function setAllSolutionMetrics($solution_metrics)
+    public function setAllSolutionMetrics(array $solution_metrics): void
     {
         $this->solution_metrics = $solution_metrics;
     }
@@ -926,7 +931,7 @@ class assSQLQuestion extends assQuestion
      *
      * @param string $json A JSON string containg all SolutionMetrics to be set
      */
-    public function setAllSolutionMetricsFromJSON($json)
+    public function setAllSolutionMetricsFromJSON(string $json): void
     {
         $json_decoded = json_decode($json, true);
 
@@ -935,9 +940,9 @@ class assSQLQuestion extends assQuestion
             $solution_metric_decoded = json_decode($solution_metric, true);
 
             $this->setSingleSolutionMetric(new SolutionMetric(
-                $solution_metric_decoded['type'],
-                $solution_metric_decoded['points'],
-                $solution_metric_decoded['value']
+                (string) $solution_metric_decoded['type'],
+                (int) $solution_metric_decoded['points'],
+                (string) $solution_metric_decoded['value']
             ));
         }
     }
@@ -948,7 +953,7 @@ class assSQLQuestion extends assQuestion
      * @param string $type The type of the searched SolutionMetric
      * @return SolutionMetric[] A array containing all metrics with this type
      */
-    public function getSolutionMetricsWithType($type)
+    public function getSolutionMetricsWithType($type): array
     {
         $found_metrics = array();
 
@@ -964,9 +969,9 @@ class assSQLQuestion extends assQuestion
     /**
      * Save a single SolutionMetric
      *
-   * @param SolutionMetric $solution_metric The SolutionMetric to be set
+     * @param SolutionMetric $solution_metric The SolutionMetric to be set
      */
-    public function setSingleSolutionMetric($solution_metric)
+    public function setSingleSolutionMetric(SolutionMetric $solution_metric): void
     {
         if (is_a($solution_metric, "SolutionMetric")) {
             // Remove existing SolutionMetric with the same type
@@ -991,56 +996,85 @@ class assSQLQuestion extends assQuestion
      * Save all data that is specific to assSQLQuestion into the database
      * (See dpupdate.php for more informations on used tables)
      */
-    public function saveSpecificQuestionDataToDb()
+    public function saveSpecificQuestionDataToDb(): void
     {
-        global $ilDB;
+        global $DIC;
+
+        $ilDB = $DIC->database();
 
         // Update "il_qpl_qst_qpisql_qd"
 
         // Delete existing entries with current question id (to avoid double entries)
-        $ilDB->manipulate("DELETE FROM il_qpl_qst_qpisql_qd
-											 WHERE question_fi = '".$this->getId()."'");
+        $ilDB->manipulate("DELETE FROM il_qpl_qst_qpisql_qd WHERE question_fi = '" . $this->getId() . "'");
 
         // Insert the current question data
         $ilDB->manipulateF(
-            "INSERT INTO il_qpl_qst_qpisql_qd (question_fi,
-																				 sequence_a,
-																				 sequence_b,
-																				 sequence_c,
-																				 integrity_check,
-																				 error_bool,
-																				 error,
-																				 executed_bool,
-																				 output_relation)
+            "INSERT INTO il_qpl_qst_qpisql_qd (
+                question_fi,
+                sequence_a,
+                sequence_b,
+                sequence_c,
+                integrity_check,
+                error_bool,
+                error,
+                executed_bool,
+                output_relation
+            )
 			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            array("integer", "text", "text",
-                        "text", "integer", "integer", "clob",
-                        "integer", "clob"),
-            array($this->getId(), $this->getSequence('sequence_a'), $this->getSequence('sequence_b'),
-                        $this->getSequence('sequence_c'), $this->getIntegrityCheck(), $this->getErrorBool(),
-                        $this->getError(), $this->getExecutedBool(), $this->getOutputRelation())
-    );
+            array(
+                "integer",
+                "text",
+                "text",
+                "text",
+                "integer",
+                "integer",
+                "clob",
+                "integer",
+                "clob"
+            ),
+            array(
+                $this->getId(),
+                $this->getSequence('sequence_a'),
+                $this->getSequence('sequence_b'),
+                $this->getSequence('sequence_c'),
+                $this->getIntegrityCheck(),
+                $this->getErrorBool(),
+                $this->getError(),
+                $this->getExecutedBool(),
+                $this->getOutputRelation()
+            )
+        );
 
 
         // Update "il_qpl_qst_qpisql_qsm"
 
         // Delete existing entries with current question id (to avoid double entries)
         $ilDB->manipulate("DELETE FROM il_qpl_qst_qpisql_qsm
-											 WHERE question_fi = '".$this->getId()."'");
+											 WHERE question_fi = '" . $this->getId() . "'");
 
         // Insert all current SolutionMetrics
         foreach ($this->solution_metrics as $solution_metric) {
             $ilDB->manipulateF(
-                "INSERT INTO il_qpl_qst_qpisql_qsm (question_fi,
-																					  type,
-																					  points,
-																					  value)
+                "INSERT INTO il_qpl_qst_qpisql_qsm (
+                    question_fi,
+                    type,
+                    points,
+                    value
+                )
 				VALUES (%s, %s, %s, %s)",
-                array("integer", "text",
-                            "integer", "clob"),
-                array($this->getId(), $solution_metric->getType(),
-                            $solution_metric->getPoints(), $solution_metric->getValue())
-        );
+                array(
+                    "integer",
+                    "text",
+                    "integer",
+                    "clob"
+                ),
+                array(
+                    $this->getId(),
+                    $solution_metric->getType(),
+                    $solution_metric->getPoints(),
+                    $solution_metric->getValue()
+                )
+            );
         }
     }
 
@@ -1057,29 +1091,31 @@ class assSQLQuestion extends assQuestion
 
         // Set Sequences and other data from il_qpl_qst_qpisql_qd
         $result_qd = $ilDB->query("SELECT * FROM il_qpl_qst_qpisql_qd WHERE question_fi = "
-                . $ilDB->quote($question_id, 'integer'));
+            . $ilDB->quote($question_id, 'integer'));
 
-        $data_qd = $ilDB->fetchAssoc($result_qd);
+        if ($result_qd->numRows() > 0) {
+            $data_qd = $ilDB->fetchAssoc($result_qd);
 
-        $this->setSequence('sequence_a', $data_qd['sequence_a']);
-        $this->setSequence('sequence_b', $data_qd['sequence_b']);
-        $this->setSequence('sequence_c', $data_qd['sequence_c']);
-        $this->setIntegrityCheck($data_qd['integrity_check']);
-        $this->setErrorBool($data_qd['error_bool']);
-        $this->setError($data_qd['error']);
-        $this->setExecutedBool($data_qd['executed_bool']);
-        $this->setOutputRelation($data_qd['output_relation']);
+            $this->setSequence('sequence_a', (string) $data_qd['sequence_a']);
+            $this->setSequence('sequence_b', (string) $data_qd['sequence_b']);
+            $this->setSequence('sequence_c', (string) $data_qd['sequence_c']);
+            $this->setIntegrityCheck((bool) $data_qd['integrity_check']);
+            $this->setErrorBool((bool) $data_qd['error_bool']);
+            $this->setError((string) $data_qd['error']);
+            $this->setExecutedBool((bool) $data_qd['executed_bool']);
+            $this->setOutputRelation((string) $data_qd['output_relation']);
+        }
 
         // Set SolutionMetrics from il_qpl_qst_qpisql_qsm
         $result_qsm = $ilDB->query("SELECT * FROM il_qpl_qst_qpisql_qsm WHERE question_fi = "
-                . $ilDB->quote($question_id, 'integer'));
+            . $ilDB->quote($question_id, 'integer'));
 
         while ($data_qsm = $ilDB->fetchAssoc($result_qsm)) {
             $this->setSingleSolutionMetric(
                 new SolutionMetric(
-                    $data_qsm['type'],
-                    $data_qsm['points'],
-                    $data_qsm['value']
+                    (string) $data_qsm['type'],
+                    (int) $data_qsm['points'],
+                    (string) $data_qsm['value']
                 )
             );
         }

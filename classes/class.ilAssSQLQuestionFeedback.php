@@ -1,6 +1,6 @@
 <?php
 
-require_once 'Modules/TestQuestionPool/classes/feedback/class.ilAssSingleOptionQuestionFeedback.php';
+declare(strict_types=1);
 
 /**
  * Feedback class of the SQLQuestion plugin

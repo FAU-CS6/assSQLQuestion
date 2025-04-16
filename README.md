@@ -38,6 +38,31 @@ There are two different options to install this plugin. One for demonstration an
 
 1. Press "Activate" for the assSQLQuestion plugin
 
+## Development
+
+Some of the artifacts are uploaded to the repository in built form, some need to be built during installation. For the PHP part of the plugin, we adhere to the suggestions of ILIAS, namely to `composer install --no-dev` all dependencies during installation and not check in dependency artifacts into git (c.f. https://github.com/ILIAS-eLearning/ILIAS/pull/1833 and specifically https://docu.ilias.de/ilias.php?baseClass=ilwikihandlergui&cmdNode=16f:rp&cmdClass=ilobjwikigui&cmd=viewPage&ref_id=1357&page=Include_Plugins_into_composer_autoloader for plugins).
+
+At the same time, there is the file `js/min.js.php`, which depends on `MatthiasMullie\Minify`. `min.js.php` is called directly from the browser but not via `ilias.php`. For this reason, we maintain a second, parallel composer in `lib/minify/vendor/`, which we do check in! It is up to the developer to update these dependencies and in order to do so, they need to operate in this composer instance (e.g. by calling `composer update matthiasmullie/path-converter`).
+
+### Building the JavaScript bundle
+
+From version 6 on, _Codemirror_ "exposes only modules, which will require some kind of build step before you can use them." (https://codemirror.net/docs/migration/) Therefore, we use _rollupjs_ and some glue code (c.f. `lib/codemirror/editor.mjs`) to make codemirror available from the global environment (i.e. `<script src="compiled.bundle.js"></script><script>here</script>`). This approach is taken from the official manual here: https://codemirror.net/examples/bundle/ The link gives an explanation about the later rollup invocation, too.
+
+To install codemirror, rollup and its plugins, use `npm install` in the `lib/codemirror` directory, which installs the packages as in `package-lock.json`.
+
+Use the following command to build the bundle:
+
+```sh
+node_modules/.bin/rollup editor.mjs \
+  -f iife \
+  -o codemirror_sqlquestion.bundle.js \
+  -p @rollup/plugin-node-resolve \
+  -p @rollup/plugin-terser \
+  --name codemirror_sqlquestion
+```
+
+We do check in the resulting `codemirror_sqlquestion.bundle.js` file, as we cannot expect all administrators to set up their own JavaScript build environment to gather the file themselves.
+
 ## Documentation
 Additionally to the in source documentation there is a documentation educating about the interaction of components and further informations. Due to the origin of this project this part of the documentation is only available in German. It can be viewed by compiling the `dokumentation.tex` in the `docs/` folder with *pdflatex* or a comparable Latex compiler.
 
