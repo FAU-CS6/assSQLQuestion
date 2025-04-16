@@ -1,4 +1,3 @@
-version: '3'
 services:
     ilias:
         image: srsolutions/ilias:9.7-php8.2-apache
