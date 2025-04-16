@@ -1,8 +1,8 @@
 <!-- language file start -->
 
-//////////////////////////////////////////////////////////
-// General informations about the plugin ("gi_" prefix) //
-//////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////
+// General information about the plugin ("gi_" prefix) //
+/////////////////////////////////////////////////////////
 
 // The name of the question type
 gi_name#:#Interaktive SQL Frage
@@ -32,7 +32,7 @@ ai_sea_exec_text#:#Ausführen
 ai_sea_eo_name#:#SQL Sequenzen
 
 // Some information on the sequence area as shown in edit mode
-ai_sea_eo_info#:#Eine Interaktive SQL Anfrage besteht, neben den üblichen Bestandteilen Titel, Autor, Beschreibung und Frage, aus drei Sequenzen SQL. Diese Sequenzen – genannt A, B und C – werden dabei bei jedem Durchlauf durch SQL.js ihrer Reihenfolge nach ausgeführt. Die Sequenzen A und C werden dabei durch den Fragenersteller vorgegeben, während die Sequenz B durch den Prüfling entwickelt werden muss. Basis für die Bewertung von Anfragen bildet die letzte Ausgaberelation die in der gesamten Ausführung vorkommt. Dies ermöglicht im Wesentlichen zwei Arten von Fragen:<br /><br /><dl><dt> Frage zu einer SELECT-Anfrage </dt><dd> Der Fragenersteller nutzt Sequenz A um die Datenbank für die Frage mit Inhalten zu füllen. Beispielsweise legt er Relationen an und füllt diese mit Tupeln. In Sequenz B wird vom Prüfling verlangt eine SELECT Anfrage zu schreiben, die einen bestimmten Ausschnitt der angelegten Tupel anzeigt. Sequenz C würde in diesem Fall leer bleiben. So würde die Ausgabe aus der geschriebenen SELECT Anfrage die Grundlage der Bewertung bilden. </dd><br /><dt> Frage zu CREATE TABLE, INSERT INTO, DELETE FROM, UPDATE, usw. </dt><dd> Auch in diesem Fall kann Sequenz A genutzt werden um die Datenbank für die Frage vorzubereiten. Der Unterschied dieser Fragenart liegt darin, dass der Prüfling in Sequenz B eben keine SELECT Anfrage schreiben soll und damit dort auch keine prüfbare Ausgaberelation vorliegt. Diese Ausgaberelation kann vom Prüfer in Sequenz C erzeugt werden, wodurch die Veränderungen an der Datenbank perfekt abgeprüft werden können.</dd><br /><br />Speziell im Falle der ersten Fragenart, kann es sinnvoll sein Veränderungen der Datenbank in Sequenz B zu verbieten. Ist dies erwünscht ist die Integritätsprüfung zu aktivieren. Dabei wird nach die Sequenz B auf verbotene Inhalte, wie "CREATE TABLE", "ALTER TABLE", "DROP TABLE", "INSERT INTO", "UPDATE" und "DELETE FROM" geprüft. Sind diese Sequenzen enthalten, wird die Sequenz nicht akzeptiert.
+ai_sea_eo_info#:#Eine Interaktive SQL Anfrage besteht, neben den üblichen Bestandteilen Titel, Autor, Beschreibung und Frage, aus drei Sequenzen SQL. Diese Sequenzen – genannt A, B und C – werden dabei bei jedem Durchlauf durch SQL.js ihrer Reihenfolge nach ausgeführt. Die Sequenzen A und C werden dabei durch den Fragenersteller vorgegeben, während die Sequenz B durch den Prüfling entwickelt werden muss. Basis für die Bewertung von Anfragen bildet die letzte Ausgaberelation, die in der gesamten Ausführung vorkommt. Dies ermöglicht im Wesentlichen zwei Arten von Fragen:<br /><br /><dl><dt> Frage zu einer SELECT-Anfrage </dt><dd> Der Fragenersteller nutzt Sequenz A um die Datenbank für die Frage mit Inhalten zu füllen. Beispielsweise legt er Relationen an und füllt diese mit Tupeln. In Sequenz B wird vom Prüfling verlangt eine SELECT Anfrage zu schreiben, die einen bestimmten Ausschnitt der angelegten Tupel anzeigt. Sequenz C würde in diesem Fall leer bleiben. So würde die Ausgabe aus der geschriebenen SELECT Anfrage die Grundlage der Bewertung bilden. </dd><br /><dt> Frage zu CREATE TABLE, INSERT INTO, DELETE FROM, UPDATE, usw. </dt><dd> Auch in diesem Fall kann Sequenz A genutzt werden um die Datenbank für die Frage vorzubereiten. Der Unterschied dieser Fragenart liegt darin, dass der Prüfling in Sequenz B eben keine SELECT Anfrage schreiben soll und damit dort auch keine prüfbare Ausgaberelation vorliegt. Diese Ausgaberelation kann vom Prüfer in Sequenz C erzeugt werden, wodurch die Veränderungen an der Datenbank abgeprüft werden können.</dd><br /><br />Speziell im Falle der ersten Fragenart kann es sinnvoll sein, Veränderungen der Datenbank in Sequenz B zu verbieten. Ist dies erwünscht, ist die Integritätsprüfung zu aktivieren. Dabei wird nach die Sequenz B auf verbotene Anweisungen, wie "CREATE TABLE", "ALTER TABLE", "DROP TABLE", "INSERT INTO", "UPDATE" und "DELETE FROM", geprüft. Sind diese Sequenzen enthalten, wird die Sequenz nicht akzeptiert.
 
 // The headers for the sequence A, B and C input areas as shown in edit mode
 ai_sea_eo_seq_a#:#Sequenz A:
@@ -71,7 +71,7 @@ ai_sea_qo_seq_b#:#Antwort:
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // String used to display a running execution
-ai_oa_st_run#:#Die SQL Anfrage(n) werden gerade ausgeführt. Bitte warten ...
+ai_oa_st_run#:#Die SQL Anfrage(n) werden gerade ausgeführt. Bitte warten...
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // String used in the output area to display errors of the execution ("ai_oa_er_" prefix) //
@@ -117,10 +117,10 @@ ai_sca_points#:#Punkte
 ai_sca_eo_name#:#Bepunktung
 
 // Some information on the scoring area as shown in edit mode
-ai_sca_eo_info#:#Um eine automatische Bewertung der Antworten zu ermöglichen, werden verschiedene Metriken herangezogen. Dabei werden die Metriken über der vom Fragenersteller erzeugten Ausgaberelation und der Ausgaberelation des Prüflings berechnet und anschließend miteinander verglichen. Die Gewichtung dieser einzelnen Werte – in Form von Punkten - obliegt wiederum dem Fragenersteller.
+ai_sca_eo_info#:#Um eine automatische Bewertung der Antworten zu ermöglichen, werden verschiedene Metriken herangezogen. Dabei werden die Metriken über der vom Fragenersteller erzeugten Ausgaberelation und der Ausgaberelation des Prüflings berechnet und anschließend miteinander verglichen. Die Gewichtung dieser einzelnen Werte – in Form von Punkten – obliegt wiederum dem Fragenersteller.
 
-// The error message as shown if scoring metric do not include points higher than 0
-ai_sca_eo_error#:#Die gesamt mögliche Punktzahl muss höher als 0 sein.
+// The error message as shown if scoring metric do not include points greater than 0
+ai_sca_eo_error#:#Die gesamt mögliche Punktzahl muss größer als 0 sein.
 
 // The warning displayed in edit mode of scoring area if there was no execution until now
 ai_sca_eo_no_exec#:#Bitte die Ausführung starten.
@@ -137,14 +137,14 @@ ai_sca_eo_out_text#:#Das Ergebnis dieser Metrik für Ihre Relation:
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // The information text informing question creators about the result lines metric
-ai_sca_eo_sm_rl_info#:#<b>Anzahl der Tupel</b><br />Eine der einfachsten Metriken, die zur Bewertung von Anfragen hinzugezogen werden kann ist die Anzahl der Tupel im Ergebnis. Hat das Ergebnis des Prüflings die gleiche Anzahl an Tupeln wie die Musterlösung, so erhält er alle für diese Metrik vergebenen Punkte. Unterscheidet sich seine Anzahl der Ergebnistupel, so bekommt er keine Punkte für diese Metrik.
+ai_sca_eo_sm_rl_info#:#<b>Anzahl der Tupel</b><br />Eine der einfachsten Metriken, die zur Bewertung von Anfragen hinzugezogen werden kann, ist die Anzahl der Tupel im Ergebnis. Hat das Ergebnis des Prüflings die gleiche Anzahl an Tupeln wie die Musterlösung, so erhält er alle für diese Metrik vergebenen Punkte. Unterscheidet sich seine Anzahl der Ergebnistupel, so bekommt er keine Punkte für diese Metrik.
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Strings used in the edit mode of the scoring area to describe the functional dependencies metric ("ai_sca_eo_sm_fd_" prefix) //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // The information text informing question creators about the functional dependencies metric
-ai_sca_eo_sm_fd_info#:#<b>Funktionale Abhängigkeiten</b><br />Diese Metrik zieht die funktionalen Abhängigkeiten des Ergebnisses heran, um die Musterlösung und die Lösung des Prüflings zu vergleichen. Wichtig dabei ist, dass nur die "minimalen" funktionalen Abhängigkeiten verwendet werden (z.B. bei A &rArr; C würde A &times; B &rArr; C nicht aufgeführt werden). Die Bepunktung erfolgt dabei mit Hilfe der Jaccard-Metrik: Punkte = Max. Punktzahl * (1 - Jaccard-Metrik).
+ai_sca_eo_sm_fd_info#:#<b>Funktionale Abhängigkeiten</b><br />Diese Metrik zieht die funktionalen Abhängigkeiten des Ergebnisses heran, um die Musterlösung und die Lösung des Prüflings zu vergleichen. Wichtig dabei ist, dass nur die "minimalen" funktionalen Abhängigkeiten verwendet werden (z.&nbsp;B. bei A &rArr; C würde A &times; B &rArr; C nicht aufgeführt werden). Die Bepunktung erfolgt dabei mit Hilfe der Jaccard-Metrik: Punkte = Max. Punktzahl * (1 - Jaccard-Metrik).
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Strings used in the edit mode of the scoring area to describe the column names metric ("ai_sca_eo_sm_cn_" prefix) //
