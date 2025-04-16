@@ -1,7 +1,7 @@
 version: '3'
 services:
     ilias:
-        image: srsolutions/ilias:9.7-php8.2-apach
+        image: srsolutions/ilias:9.7-php8.2-apache
         ports:
           - 8080:80
         links:
