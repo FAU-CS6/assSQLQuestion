@@ -37,6 +37,8 @@
    {
      // Disable the input
      this.editor.setReadOnly(true);
+     // Transfer the contents of the 
+     this.editor.transferValueToTextarea();
    }
 
    /**
