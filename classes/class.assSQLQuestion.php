@@ -696,7 +696,7 @@ class assSQLQuestion extends assQuestion
      * @param array $import_mapping An array containing references to included ILIAS objects
      * @access public
      */
-    function fromXML($item, int $questionpool_id, ?int $tst_id, &$tst_object, int &$question_counter, array $import_mapping, array &$solutionhints = []): array
+    public function fromXML($item, int $questionpool_id, ?int $tst_id, &$tst_object, int &$question_counter, array $import_mapping, array &$solutionhints = []): array
     {
         $import = new assSQLQuestionImport($this);
         $import_mapping = $import->fromXML($item, $questionpool_id, $tst_id, $tst_object, $question_counter, $import_mapping);
@@ -711,7 +711,7 @@ class assSQLQuestion extends assQuestion
      * @return string The QTI xml representation of the question
      * @access public
      */
-    function toXML(
+    public function toXML(
         bool $a_include_header = true,
         bool $a_include_binary = true,
         bool $a_shuffle = false,

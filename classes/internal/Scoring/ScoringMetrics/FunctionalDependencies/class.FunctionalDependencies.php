@@ -107,12 +107,12 @@ class FunctionalDependencies extends ScoringMetric
         $participant_metric = static::getParticipantMetric($participant_metrics);
 
         // Decode the JSONs
-        $solution_metric_decoded = json_decode($solution_metric->getValue(), TRUE);
-        $participant_metric_decoded = json_decode($participant_metric->getValue(), TRUE);
+        $solution_metric_decoded = json_decode($solution_metric->getValue(), true);
+        $participant_metric_decoded = json_decode($participant_metric->getValue(), true);
 
         // If $solution_metric_decoded is empty the participant only gets (full) points if his solution is empty, too
-        if($solution_metric_decoded == "") {
-            if($participant_metric_decoded == "") {
+        if ($solution_metric_decoded == "") {
+            if ($participant_metric_decoded == "") {
                 return $solution_metric->getPoints();
             }
 
@@ -122,12 +122,12 @@ class FunctionalDependencies extends ScoringMetric
         // On the other side it might be possible that the participants fds are empty and the solution metric
         // is not (last condition is true if the code on this position is executed) => In this case the participant gets
         // zero points as well
-        if($participant_metric_decoded == "") {
+        if ($participant_metric_decoded == "") {
             return 0;
         }
 
         // If both solutions include no functional dependencies the participant scored full points
-        if(sizeof($solution_metric_decoded) == sizeof($participant_metric_decoded)) {
+        if (sizeof($solution_metric_decoded) == sizeof($participant_metric_decoded)) {
             return $solution_metric->getPoints();
         }
 
@@ -135,67 +135,55 @@ class FunctionalDependencies extends ScoringMetric
         $union = array();
 
         // Iterate through the $solution_metric_decoded
-        for($i = 0; $i < sizeof($solution_metric_decoded); $i++)
-        {
-          $found = false;
+        for ($i = 0; $i < sizeof($solution_metric_decoded); $i++) {
+            $found = false;
 
-          for($ii = 0; $ii < sizeof($union); $ii++)
-          {
-            if(self::compareFunctionalDependencies($union[$ii], $solution_metric_decoded[$i]))
-            {
-              $found = true;
+            for ($ii = 0; $ii < sizeof($union); $ii++) {
+                if (self::compareFunctionalDependencies($union[$ii], $solution_metric_decoded[$i])) {
+                    $found = true;
+                }
             }
-          }
 
-          if(!$found)
-          {
-            array_push($union, $solution_metric_decoded[$i]);
-          }
+            if (!$found) {
+                array_push($union, $solution_metric_decoded[$i]);
+            }
         }
 
         // Iterate through the $solution_metric_decoded
-        for($i = 0; $i < sizeof($participant_metric_decoded); $i++)
-        {
-          $found = false;
+        for ($i = 0; $i < sizeof($participant_metric_decoded); $i++) {
+            $found = false;
 
-          for($ii = 0; $ii < sizeof($union); $ii++)
-          {
-            if(self::compareFunctionalDependencies($union[$ii], $participant_metric_decoded[$i]))
-            {
-              $found = true;
+            for ($ii = 0; $ii < sizeof($union); $ii++) {
+                if (self::compareFunctionalDependencies($union[$ii], $participant_metric_decoded[$i])) {
+                    $found = true;
+                }
             }
-          }
 
-          if(!$found)
-          {
-            array_push($union, $participant_metric_decoded[$i]);
-          }
+            if (!$found) {
+                array_push($union, $participant_metric_decoded[$i]);
+            }
         }
 
         // Compute the INTERSECT
         $intersect = array();
 
         // Iterate through the $solution_metric_decoded
-        for($i = 0; $i < sizeof($solution_metric_decoded); $i++)
-        {
-          $found = false;
+        for ($i = 0; $i < sizeof($solution_metric_decoded); $i++) {
+            $found = false;
 
-          for($ii = 0; $ii < sizeof($participant_metric_decoded); $ii++)
-          {
-            if(self::compareFunctionalDependencies($participant_metric_decoded[$ii], $solution_metric_decoded[$i]))
-            {
-              $found = true;
+            for ($ii = 0; $ii < sizeof($participant_metric_decoded); $ii++) {
+                if (self::compareFunctionalDependencies($participant_metric_decoded[$ii], $solution_metric_decoded[$i])) {
+                    $found = true;
+                }
             }
-          }
 
-          if($found)
-          {
-            array_push($intersect, $solution_metric_decoded[$i]);
-          }
+            if ($found) {
+                array_push($intersect, $solution_metric_decoded[$i]);
+            }
         }
 
         // Compute 1 - Jaccard distance
-        return (int)(1 - ((sizeof($union) - sizeof($intersect))/sizeof($union))) * $solution_metric->getPoints();
+        return (int)(1 - ((sizeof($union) - sizeof($intersect)) / sizeof($union))) * $solution_metric->getPoints();
     }
 
     /**
@@ -210,59 +198,52 @@ class FunctionalDependencies extends ScoringMetric
      */
     public static function compareFunctionalDependencies($a_json, $b_json): bool
     {
-      $a = json_decode($a_json, TRUE);
-      $b = json_decode($b_json, TRUE);
+        $a = json_decode($a_json, true);
+        $b = json_decode($b_json, true);
 
-      if(!is_array($a) || !is_array($b))
-      {
-        return false;
-      }
-
-      // At first check whether both have the keys determinateAttributes and dependentAttributes
-      if(!array_key_exists("determinateAttributes", $a) || !array_key_exists("dependentAttributes", $a) ||
-         !array_key_exists("determinateAttributes", $b) || !array_key_exists("dependentAttributes", $b))
-      {
-        throw new Exception('Tried to compare non functional dependencies in the compareFunctionalDependencies() function');
-      }
-
-      // Compare the length of both the determinateAtrributes and the dependentAttributes
-      if(sizeof($a["determinateAttributes"]) != sizeof($b["determinateAttributes"]) ||
-         sizeof($a["dependentAttributes"]) != sizeof($b["dependentAttributes"]))
-      {
-        return false;
-      }
-
-      // Save the values in seperate arrays for easier handling
-      $a_determinate = array_map('strtolower', $a["determinateAttributes"]);
-      $a_dependent = array_map('strtolower', $a["dependentAttributes"]);
-      $b_determinate = array_map('strtolower', $b["determinateAttributes"]);
-      $b_dependent = array_map('strtolower', $b["dependentAttributes"]);
-
-      // Sort the arrays
-      sort($a_determinate);
-      sort($a_dependent);
-      sort($b_determinate);
-      sort($b_dependent);
-
-      // Compare the determinate attributes
-      for($i = 0; $i < sizeof($a_determinate); $i++)
-      {
-        if($a_determinate[$i] != $b_determinate[$i])
-        {
-          return false;
+        if (!is_array($a) || !is_array($b)) {
+            return false;
         }
-      }
 
-      // Compare the determinate attributes
-      for($i = 0; $i < sizeof($a_dependent); $i++)
-      {
-        if($a_dependent[$i] != $b_dependent[$i])
-        {
-          return false;
+        // At first check whether both have the keys determinateAttributes and dependentAttributes
+        if (!array_key_exists("determinateAttributes", $a) || !array_key_exists("dependentAttributes", $a) ||
+           !array_key_exists("determinateAttributes", $b) || !array_key_exists("dependentAttributes", $b)) {
+            throw new Exception('Tried to compare non functional dependencies in the compareFunctionalDependencies() function');
         }
-      }
 
-      // Both functional dependencies are equal
-      return true;
+        // Compare the length of both the determinateAtrributes and the dependentAttributes
+        if (sizeof($a["determinateAttributes"]) != sizeof($b["determinateAttributes"]) ||
+           sizeof($a["dependentAttributes"]) != sizeof($b["dependentAttributes"])) {
+            return false;
+        }
+
+        // Save the values in seperate arrays for easier handling
+        $a_determinate = array_map('strtolower', $a["determinateAttributes"]);
+        $a_dependent = array_map('strtolower', $a["dependentAttributes"]);
+        $b_determinate = array_map('strtolower', $b["determinateAttributes"]);
+        $b_dependent = array_map('strtolower', $b["dependentAttributes"]);
+
+        // Sort the arrays
+        sort($a_determinate);
+        sort($a_dependent);
+        sort($b_determinate);
+        sort($b_dependent);
+
+        // Compare the determinate attributes
+        for ($i = 0; $i < sizeof($a_determinate); $i++) {
+            if ($a_determinate[$i] != $b_determinate[$i]) {
+                return false;
+            }
+        }
+
+        // Compare the determinate attributes
+        for ($i = 0; $i < sizeof($a_dependent); $i++) {
+            if ($a_dependent[$i] != $b_dependent[$i]) {
+                return false;
+            }
+        }
+
+        // Both functional dependencies are equal
+        return true;
     }
 }

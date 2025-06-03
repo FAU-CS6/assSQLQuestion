@@ -17,7 +17,7 @@ class assSQLQuestionExport extends assQuestionExport
     {
         global $ilias;
 
-        $a_xml_writer = new ilXmlWriter;
+        $a_xml_writer = new ilXmlWriter();
 
         // Set XML header
         $a_xml_writer->xmlHeader();
