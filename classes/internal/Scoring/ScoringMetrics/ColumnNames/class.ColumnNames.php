@@ -85,75 +85,31 @@ class ColumnNames extends ScoringMetric
         $participant_metric = static::getParticipantMetric($participant_metrics);
 
         // Decode the JSONs
-        $solution_metric_decoded = json_decode($solution_metric->getValue(), true);
-        $participant_metric_decoded = json_decode($participant_metric->getValue(), true);
-
-        // If $solution_metric_decoded is empty the participant only gets (full) points if his solution is empty, too
-        if ($solution_metric_decoded == "") {
-            if ($participant_metric_decoded == "") {
-                return $solution_metric->getPoints();
-            }
-
-            return 0;
+        $solution_columns_anycase = json_decode($solution_metric->getValue(), true);
+        $participant_columns_anycase = json_decode($participant_metric->getValue(), true);
+        
+        // Sanitize the column names by making the array keys all lowercase
+        $solution_columns = array();
+        foreach ($solution_columns_anycase as $v) {
+            array_push($solution_columns, strtolower($v));
+        }
+        $participant_columns = array();
+        foreach ($participant_columns_anycase as $v) {
+            array_push($participant_columns, strtolower($v));
         }
 
-        // On the other side it might be possible that the participants column names are empty and the solution metric
-        // is not (last condition is true if the code on this position is executed) => In this case the participant gets
-        // zero points as well
-        if ($participant_metric_decoded == "") {
+        // Return early in case one of the metrics arrays is empty
+        if (sizeof($solution_columns) === 0 && sizeof($participant_columns) === 0) {
+            return $solution_metric->getPoints();
+        } elseif (sizeof($solution_columns) === 0 || sizeof($participant_columns) === 0) {
             return 0;
         }
 
         // Compute the UNION of both
-        $union = array();
-
-        // Iterate through the $solution_metric_decoded
-        for ($i = 0; $i < sizeof($solution_metric_decoded); $i++) {
-            $found = false;
-
-            for ($ii = 0; $ii < sizeof($union); $ii++) {
-                if (strtolower($union[$ii]) == strtolower($solution_metric_decoded[$i])) {
-                    $found = true;
-                }
-            }
-
-            if (!$found) {
-                array_push($union, $solution_metric_decoded[$i]);
-            }
-        }
-
-        // Iterate through the $solution_metric_decoded
-        for ($i = 0; $i < sizeof($participant_metric_decoded); $i++) {
-            $found = false;
-
-            for ($ii = 0; $ii < sizeof($union); $ii++) {
-                if (strtolower($union[$ii]) == strtolower($solution_metric_decoded[$i])) {
-                    $found = true;
-                }
-            }
-
-            if (!$found) {
-                array_push($union, $participant_metric_decoded[$i]);
-            }
-        }
+        $union = array_unique(array_merge($solution_columns, $participant_columns));
 
         // Compute the INTERSECT
-        $intersect = array();
-
-        // Iterate through the $solution_metric_decoded
-        for ($i = 0; $i < sizeof($solution_metric_decoded); $i++) {
-            $found = false;
-
-            for ($ii = 0; $ii < sizeof($participant_metric_decoded); $ii++) {
-                if (strtolower($participant_metric_decoded[$ii]) == strtolower($solution_metric_decoded[$i])) {
-                    $found = true;
-                }
-            }
-
-            if ($found) {
-                array_push($intersect, $solution_metric_decoded[$i]);
-            }
-        }
+        $intersect = array_intersect($solution_columns, $participant_columns);
 
         // Compute 1 - Jaccard distance
         return (int)(1 - ((sizeof($union) - sizeof($intersect)) / sizeof($union))) * $solution_metric->getPoints();
