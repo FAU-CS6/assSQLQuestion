@@ -126,11 +126,6 @@ class FunctionalDependencies extends ScoringMetric
             return 0;
         }
 
-        // If both solutions include no functional dependencies the participant scored full points
-        if (sizeof($solution_metric_decoded) == sizeof($participant_metric_decoded)) {
-            return $solution_metric->getPoints();
-        }
-
         // Compute the UNION of both
         $union = array();
 
@@ -149,7 +144,7 @@ class FunctionalDependencies extends ScoringMetric
             }
         }
 
-        // Iterate through the $solution_metric_decoded
+        // Iterate through the $participant_metric_decoded
         for ($i = 0; $i < sizeof($participant_metric_decoded); $i++) {
             $found = false;
 

@@ -20,7 +20,7 @@ final class FunctionalDependenciesTest extends TestCase
 
         $this->assertSame(5.0, $points);
     }
-    
+
     public function testGivesZeroPointsForIncorrectSolution(): void
     {
         $solution_metrics = [];
@@ -30,7 +30,7 @@ final class FunctionalDependenciesTest extends TestCase
 
         $participant_metrics = [];
         array_push($participant_metrics, new ParticipantMetric("column_names", '["geburtsjahr","id","name"]'));
-        array_push($participant_metrics, new ParticipantMetric("functional_dependencies", '["{\"determinateAttributes\":[\"id\"],\"dependentAttributes\":[\"name_herestheerror\"]}","{\"determinateAttributes\":[\"id\"],\"dependentAttributes\":[\"geburtsjahr\"]}","{\"determinateAttributes\":[\"name\"],\"dependentAttributes\":[\"id\"]}","{\"determinateAttributes\":[\"name\"],\"dependentAttributes\":[\"geburtsjahr\"]}"]'));
+        array_push($participant_metrics, new ParticipantMetric("functional_dependencies", '["{\"determinateAttributes\":[\"id\"],\"dependentAttributes\":[\"name_error\"]}","{\"determinateAttributes\":[\"id\"],\"dependentAttributes\":[\"geburtsjahr_error\"]}","{\"determinateAttributes\":[\"name\"],\"dependentAttributes\":[\"id_error\"]}","{\"determinateAttributes\":[\"name\"],\"dependentAttributes\":[\"geburtsjahr_error\"]}"]'));
         array_push($participant_metrics, new ParticipantMetric("result_lines", "100"));
 
         $points = FunctionalDependencies::calculateReachedPoints($solution_metrics, $participant_metrics);
