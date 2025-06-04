@@ -312,7 +312,7 @@ abstract class ScoringMetric
      * @return float The reached points
      * @access protected
      */
-    public static function calculateReachedPoints($solution_metrics, $participant_metrics): int
+    public static function calculateReachedPoints($solution_metrics, $participant_metrics): float
     {
         throw new Exception("This is an abstract method that should never be used - Has to be implemented by a subclass");
     }

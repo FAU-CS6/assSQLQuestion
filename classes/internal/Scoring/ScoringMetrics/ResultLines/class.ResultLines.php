@@ -52,11 +52,11 @@ class ResultLines extends ScoringMetric
      * @param SolutionMetric[] $solution_metrics The suiting solution metric array (with the pattern solution values)
      * @param ParticipantMetric[] $participant_metrics The participant metric array to be evaluated
      *
-     * @return int The reached points
+     * @return float The reached points
      *
      * @access public
      */
-    public static function calculateReachedPoints($solution_metrics, $participant_metrics): int
+    public static function calculateReachedPoints($solution_metrics, $participant_metrics): float
     {
         // Get the suiting solution and participant metric
         $solution_metric = static::getSolutionMetric($solution_metrics);

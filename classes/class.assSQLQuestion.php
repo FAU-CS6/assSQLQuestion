@@ -484,7 +484,7 @@ class assSQLQuestion extends assQuestion
      * @param	array	('value1' => string, 'value2' => float)
      * @return float The reached points
      */
-    protected function calculateReachedPointsForSolution($solution)
+    protected function calculateReachedPointsForSolution($solution): float
     {
         // Transform value1 of solution into a ParticipantInput
         $participant_input = isset($solution["value1"]) ? ParticipantInput::fromJSON($solution["value1"]) : new ParticipantInput();
@@ -495,7 +495,7 @@ class assSQLQuestion extends assQuestion
         // Initialize the points with zero
         $points = 0;
 
-        // Go through the different ScoringMetrics and sum there points up
+        // Go through the different ScoringMetrics and sum their points up
         $points += ResultLines::calculateReachedPoints($this->solution_metrics, $participant_metrics);
         $points += ColumnNames::calculateReachedPoints($this->solution_metrics, $participant_metrics);
         $points += FunctionalDependencies::calculateReachedPoints($this->solution_metrics, $participant_metrics);
@@ -951,7 +951,7 @@ class assSQLQuestion extends assQuestion
      * Get all scoring metrics with a specific type
      *
      * @param string $type The type of the searched SolutionMetric
-     * @return SolutionMetric[] A array containing all metrics with this type
+     * @return SolutionMetric[] An array containing all metrics with this type
      */
     public function getSolutionMetricsWithType($type): array
     {

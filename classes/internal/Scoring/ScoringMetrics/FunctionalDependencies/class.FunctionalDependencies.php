@@ -96,11 +96,11 @@ class FunctionalDependencies extends ScoringMetric
      * @param SolutionMetric[] $solution_metrics The suiting solution metric array (with the pattern solution values)
      * @param ParticipantMetric[] $participant_metrics The participant metric array to be evaluated
      *
-     * @return int The reached points
+     * @return float The reached points
      *
      * @access public
      */
-    public static function calculateReachedPoints($solution_metrics, $participant_metrics): int
+    public static function calculateReachedPoints($solution_metrics, $participant_metrics): float
     {
         // Get the suiting solution and participant metric
         $solution_metric = static::getSolutionMetric($solution_metrics);
@@ -183,7 +183,7 @@ class FunctionalDependencies extends ScoringMetric
         }
 
         // Compute 1 - Jaccard distance
-        return (int)(1 - ((sizeof($union) - sizeof($intersect)) / sizeof($union))) * $solution_metric->getPoints();
+        return (1 - ((sizeof($union) - sizeof($intersect)) / sizeof($union))) * $solution_metric->getPoints();
     }
 
     /**
