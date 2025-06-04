@@ -73,6 +73,15 @@ final class FunctionalDependenciesTest extends TestCase
 
         $this->assertSame(7.0, $points);
     }
+
+    public function testRecognizesCommutativeNotations(): void
+    {
+        $solution_metrics = [new SolutionMetric("functional_dependencies", 7, '["{\"determinateAttributes\":[\"id\"],\"dependentAttributes\":[\"firstname\", \"familyname\"]}", "{\"determinateAttributes\":[\"plz\"],\"dependentAttributes\":[\"ort\"]}"]')];
+        $participant_metrics = [new ParticipantMetric("functional_dependencies", '["{\"determinateAttributes\":[\"plz\"],\"dependentAttributes\":[\"ort\"]}", "{\"determinateAttributes\":[\"id\"],\"dependentAttributes\":[\"familyname\", \"firstname\"]}"]')];
+        $points = FunctionalDependencies::calculateReachedPoints($solution_metrics, $participant_metrics);
+
+        $this->assertSame(7.0, $points);
+    }
 }
 
 
