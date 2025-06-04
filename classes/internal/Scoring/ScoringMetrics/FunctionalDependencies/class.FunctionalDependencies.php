@@ -110,20 +110,11 @@ class FunctionalDependencies extends ScoringMetric
         $solution_metric_decoded = json_decode($solution_metric->getValue(), true);
         $participant_metric_decoded = json_decode($participant_metric->getValue(), true);
 
-        // If $solution_metric_decoded is empty the participant only gets (full) points if his solution is empty, too
-        if ($solution_metric_decoded == "") {
-            if ($participant_metric_decoded == "") {
-                return $solution_metric->getPoints();
-            }
-
-            return 0;
-        }
-
-        // On the other side it might be possible that the participants fds are empty and the solution metric
-        // is not (last condition is true if the code on this position is executed) => In this case the participant gets
-        // zero points as well
-        if ($participant_metric_decoded == "") {
-            return 0;
+        // Return early if one of the column arrays is empty
+        if (!$solution_metric_decoded && !$participant_metric_decoded) {
+            return $solution_metric->getPoints(); // Both empty --> full points
+        } elseif (!$solution_metric_decoded || !$participant_metric_decoded) {
+            return 0; // One empty but not the other --> no points
         }
 
         // Compute the UNION of both
