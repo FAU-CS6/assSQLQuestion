@@ -88,6 +88,12 @@ class ColumnNames extends ScoringMetric
         $solution_columns_anycase = json_decode($solution_metric->getValue(), true);
         $participant_columns_anycase = json_decode($participant_metric->getValue(), true);
         
+        // Return early if one of the column arrays is empty
+        if (!$solution_columns_anycase && !$participant_columns_anycase) {
+            return $solution_metric->getPoints(); // Both empty --> full points
+        } elseif (!$solution_columns_anycase || !$participant_columns_anycase) {
+            return 0; // One empty but not the other --> no points
+        }
         // Sanitize the column names by making the array keys all lowercase
         $solution_columns = array();
         foreach ($solution_columns_anycase as $v) {
@@ -96,13 +102,6 @@ class ColumnNames extends ScoringMetric
         $participant_columns = array();
         foreach ($participant_columns_anycase as $v) {
             array_push($participant_columns, strtolower($v));
-        }
-
-        // Return early in case one of the metrics arrays is empty
-        if (sizeof($solution_columns) === 0 && sizeof($participant_columns) === 0) {
-            return $solution_metric->getPoints();
-        } elseif (sizeof($solution_columns) === 0 || sizeof($participant_columns) === 0) {
-            return 0;
         }
 
         // Compute the UNION of both
