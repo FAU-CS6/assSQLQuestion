@@ -1,12 +1,6 @@
 <?php
-require_once __DIR__.'/../class.GUIArea.php';
 
-require_once __DIR__.'/../GUIElements/SequenceArea/class.SequenceInfo.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.SequenceA.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.SequenceB.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.SequenceC.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.IntegrityCheck.php';
-require_once __DIR__.'/../GUIElements/SequenceArea/class.ExecuteButton.php';
+declare(strict_types=1);
 
 /**
  * Represents the sequence area used in assSQLQuestionGUI
@@ -19,12 +13,12 @@ require_once __DIR__.'/../GUIElements/SequenceArea/class.ExecuteButton.php';
 class SequenceArea extends GUIArea
 {
     /**
-    * Constructor
-    *
-    * @param ilassSQLQuestionPlugin $plugin The plugin object
-    * @param assSQLQuestion $object The question object
-    * @access public
-    */
+     * Constructor
+     *
+     * @param ilassSQLQuestionPlugin $plugin The plugin object
+     * @param assSQLQuestion $object The question object
+     * @access public
+     */
     public function __construct($plugin, $object)
     {
         // Use the GUIArea constructor
@@ -37,6 +31,12 @@ class SequenceArea extends GUIArea
 
         // Info area
         $this->addSubElement(new SequenceInfo(
+            $plugin, // Plugin
+            $object // Object
+        ));
+
+        // Syntax help area
+        $this->addSubElement(new SyntaxHelp(
             $plugin, // Plugin
             $object // Object
         ));
@@ -86,7 +86,7 @@ class SequenceArea extends GUIArea
      * @return boolean True if input is ok, False if it is not
      * @access public
      */
-    public function checkInput()
+    public function checkInput(): bool
     {
         if (isset($_POST["sequence_b"]) && $_POST["sequence_b"] == "") {
             // $this->setAlert($this->plugin->txt('ai_sea_eo_error'));

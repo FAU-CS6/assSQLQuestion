@@ -1,8 +1,6 @@
 <?php
-require_once __DIR__.'/../class.GUIArea.php';
 
-require_once __DIR__.'/../GUIElements/OutputArea/class.OutputInfo.php';
-require_once __DIR__.'/../GUIElements/OutputArea/class.Output.php';
+declare(strict_types=1);
 
 /**
  * Represents the output area used in assSQLQuestionGUI
@@ -15,12 +13,12 @@ require_once __DIR__.'/../GUIElements/OutputArea/class.Output.php';
 class OutputArea extends GUIArea
 {
     /**
-    * Constructor
-    *
-    * @param ilassSQLQuestionPlugin $plugin The plugin object
-    * @param assSQLQuestion $object The question object
-    * @access public
-    */
+     * Constructor
+     *
+     * @param ilassSQLQuestionPlugin $plugin The plugin object
+     * @param assSQLQuestion $object The question object
+     * @access public
+     */
     public function __construct($plugin, $object)
     {
         // Use the GUIArea constructor
@@ -62,10 +60,12 @@ class OutputArea extends GUIArea
      * @return boolean True if input is ok, False if it is not
      * @access public
      */
-    public function checkInput()
+    public function checkInput(): bool
     {
-        if ((isset($_POST["error_bool"]) && $_POST["error_bool"] == "true") ||
-        (isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "false")) {
+        if (
+            (isset($_POST["error_bool"]) && $_POST["error_bool"] == "true") ||
+            (isset($_POST["executed_bool"]) && $_POST["executed_bool"] == "false")
+        ) {
             // $this->setAlert($this->plugin->txt('ai_oa_eo_error'));
             return false;
         }

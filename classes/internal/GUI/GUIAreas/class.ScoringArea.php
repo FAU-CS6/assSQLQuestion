@@ -1,8 +1,6 @@
 <?php
-require_once __DIR__.'/../class.GUIArea.php';
 
-require_once __DIR__.'/../GUIElements/ScoringArea/class.ScoringInfo.php';
-require_once __DIR__.'/../GUIElements/ScoringArea/class.ScoringMetrics.php';
+declare(strict_types=1);
 
 /**
  * Represents the scoring area used in assSQLQuestionGUI
@@ -15,12 +13,12 @@ require_once __DIR__.'/../GUIElements/ScoringArea/class.ScoringMetrics.php';
 class ScoringArea extends GUIArea
 {
     /**
-    * Constructor
-    *
-    * @param ilassSQLQuestionPlugin $plugin The plugin object
-    * @param assSQLQuestion $object The question object
-    * @access public
-    */
+     * Constructor
+     *
+     * @param ilassSQLQuestionPlugin $plugin The plugin object
+     * @param assSQLQuestion $object The question object
+     * @access public
+     */
     public function __construct($plugin, $object)
     {
         // Use the GUIArea constructor
@@ -46,7 +44,7 @@ class ScoringArea extends GUIArea
         // Set Title, Information and Required
         $this->setTitle($this->plugin->txt('ai_sca_eo_name'));
         $this->setRequired(true);
-        $this->setHTML($this->getEditOutput());
+        $this->setHtml($this->getEditOutput());
     }
 
     /**
@@ -58,23 +56,20 @@ class ScoringArea extends GUIArea
      * @return boolean True if input is ok, False if it is not
      * @access public
      */
-    public function checkInput()
+    public function checkInput(): bool
     {
         $points = 0;
 
-        if(isset($_POST["points_result_lines"]))
-        {
-          $points += $_POST["points_result_lines"];
+        if (isset($_POST["points_result_lines"])) {
+            $points += $_POST["points_result_lines"];
         }
 
-        if(isset($_POST["points_functional_dependencies"]))
-        {
-          $points += $_POST["points_functional_dependencies"];
+        if (isset($_POST["points_functional_dependencies"])) {
+            $points += $_POST["points_functional_dependencies"];
         }
 
-        if(isset($_POST["points_column_names"]))
-        {
-          $points += $_POST["points_column_names"];
+        if (isset($_POST["points_column_names"])) {
+            $points += $_POST["points_column_names"];
         }
 
         if ($points <= 0) {

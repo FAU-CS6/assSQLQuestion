@@ -1,7 +1,6 @@
 <?php
-require_once __DIR__.'/../class.GUIArea.php';
 
-require_once __DIR__.'/../GUIElements/QuestionArea/class.QuestionText.php';
+declare(strict_types=1);
 
 /**
  * Represents the area used in assSQLQuestionGUI to display the question
@@ -14,12 +13,12 @@ require_once __DIR__.'/../GUIElements/QuestionArea/class.QuestionText.php';
 class QuestionArea extends GUIArea
 {
     /**
-    * Constructor
-    *
-    * @param ilassSQLQuestionPlugin $plugin The plugin object
-    * @param assSQLQuestion $object The question object
-    * @access public
-    */
+     * Constructor
+     *
+     * @param ilassSQLQuestionPlugin $plugin The plugin object
+     * @param assSQLQuestion $object The question object
+     * @access public
+     */
     public function __construct($plugin, $object)
     {
         // Use the GUIArea constructor
@@ -50,7 +49,7 @@ class QuestionArea extends GUIArea
      * @return boolean True if input is ok, False if it is not
      * @access public
      */
-    public function checkInput()
+    public function checkInput(): bool
     {
         // This includes no Input
         return true;

@@ -1,13 +1,6 @@
 <?php
-require_once __DIR__.'/../../class.GUIElement.php';
 
-// Abstract ScoringMetric
-require_once __DIR__.'/../../../Scoring/class.ScoringMetric.php';
-
-// All ScoringMetrics to be shown
-require_once __DIR__.'/../../../Scoring/ScoringMetrics/ResultLines/class.ResultLines.php';
-require_once __DIR__.'/../../../Scoring/ScoringMetrics/ColumnNames/class.ColumnNames.php';
-require_once __DIR__.'/../../../Scoring/ScoringMetrics/FunctionalDependencies/class.FunctionalDependencies.php';
+declare(strict_types=1);
 
 /**
  * Represents the quantity of ScoringMetrics

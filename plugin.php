@@ -4,11 +4,11 @@
 $id = "qpisql";
 
 // Version of the Plugin
-$version = "0.0.78";
+$version = "0.0.82";
 
 // Supported Ilias Versions
-$ilias_min_version = "5.4.0";
-$ilias_max_version = "7.5.999";
+$ilias_min_version = "8.0.0";
+$ilias_max_version = "9.999";
 
 // Main Responsible Person
 $responsible = "Dominik Probst";

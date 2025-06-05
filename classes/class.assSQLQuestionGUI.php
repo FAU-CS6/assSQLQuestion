@@ -1,9 +1,6 @@
 <?php
-require_once "internal/GUI/GUIAreas/class.QuestionArea.php";
-require_once "internal/GUI/GUIAreas/class.SequenceArea.php";
-require_once "internal/GUI/GUIAreas/class.OutputArea.php";
-require_once "internal/GUI/GUIAreas/class.ScoringArea.php";
-require_once "internal/DataStructures/class.ParticipantInput.php";
+
+declare(strict_types=1);
 
 /**
  * GUI class of the SQLQuestion plugin
@@ -24,34 +21,37 @@ class assSQLQuestionGUI extends assQuestionGUI
     /**
      * @var ilassSQLQuestionPlugin The plugin object
      */
-    public $plugin = null;
+    public ilassSQLQuestionPlugin $plugin;
 
     /**
      * @var assSQLQuestion The question object
      */
-    public $object = null;
+    public assQuestion $object;
 
     /**
-     * @const	string URL base path for including used javascript and css files
+     * @const string URL base path for including used javascript and css files
      */
-    const QPISQL_URL_PATH = "./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion";
+    private const QPISQL_URL_PATH = "./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion";
 
     /**
      * Member functions that have to be part of every assQuestionGUI
      */
 
     /**
-    * Constructor
-    *
-    * @param integer $id The database id of a question object
-    * @access public
-    */
+     * Constructor
+     *
+     * @param integer $id The database id of a question object
+     * @access public
+     */
     public function __construct($id = -1)
     {
+        global $DIC;
+
         parent::__construct();
 
-        $this->plugin = ilPlugin::getPluginObject(IL_COMP_MODULE, "TestQuestionPool", "qst", "assSQLQuestion");
-        $this->plugin->includeClass("class.assSQLQuestion.php");
+        /** @var ilComponentFactory $component_factory */
+        $component_factory = $DIC["component.factory"];
+        $this->plugin = $component_factory->getPlugin('qpisql');
         $this->object = new assSQLQuestion();
         if ($id >= 0) {
             $this->object->loadFromDb($id);
@@ -64,7 +64,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param bool $checkonly
      * @return bool
      */
-    public function editQuestion($checkonly = false)
+    public function editQuestion($checkonly = false): bool
     {
         // Initialize the Language module
         global $DIC;
@@ -82,7 +82,7 @@ class assSQLQuestionGUI extends assQuestionGUI
         $form->setTableWidth("100%");
         $form->setId("qpisql");
 
-        // Add basic fields (title, author, description, question and working time)
+        // Add basic fields (title, author, description and question)
         $this->addBasicQuestionFormProperties($form);
 
         // Add question specific fields
@@ -128,7 +128,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param bool $always
      * @return integer A positive value, if one of the required fields wasn't set, else 0
      */
-    public function writePostData($always = false)
+    protected function writePostData($always = false): int
     {
         $hasErrors = (!$always) ? $this->editQuestion(true) : false;
         if (!$hasErrors) {
@@ -137,6 +137,7 @@ class assSQLQuestionGUI extends assQuestionGUI
 
             // Insert the different GUIAreas
             $guiAreas = array();
+            array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
             array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
             array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
             array_push($guiAreas, new OutputArea($this->plugin, $this->object));
@@ -168,7 +169,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param boolean $show_specific_inline_feedback	Show a specific inline feedback
      * @return string
      */
-    public function getTestOutput($active_id, $pass = null, $is_postponed = false, $use_post_solutions = false, $show_specific_inline_feedback = false)
+    public function getTestOutput($active_id, $pass = null, $is_postponed = false, $use_post_solutions = false, $show_specific_inline_feedback = false): string
     {
         // Get the stored solution
         $solution = $this->object->getSolutionStored($active_id, $pass, null);
@@ -186,6 +187,7 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         // Insert the different GUIAreas
         $guiAreas = array();
+        array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
         array_push($guiAreas, new OutputArea($this->plugin, $this->object));
@@ -207,7 +209,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param boolean	$show_question_only
      * @return string
      */
-    public function getPreview($show_question_only = false, $showInlineFeedback = false)
+    public function getPreview($show_question_only = false, $showInlineFeedback = false): string
     {
         if (is_object($this->getPreviewSession())) {
             $solution = $this->getPreviewSession()->getParticipantsSolution();
@@ -226,6 +228,7 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         // Insert the different GUIAreas
         $guiAreas = array();
+        array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
         array_push($guiAreas, new OutputArea($this->plugin, $this->object));
@@ -262,7 +265,7 @@ class assSQLQuestionGUI extends assQuestionGUI
         $show_correct_solution = false,
         $show_manual_scoring = false,
         $show_question_text = true
-    ) {
+    ): string {
         // If we want to show the pattern solution we have no participant input
         $participant_input = null;
 
@@ -280,6 +283,7 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         // Insert the different GUIAreas
         $guiAreas = array();
+        array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
         array_push($guiAreas, new OutputArea($this->plugin, $this->object));
@@ -293,100 +297,18 @@ class assSQLQuestionGUI extends assQuestionGUI
     }
 
     /**
-    * Returns the answer specific feedback for the question
-    *
-    * @param array $userSolution ($userSolution[<value1>] = <value2>)
-    * @return string HTML Code with the answer specific feedback
-    * @access public
-    */
-    public function getSpecificFeedbackOutput($userSolution)
+     * Returns the answer specific feedback for the question
+     *
+     * @param array $userSolution ($userSolution[<value1>] = <value2>)
+     * @return string HTML Code with the answer specific feedback
+     * @access public
+     */
+    public function getSpecificFeedbackOutput($userSolution): string
     {
         // By default no answer specific feedback is defined
         $output = '';
-        return $this->object->prepareTextareaOutput($output, true);
+        return self::prepareTextareaOutput($output, true);
     }
-
-
-    /**
-     * Sets the ILIAS tabs for this question type
-     * called from ilObjTestGUI and ilObjQuestionPoolGUI
-     */
-    public function setQuestionTabs()
-    {
-        global $DIC;
-        $rbacsystem = $DIC->rbac()->system();
-        $ilTabs = $DIC->tabs();
-
-        $this->ctrl->setParameterByClass("ilpageobjectgui", "q_id", $_GET["q_id"]);
-        include_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
-        $q_type = $this->object->getQuestionType();
-
-        if (strlen($q_type)) {
-            $classname = $q_type . "GUI";
-            $this->ctrl->setParameterByClass(strtolower($classname), "sel_question_types", $q_type);
-            $this->ctrl->setParameterByClass(strtolower($classname), "q_id", $_GET["q_id"]);
-        }
-
-        if ($_GET["q_id"]) {
-            if ($rbacsystem->checkAccess('write', $_GET["ref_id"])) {
-                // edit page
-                $ilTabs->addTarget(
-                    "edit_page",
-                    $this->ctrl->getLinkTargetByClass("ilAssQuestionPageGUI", "edit"),
-                    array("edit", "insert", "exec_pg"),
-                    "",
-                    "",
-                    $force_active
-                );
-            }
-
-            $this->addTab_QuestionPreview($ilTabs);
-        }
-
-        $force_active = false;
-        if ($rbacsystem->checkAccess('write', $_GET["ref_id"])) {
-            $url = "";
-
-            if ($classname) {
-                $url = $this->ctrl->getLinkTargetByClass($classname, "editQuestion");
-            }
-            $commands = $_POST["cmd"];
-
-            // edit question properties
-            $ilTabs->addTarget(
-                "edit_properties",
-                $url,
-                array("editQuestion", "save", "cancel", "saveEdit", "originalSyncForm"),
-                $classname,
-                "",
-                $force_active
-            );
-        }
-
-        // add tab for question feedback within common class assQuestionGUI
-        $this->addTab_QuestionFeedback($ilTabs);
-
-        // add tab for question hint within common class assQuestionGUI
-        $this->addTab_QuestionHints($ilTabs);
-
-        // add tab for question's suggested solution within common class assQuestionGUI
-        $this->addTab_SuggestedSolution($ilTabs, $classname);
-
-
-        // Assessment of questions sub menu entry
-        if ($_GET["q_id"]) {
-            $ilTabs->addTarget(
-                "statistics",
-                $this->ctrl->getLinkTargetByClass($classname, "assessment"),
-                array("assessment"),
-                $classname,
-                ""
-            );
-        }
-
-        $this->addBackTab($ilTabs);
-    }
-
 
     /**
      * Custom member functions only needed in an assSQLQuestionGUI
@@ -398,35 +320,19 @@ class assSQLQuestionGUI extends assQuestionGUI
      *
      * @access private
      */
-    private function prepareTemplate()
+    private function prepareTemplate(): void
     {
         // Add CSS files
 
-        // Custom css
-        $this->tpl->addCss(self::QPISQL_URL_PATH.'/css/custom.css');
-
-        // Codemirror
-        $this->tpl->addCss(self::QPISQL_URL_PATH.'/lib/codemirror/lib/codemirror.css');
+        // Custom CSS
+        $this->tpl->addCss(self::QPISQL_URL_PATH . '/css/custom.css');
 
         // Add JS files
 
-        // Minified JS file
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/js/min.js.php');
+        // Add custom JS code
 
-        // Codemirror
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/lib/codemirror/lib/codemirror.js');
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/lib/codemirror/mode/sql/sql.js');
-
-        // SQL.js
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/lib/sql.js/sql.js');
-
-        // JThread
-        $this->tpl->addJavascript(self::QPISQL_URL_PATH.'/lib/jThread/jThread.js');
-
-        // Add custom js code
-
-        // Add path to the plugin file to be accessible in js, too
-        $this->tpl->addOnLoadCode("window.QPISQL_URL_PATH = \"".self::QPISQL_URL_PATH."\"");
+        // Add path to the plugin file to be accessible in JS, too
+        $this->tpl->addOnLoadCode("window.QPISQL_URL_PATH = \"" . self::QPISQL_URL_PATH . "\"");
 
     }
 
@@ -437,12 +343,11 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param ilPropertyFormGUI $form The form the fields should be added to
      * @access private
      */
-    private function addSpecificQuestionFormProperties(\ilPropertyFormGUI $form)
+    private function addSpecificQuestionFormProperties(\ilPropertyFormGUI $form): void
     {
-        global $lng;
-
         // Insert the different GUIAreas
         $guiAreas = array();
+        array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
         array_push($guiAreas, new OutputArea($this->plugin, $this->object));

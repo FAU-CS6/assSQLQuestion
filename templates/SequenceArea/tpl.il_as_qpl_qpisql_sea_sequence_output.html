@@ -9,11 +9,11 @@
 
   <script>
     // Create a coding box out of the textarea
-    var editor_{ID} = CodeMirror.fromTextArea(document.getElementById('{ID}'), {
-      lineNumbers: true,
-      mode: 'text/x-sql',
-      readOnly: true
-    });
+    var editor_{ID} = codemirror_sqlquestion.editorFromTextArea(
+      document.getElementById('{ID}'),
+      window.EXECUTE_HANDLER.onChange(),
+      true
+    );
   </script>
 
 </div>

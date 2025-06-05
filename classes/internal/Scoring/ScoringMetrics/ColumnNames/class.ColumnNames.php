@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__.'/../../class.ScoringMetric.php';
+
+declare(strict_types=1);
 
 /**
  * Represents the ColumnNames ScoringMetric
@@ -11,17 +12,17 @@ class ColumnNames extends ScoringMetric
     /**
      * @var string The type identifier of the scoring metric (e.g. "functional_dependency")
      */
-    protected static $type = "column_names";
+    protected static string $type = "column_names";
 
     /**
      * @var string The Javascript funtion to get the value of the sm out of a result
      */
-    protected static $getter = "function(result) { return result.getColumnNamesAsJSON(); }";
+    protected static string $getter = "function(result) { return result.getColumnNamesAsJSON(); }";
 
     /**
      * @var string The Javascript to beautifiy (make it more readable) the getter string
      */
-    protected static $beautifier = "function(stringToBeautify) {
+    protected static string $beautifier = "function(stringToBeautify) {
       var decoded_json = '';
 
       try {
@@ -51,7 +52,7 @@ class ColumnNames extends ScoringMetric
      * @return string The info text shown at the edit page
      * @access protected
      */
-    protected static function getEditPageInfo($plugin)
+    protected static function getEditPageInfo($plugin): string
     {
         return $plugin->txt('ai_sca_eo_sm_cn_info');
     }
@@ -62,7 +63,7 @@ class ColumnNames extends ScoringMetric
      * @return string The info text shown at the solution page
      * @access protected
      */
-    protected static function getSolutionPageInfo($plugin)
+    protected static function getSolutionPageInfo($plugin): string
     {
         return $plugin->txt('ai_sca_so_sm_cn_info');
     }
@@ -77,96 +78,39 @@ class ColumnNames extends ScoringMetric
      *
      * @access public
      */
-    public static function calculateReachedPoints($solution_metrics, $participant_metrics)
+    public static function calculateReachedPoints($solution_metrics, $participant_metrics): float
     {
         // Get the suiting solution and participant metric
         $solution_metric = static::getSolutionMetric($solution_metrics);
         $participant_metric = static::getParticipantMetric($participant_metrics);
 
         // Decode the JSONs
-        $solution_metric_decoded = json_decode($solution_metric->getValue(), TRUE);
-        $participant_metric_decoded = json_decode($participant_metric->getValue(), TRUE);
-
-        // If $solution_metric_decoded is empty the participant only gets (full) points if his solution is empty, too
-        if($solution_metric_decoded == "") {
-            if($participant_metric_decoded == "") {
-                return $solution_metric->getPoints();
-            }
-
-            return 0;
+        $solution_columns_anycase = json_decode($solution_metric->getValue(), true);
+        $participant_columns_anycase = json_decode($participant_metric->getValue(), true);
+        
+        // Return early if one of the column arrays is empty
+        if (!$solution_columns_anycase && !$participant_columns_anycase) {
+            return $solution_metric->getPoints(); // Both empty --> full points
+        } elseif (!$solution_columns_anycase || !$participant_columns_anycase) {
+            return 0; // One empty but not the other --> no points
         }
-
-        // On the other side it might be possible that the participants column names are empty and the solution metric
-        // is not (last condition is true if the code on this position is executed) => In this case the participant gets
-        // zero points as well
-        if($participant_metric_decoded == "") {
-            return 0;
+        // Sanitize the column names by making the array keys all lowercase
+        $solution_columns = array();
+        foreach ($solution_columns_anycase as $v) {
+            array_push($solution_columns, strtolower($v));
+        }
+        $participant_columns = array();
+        foreach ($participant_columns_anycase as $v) {
+            array_push($participant_columns, strtolower($v));
         }
 
         // Compute the UNION of both
-        $union = array();
-
-        // Iterate through the $solution_metric_decoded
-        for($i = 0; $i < sizeof($solution_metric_decoded); $i++)
-        {
-          $found = false;
-
-          for($ii = 0; $ii < sizeof($union); $ii++)
-          {
-            if(strtolower($union[$ii]) == strtolower($solution_metric_decoded[$i]))
-            {
-              $found = true;
-            }
-          }
-
-          if(!$found)
-          {
-            array_push($union, $solution_metric_decoded[$i]);
-          }
-        }
-
-        // Iterate through the $solution_metric_decoded
-        for($i = 0; $i < sizeof($participant_metric_decoded); $i++)
-        {
-          $found = false;
-
-          for($ii = 0; $ii < sizeof($union); $ii++)
-          {
-            if(strtolower($union[$ii]) == strtolower($solution_metric_decoded[$i]))
-            {
-              $found = true;
-            }
-          }
-
-          if(!$found)
-          {
-            array_push($union, $participant_metric_decoded[$i]);
-          }
-        }
+        $union = array_unique(array_merge($solution_columns, $participant_columns));
 
         // Compute the INTERSECT
-        $intersect = array();
-
-        // Iterate through the $solution_metric_decoded
-        for($i = 0; $i < sizeof($solution_metric_decoded); $i++)
-        {
-          $found = false;
-
-          for($ii = 0; $ii < sizeof($participant_metric_decoded); $ii++)
-          {
-            if(strtolower($participant_metric_decoded[$ii]) == strtolower($solution_metric_decoded[$i]))
-            {
-              $found = true;
-            }
-          }
-
-          if($found)
-          {
-            array_push($intersect, $solution_metric_decoded[$i]);
-          }
-        }
+        $intersect = array_intersect($solution_columns, $participant_columns);
 
         // Compute 1 - Jaccard distance
-        return (1 - ((sizeof($union) - sizeof($intersect))/sizeof($union))) * $solution_metric->getPoints();
+        return (1 - ((sizeof($union) - sizeof($intersect)) / sizeof($union))) * $solution_metric->getPoints();
     }
 }

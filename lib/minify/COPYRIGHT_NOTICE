@@ -5,6 +5,9 @@ Copyright notice
 The code in this subdirectory is licensed under MIT license and
 was obtained from https://php-download.com/package/matthiasmullie/minify at 2019-01-04.
 
+By using composer, it was updated to the then latest version at 2025-03-10.
+The 'modifications to original code' below don't apply anymore.
+
 The original licenses can be found in the LICENSE file included in the vendor/composer/,
 vendor/matthiasmullie/minify and vendor/matthiasmullie/path-converter subfolders.
 

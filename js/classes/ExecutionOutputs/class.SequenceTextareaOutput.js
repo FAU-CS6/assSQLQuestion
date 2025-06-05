@@ -36,7 +36,9 @@
    onExecution()
    {
      // Disable the input
-     this.editor.setOption("readOnly", true);
+     this.editor.setReadOnly(true);
+     // Transfer the contents of the 
+     this.editor.transferValueToTextarea();
    }
 
    /**
@@ -47,7 +49,7 @@
    onError(error)
    {
      // Enable the input
-     this.editor.setOption("readOnly", false);
+     this.editor.setReadOnly(false);
    }
 
    /**
@@ -58,7 +60,7 @@
    onResult(result)
    {
      // Enable the input
-     this.editor.setOption("readOnly", false);
+     this.editor.setReadOnly(false);
    }
 
  }
