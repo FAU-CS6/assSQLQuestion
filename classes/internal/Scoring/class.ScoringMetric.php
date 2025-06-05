@@ -120,7 +120,7 @@ abstract class ScoringMetric
         $points = $solution_metric->getPoints();
 
         if (isset($_POST["points_" . static::$type])) {
-            $points = (integer) $_POST["points_" . static::$type];
+            $points = (int) $_POST["points_" . static::$type];
         }
 
         $tpl->setVariable("VALUE", $value);
@@ -282,7 +282,7 @@ abstract class ScoringMetric
         $object->setSingleSolutionMetric(
             new SolutionMetric(
                 static::$type, // type
-                (integer) $_POST["points_" . static::$type], // points
+                (int) $_POST["points_" . static::$type], // points
                 (string) $_POST["value_" . static::$type]
             ) // value
         );
@@ -312,7 +312,7 @@ abstract class ScoringMetric
      * @return float The reached points
      * @access protected
      */
-    public static function calculateReachedPoints($solution_metrics, $participant_metrics): int
+    public static function calculateReachedPoints($solution_metrics, $participant_metrics): float
     {
         throw new Exception("This is an abstract method that should never be used - Has to be implemented by a subclass");
     }

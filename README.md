@@ -40,7 +40,7 @@ There are two different options to install this plugin. One for demonstration an
 
 ## Development
 
-Some of the artifacts are uploaded to the repository in built form, some need to be built during installation. For the PHP part of the plugin, we adhere to the suggestions of ILIAS, namely to `composer install --no-dev` all dependencies during installation and not check in dependency artifacts into git (c.f. https://github.com/ILIAS-eLearning/ILIAS/pull/1833 and specifically https://docu.ilias.de/ilias.php?baseClass=ilwikihandlergui&cmdNode=16f:rp&cmdClass=ilobjwikigui&cmd=viewPage&ref_id=1357&page=Include_Plugins_into_composer_autoloader for plugins).
+Some of the artifacts are uploaded to the repository in built form, some need to be built during installation. For the PHP part of the plugin, we adhere to the suggestions of ILIAS, namely to `composer install --no-dev` all dependencies during installation and not check in dependency artifacts into git (c.f. https://github.com/ILIAS-eLearning/ILIAS/pull/1833 and specifically https://docu.ilias.de/go/wiki/wpage_6371_1357 for plugins).
 
 At the same time, there is the file `js/min.js.php`, which depends on `MatthiasMullie\Minify`. `min.js.php` is called directly from the browser but not via `ilias.php`. For this reason, we maintain a second, parallel composer in `lib/minify/vendor/`, which we do check in! It is up to the developer to update these dependencies and in order to do so, they need to operate in this composer instance (e.g. by calling `composer update matthiasmullie/path-converter`).
 

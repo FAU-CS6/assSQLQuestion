@@ -137,7 +137,7 @@ class assSQLQuestionImport extends assQuestionImport
                     $importfile = $this->getQplImportArchivDirectory() . '/' . $mob["uri"];
                 }
                 $ilLog->write($importfile);
-                $media_object = ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, FALSE);
+                $media_object = ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, false);
                 ilObjMediaObject::_saveUsage($media_object->getId(), "qpl:html", $this->object->getId());
 
                 // Images in question text
