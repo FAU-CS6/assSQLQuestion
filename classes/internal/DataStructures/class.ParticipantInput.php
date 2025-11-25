@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * An internal helper class to define a solid structure for the participants input
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  */
 class ParticipantInput
 {

@@ -1,6 +1,6 @@
 /**
  * @file ExecutionInput for a single CodeMirror Sequence input area
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version 0.1
  */
 

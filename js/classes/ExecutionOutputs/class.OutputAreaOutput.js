@@ -1,6 +1,6 @@
 /**
  * @file ExecutionOutput for the hidden fields of the output area
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version 0.1
  */
 

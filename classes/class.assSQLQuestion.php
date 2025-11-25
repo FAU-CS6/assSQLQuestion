@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Main defintion of the SQLQuestion plugin
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @ingroup ModulesTestQuestionPool
  */
 class assSQLQuestion extends assQuestion

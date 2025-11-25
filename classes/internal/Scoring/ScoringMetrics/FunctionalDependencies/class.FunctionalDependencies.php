@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Represents the FunctionalDependencies ScoringMetric
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  */
 class FunctionalDependencies extends ScoringMetric
 {

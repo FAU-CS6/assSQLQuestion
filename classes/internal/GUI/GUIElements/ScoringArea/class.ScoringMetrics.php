@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Represents the quantity of ScoringMetrics
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  *
  * @ilctrl_iscalledby ScoringMetrics: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilCtrl_Calls ScoringMetrics: ilFormPropertyDispatchGUI

@@ -1,6 +1,6 @@
 /**
  * @file Test specification for SQL/class.SQLResult.js
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version 0.1
  */
 

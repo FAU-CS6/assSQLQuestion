@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Represents an abstract GUIArea implemented by the different GUIElements of assSQLQuestionGUI.
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  *
  * @ilctrl_iscalledby GUIElement: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilCtrl_Calls GUIElement: ilFormPropertyDispatchGUI

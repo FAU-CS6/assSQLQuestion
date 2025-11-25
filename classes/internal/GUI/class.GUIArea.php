@@ -8,7 +8,7 @@ declare(strict_types=1);
  * This class is based on the idea that the  edit, question and solution page are using
  * the all the same areas.
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  *
  * @ilctrl_iscalledby GUIArea: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilCtrl_Calls GUIArea: ilFormPropertyDispatchGUI

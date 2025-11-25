@@ -10,7 +10,7 @@ declare(strict_types=1);
  * It is important that these ScoringMetric does not save any data, it only
  * provides static methods to enable this scoringMetric.
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  */
 abstract class ScoringMetric
 {
