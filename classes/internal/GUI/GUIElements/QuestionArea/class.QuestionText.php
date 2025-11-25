@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Represents the question area GUIElement
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  *
  * @ilctrl_iscalledby QuestionText: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilCtrl_Calls QuestionText: ilFormPropertyDispatchGUI

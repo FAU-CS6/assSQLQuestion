@@ -9,7 +9,7 @@ use MatthiasMullie\Minify;
  * This lowers data traffic produced by the plugin and (even more important) is designed
  * to make it harder to reverse engineer the plugins functionality for test participants.
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  */
 class Minifier
 {

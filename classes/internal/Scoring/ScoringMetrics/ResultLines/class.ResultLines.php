@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Represents the ResultLines ScoringMetric
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  */
 class ResultLines extends ScoringMetric
 {

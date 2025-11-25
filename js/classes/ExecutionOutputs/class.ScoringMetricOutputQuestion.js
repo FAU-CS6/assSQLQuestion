@@ -1,6 +1,6 @@
 /**
  * @file ExecutionOutput for all scoring metrics on question output page
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version 0.1
  */
 

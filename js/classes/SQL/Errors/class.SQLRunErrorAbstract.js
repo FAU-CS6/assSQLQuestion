@@ -1,6 +1,6 @@
 /**
  * @file A abstract parent class for the different error types that might occur in SQLRun
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version 0.1
  */
 

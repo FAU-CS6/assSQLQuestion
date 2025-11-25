@@ -1,6 +1,6 @@
 /**
  * @file A class implementing an error at the integrity check of SQLRun
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version 0.1
  */
 

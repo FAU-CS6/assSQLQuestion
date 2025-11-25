@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Represents the area used in assSQLQuestionGUI to display the question
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  *
  * @ilctrl_iscalledby QuestionArea: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilCtrl_Calls QuestionArea: ilFormPropertyDispatchGUI

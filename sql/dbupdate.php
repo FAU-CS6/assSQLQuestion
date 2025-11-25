@@ -2,7 +2,7 @@
 /**
  * Database update script for qpisql
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version $Id$
  */
 ?>

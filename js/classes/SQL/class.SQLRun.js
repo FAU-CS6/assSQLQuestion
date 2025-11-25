@@ -1,6 +1,6 @@
 /**
  * @file A class representing a single sql run through
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version 0.2
  */
 

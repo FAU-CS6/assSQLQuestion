@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Represents the integrityCheck GUIElement
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  *
  * @ilctrl_iscalledby IntegrityCheck: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilCtrl_Calls IntegrityCheck: ilFormPropertyDispatchGUI

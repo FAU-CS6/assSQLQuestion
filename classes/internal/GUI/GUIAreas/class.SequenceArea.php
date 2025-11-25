@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Represents the sequence area used in assSQLQuestionGUI
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  *
  * @ilctrl_iscalledby SequenceArea: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilCtrl_Calls SequenceArea: ilFormPropertyDispatchGUI

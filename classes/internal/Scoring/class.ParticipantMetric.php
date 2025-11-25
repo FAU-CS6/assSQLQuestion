@@ -6,7 +6,7 @@ declare(strict_types=1);
  * A internal helper class to define a solid structure for the participants solution
  * of a ScoringMetric
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  */
 class ParticipantMetric
 {

@@ -1,14 +1,18 @@
 services:
     ilias:
-        image: srsolutions/ilias:9.7-php8.2-apache
+        image: srsolutions/ilias:latest     
         ports:
           - 8080:80
         links:
           - mysql
         environment:
+          - ILIAS_DUMP_AUTOLOAD=1
           - ILIAS_AUTO_SETUP=1
+          - ILIAS_AUTO_UPDATE=0
           - ILIAS_DB_USER=root
           - ILIAS_DB_PASSWORD=example
+        volumes:
+          - .:/var/www/html/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion
     mysql:
         image: mariadb:11.7.2
         # ILIAS does not support UTF8MB4 (yet), see https://docu.ilias.de/ilias.php?baseClass=illmpresentationgui&cmd=resume&ref_id=367

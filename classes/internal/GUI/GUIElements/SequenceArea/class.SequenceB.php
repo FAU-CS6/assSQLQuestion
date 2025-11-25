@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Represents the sequenceB GUIElement
  *
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  *
  * @ilctrl_iscalledby SequenceB: ilObjQuestionPoolGUI, ilObjTestGUI, ilQuestionEditGUI, ilTestExpressPageObjectGUI
  * @ilCtrl_Calls SequenceB: ilFormPropertyDispatchGUI

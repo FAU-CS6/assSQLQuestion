@@ -1,6 +1,6 @@
 /**
  * @file ExecutionInput for a single integrity check checkbox
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version 0.1
  */
 

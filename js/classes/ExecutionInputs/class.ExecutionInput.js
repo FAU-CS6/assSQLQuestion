@@ -1,6 +1,6 @@
 /**
  * @file (Abstract) implemantation of a single input element for the Execution
- * @author Dominik Probst <dominik.probst@studium.fau.de>
+ * @author Dominik Probst <dominik.probst@fau.de>
  * @version 0.1
  */
 
