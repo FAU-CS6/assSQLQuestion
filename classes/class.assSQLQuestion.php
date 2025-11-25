@@ -1,14 +1,16 @@
 <?php
 
 declare(strict_types=1);
+ 
+require_once './Modules/TestQuestionPool/interfaces/interface.ilAssQuestionAutosaveable.php';
 
 /**
- * Main defintion of the SQLQuestion plugin
+ * Main definition of the SQLQuestion plugin
  *
  * @author Dominik Probst <dominik.probst@fau.de>
  * @ingroup ModulesTestQuestionPool
  */
-class assSQLQuestion extends assQuestion
+class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable 
 {
     /**
      * Member variables that have to be part of every assQuestion

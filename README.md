@@ -26,10 +26,6 @@ There are two different options to install this plugin. One for demonstration an
 
 1. Start the test installation of ILIAS by executing `docker-compose up` in the root folder of this repository and write down the login data for ILIAS, which will be displayed in the console at the end of the installation process.
 
-1. Prepare the plugin subfolder by executing `docker exec [NAME_OF_THE_ILIAS_CONTAINER] mkdir -p /var/www/html/Customizing/global/plugins/Modules/TestQuestionPool/Questions/`
-
-1. Copy the content of this repository into the container by executing `docker cp . [NAME_OF_THE_ILIAS_CONTAINER]:/var/www/html/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion` in the root folder of this repository
-
 1. Access the ILIAS installation at `localhost:8080`
 
 1. Access Adminstration -> Extending ILIAS -> Plugins
