@@ -2,7 +2,7 @@
   "dependencies": {
     "@codemirror/lang-sql": "^6.8.0",
     "@rollup/plugin-node-resolve": "^16.0.1",
-    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-terser": "^1.0.0",
     "codemirror": "^6.0.1",
     "rollup": "^4.40.0"
   }
