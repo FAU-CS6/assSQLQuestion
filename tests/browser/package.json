@@ -1,0 +1,6 @@
+{
+  "name": "ass-sql-question-browser-tests",
+  "private": true,
+  "scripts": { "test": "node smoke.cjs" },
+  "devDependencies": { "playwright": "1.56.1" }
+}

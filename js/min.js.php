@@ -58,7 +58,20 @@ class Minifier
         $minifier->add(__DIR__.'/classes/SQL/Errors/class.SQLRunErrorNoVisibleResult.js');
         $minifier->add(__DIR__.'/classes/SQL/Errors/class.SQLRunErrorRunningSequence.js');
 
-        return $minifier->minify();
+        // ILIAS can render the question again through AJAX (e.g. instant
+        // feedback). Keep class declarations local so loading this script a
+        // second time does not redeclare global lexical bindings. The HTML
+        // templates use the exported constructors. Only editable question
+        // output initializes an execution handler; showing a model solution
+        // alongside it must keep that handler and its registered inputs.
+        return '(function () {' . $minifier->minify() . ';Object.assign(window, {'
+            . 'ExecutionHandler, ExecutionInput, SequenceTextareaInput, IntegrityCheckCheckboxInput, '
+            . 'HiddenFieldInput, HiddenTextareaInput, ExecutionOutput, SequenceTextareaOutput, '
+            . 'ExecuteButtonOutput, IntegrityCheckCheckboxOutput, OutputAreaOutput, '
+            . 'ScoringMetricEditQuestion, ScoringMetricOutputQuestion, SQLFunctionalDependency, '
+            . 'SQLResult, SQLRun, SQLRunErrorAbstract, SQLRunErrorDBCreation, '
+            . 'SQLRunErrorIntegrityCheck, SQLRunErrorNoExecution, SQLRunErrorNoVisibleResult, '
+            . 'SQLRunErrorRunningSequence});})();';
     }
 }
 

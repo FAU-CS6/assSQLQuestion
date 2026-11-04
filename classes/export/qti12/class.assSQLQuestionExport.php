@@ -15,7 +15,8 @@ class assSQLQuestionExport extends assQuestionExport
      */
     public function toXML($a_include_header = true, $a_include_binary = true, $a_shuffle = false, $test_output = false, $force_image_references = false): string
     {
-        global $ilias;
+        global $DIC;
+        $ilias = $DIC['ilias'];
 
         $a_xml_writer = new ilXmlWriter();
 

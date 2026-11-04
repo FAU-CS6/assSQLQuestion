@@ -1,8 +1,9 @@
 <?php
 
 declare(strict_types=1);
- 
-require_once './Modules/TestQuestionPool/interfaces/interface.ilAssQuestionAutosaveable.php';
+
+use ILIAS\Test\Logging\AdditionalInformationGenerator;
+use ILIAS\TestQuestionPool\Questions\QuestionAutosaveable;
 
 /**
  * Main definition of the SQLQuestion plugin
@@ -10,7 +11,7 @@ require_once './Modules/TestQuestionPool/interfaces/interface.ilAssQuestionAutos
  * @author Dominik Probst <dominik.probst@fau.de>
  * @ingroup ModulesTestQuestionPool
  */
-class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable 
+class assSQLQuestion extends assQuestion implements QuestionAutosaveable
 {
     /**
      * Member variables that have to be part of every assQuestion
@@ -112,15 +113,22 @@ class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable
     }
 
     /**
-     * Returns the names of the used additional question data tables
+     * Returns the primary additional question data table
      *
-     * @return array The names of the additional tables
+     * @return string The name of the additional table
      */
-    public function getAdditionalTableName(): array
+    public function getAdditionalTableName(): string
     {
-        return array(
-            'il_qpl_qst_qpisql_qd',
-            'il_qpl_qst_qpisql_qsm'
+        return 'il_qpl_qst_qpisql_qd';
+    }
+
+    public function deleteAdditionalTableData(int $question_id): void
+    {
+        parent::deleteAdditionalTableData($question_id);
+        $this->db->manipulateF(
+            'DELETE FROM il_qpl_qst_qpisql_qsm WHERE question_fi = %s',
+            ['integer'],
+            [$question_id]
         );
     }
 
@@ -132,6 +140,45 @@ class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable
     public function getAnswerTableName(): array
     {
         return array();
+    }
+
+    public function toLog(AdditionalInformationGenerator $additional_info): array
+    {
+        return [
+            AdditionalInformationGenerator::KEY_QUESTION_TYPE => $this->getQuestionType(),
+            AdditionalInformationGenerator::KEY_QUESTION_TITLE => $this->getTitleForHTMLOutput(),
+            AdditionalInformationGenerator::KEY_QUESTION_TEXT => $this->formatSAQuestion($this->getQuestion()),
+            AdditionalInformationGenerator::KEY_QUESTION_REACHABLE_POINTS => $this->getMaximumPoints(),
+            'Sequence A' => $this->getSequence('sequence_a'),
+            'Sequence B' => $this->getSequence('sequence_b'),
+            'Sequence C' => $this->getSequence('sequence_c'),
+            'Integrity check' => $additional_info->getTrueFalseTagForBool($this->getIntegrityCheck()),
+            'Scoring metrics' => $this->getAllSolutionMetricsAsJSON()
+        ];
+    }
+
+    protected function solutionValuesToLog(
+        AdditionalInformationGenerator $additional_info,
+        array $solution_values
+    ): string {
+        return $this->solutionValuesToText($solution_values);
+    }
+
+    protected function solutionValuesToText(array $solution_values): string
+    {
+        if ($solution_values === []) {
+            return '';
+        }
+
+        $solution = end($solution_values);
+        return isset($solution['value1'])
+            ? ParticipantInput::fromJSON((string) $solution['value1'])->getSequence()
+            : '';
+    }
+
+    public function getCorrectSolutionForTextOutput(int $active_id, int $pass): string
+    {
+        return $this->getSequence('sequence_b');
     }
 
     /**
@@ -188,18 +235,14 @@ class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable
     /**
      * Saves a question object to a database
      *
-     * @param	string $original_id The original id
+     * @param int|null $original_id The original id
      * @access public
      * @see assQuestion::saveToDb()
      */
-    public function saveToDb($original_id = ''): void
+    public function saveToDb(?int $original_id = null): void
     {
         // Save the basic data (implemented in assQuestion)
-        if ($original_id == '') {
-            $this->saveQuestionDataToDb();
-        } else {
-            $this->saveQuestionDataToDb($original_id);
-        }
+        $this->saveQuestionDataToDb($original_id);
 
         // Save the assSQLQuestion specific data to the database
         $this->saveSpecificQuestionDataToDb();
@@ -226,12 +269,19 @@ class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable
         $data = $ilDB->fetchAssoc($result);
         $this->setId((int) $question_id);
         $this->setObjId((int) $data['obj_fi']);
-        $this->setOriginalId((int) $data['original_id']);
+        $this->setOriginalId($data['original_id'] === null ? null : (int) $data['original_id']);
         $this->setOwner((int) $data['owner']);
         $this->setTitle((string) $data['title']);
         $this->setAuthor((string) $data['author']);
         $this->setPoints((float) $data['points']);
         $this->setComment((string) $data['description']);
+        $this->setNrOfTries((int) $data['nr_of_tries']);
+
+        try {
+            $this->setLifecycle(ilAssQuestionLifecycle::getInstance((string) $data['lifecycle']));
+        } catch (ilTestQuestionPoolInvalidArgumentException $e) {
+            $this->setLifecycle(ilAssQuestionLifecycle::getDraftInstance());
+        }
 
         $this->setQuestion((string) ilRTE::_replaceMediaObjectImageSrc((string) $data['question_text'], 1));
 
@@ -239,162 +289,13 @@ class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable
         $this->loadSpecificQuestionDataFromDb($question_id);
 
         try {
-            $this->setAdditionalContentEditingMode(((string) $data['add_cont_edit_mode']) ?? null);
+            $this->setAdditionalContentEditingMode($data['add_cont_edit_mode'] ?? null);
         } catch (ilTestQuestionPoolException $e) {
         }
 
         // loads additional stuff like suggested solutions
         parent::loadFromDb($question_id);
     }
-
-    /**
-     * Duplicates a question
-     * This is used for copying a question to a test
-     *
-     * @param bool   		$for_test
-     * @param string 		$title
-     * @param string 		$author
-     * @param string 		$owner
-     * @param integer|null	$testObjId
-     *
-     * @return void|integer Id of the clone or nothing.
-     */
-    public function duplicate(bool $for_test = true, string $title = '', string $author = '', int $owner = -1, $testObjId = null): int
-    {
-        if ($this->getId() <= 0) {
-            // The question has not been saved. It cannot be duplicated
-            return -1;
-        }
-
-        // make a real clone to keep the actual object unchanged
-        $clone = clone $this;
-
-        global $DIC;
-        $original_id = $DIC->testQuestionPool()->questionInfo()->getOriginalId($this->getId());
-        $clone->setId(-1);
-
-        if ((int) $testObjId > 0) {
-            $clone->setObjId($testObjId);
-        }
-
-        if (!empty($title)) {
-            $clone->setTitle($title);
-        }
-        if (!empty($author)) {
-            $clone->setAuthor($author);
-        }
-        if (!empty($owner)) {
-            $clone->setOwner($owner);
-        }
-
-        if ($for_test) {
-            $clone->saveToDb($original_id);
-        } else {
-            $clone->saveToDb();
-        }
-
-        // copy question page content
-        $clone->copyPageOfQuestion($this->getId());
-        // copy XHTML media objects
-        $clone->copyXHTMLMediaObjectsOfQuestion($this->getId());
-
-        // call the event handler for duplication
-        $clone->onDuplicate($this->getObjId(), $this->getId(), $clone->getObjId(), $clone->getId());
-
-        return $clone->getId();
-    }
-
-    /**
-     * Copies a question
-     * This is used when a question is copied on a question pool
-     *
-     * @param integer	$target_questionpool_id
-     * @param string	$title
-     *
-     * @return void|integer Id of the clone or nothing.
-     */
-    public function copyObject($target_questionpool_id, $title = '')
-    {
-        if ($this->getId() <= 0) {
-            throw new RuntimeException('The question has not been saved. It cannot be duplicated');
-        }
-
-        // make a real clone to keep the object unchanged
-        $clone = clone $this;
-
-        global $DIC;
-        $original_id = $DIC->testQuestionPool()->questionInfo()->getOriginalId($this->getId());
-        $source_questionpool_id = $this->getObjId();
-        $clone->setId(-1);
-        $clone->setObjId($target_questionpool_id);
-        if (!empty($title)) {
-            $clone->setTitle($title);
-        }
-
-        // save the clone data
-        $clone->saveToDb();
-
-        // copy question page content
-        $clone->copyPageOfQuestion($original_id);
-        // copy XHTML media objects
-        $clone->copyXHTMLMediaObjectsOfQuestion($original_id);
-
-        // call the event handler for copy
-        $clone->onCopy($source_questionpool_id, $original_id, $clone->getObjId(), $clone->getId());
-
-        return $clone->getId();
-    }
-
-    /**
-     * Create a new original question in a question pool for a test question
-     *
-     * @param int $targetParentId			id of the target question pool
-     * @param string $targetQuestionTitle
-     *
-     * @return int|void
-     */
-    public function createNewOriginalFromThisDuplicate($targetParentId, $targetQuestionTitle = '')
-    {
-        if ($this->id <= 0) {
-            // The question has not been saved. It cannot be duplicated
-            return;
-        }
-
-        $sourceQuestionId = $this->id;
-        $sourceParentId = $this->getObjId();
-
-        // make a real clone to keep the object unchanged
-        $clone = clone $this;
-        $clone->setId(-1);
-
-        $clone->setObjId($targetParentId);
-
-        if (!empty($targetQuestionTitle)) {
-            $clone->setTitle($targetQuestionTitle);
-        }
-
-        $clone->saveToDb();
-        // copy question page content
-        $clone->copyPageOfQuestion($sourceQuestionId);
-        // copy XHTML media objects
-        $clone->copyXHTMLMediaObjectsOfQuestion($sourceQuestionId);
-
-        $clone->onCopy($sourceParentId, $sourceQuestionId, $clone->getObjId(), $clone->getId());
-
-        return $clone->getId();
-    }
-
-    /**
-     * Synchronize a question with its original
-     * You need to extend this function if a question has additional data that needs to be synchronized
-     *
-     * @access public
-     */
-    public function syncWithOriginal(): void
-    {
-        parent::syncWithOriginal();
-    }
-
 
     /**
      * Get a submitted solution array by generating a new ParticipantInput object,
@@ -491,6 +392,10 @@ class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable
         // Transform value1 of solution into a ParticipantInput
         $participant_input = isset($solution["value1"]) ? ParticipantInput::fromJSON($solution["value1"]) : new ParticipantInput();
 
+        if (!$participant_input->getExecutedBool() || $participant_input->getErrorBool()) {
+            return 0.0;
+        }
+
         // Extract the participant metrics array out of $participant_input
         $participant_metrics = $participant_input->getAllParticipantMetrics();
 
@@ -512,58 +417,22 @@ class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable
      *
      * @param int $active_id
      * @param integer $pass The Id of the test pass
-     * @param bool $authorizedSolution
-     * @param boolean $returndetails (deprecated !!)
+     * @param bool $authorized_solution
      * @return int
      *
      * @throws ilTestException
      */
-    public function calculateReachedPoints($active_id, $pass = null, $authorizedSolution = true, $returndetails = false): float
+    public function calculateReachedPoints(int $active_id, ?int $pass = null, bool $authorized_solution = true): float
     {
-        if ($returndetails) {
-            throw new ilTestException('return details not implemented for ' . __METHOD__);
-        }
-
         if (is_null($pass)) {
             $pass = $this->getSolutionMaxPass($active_id);
         }
 
         // get the answers of the learner from the tst_solution table
         // the data is saved by saveWorkingData() in this class
-        $solution = $this->getSolutionStored($active_id, $pass, $authorizedSolution);
+        $solution = $this->getSolutionStored($active_id, $pass, $authorized_solution);
 
         return $this->calculateReachedPointsForSolution($solution);
-    }
-
-    /**
-     * Sets the points, a learner has reached answering the question
-     *
-     * @param integer $user_id The database ID of the learner
-     * @param integer $test_id The database Id of the test containing the question
-     * @param integer $points The points the user has reached answering the question
-     * @return boolean true on success, otherwise false
-     * @access public
-     */
-    public function setReachedPoints($active_id, $points, $pass = null)
-    {
-        global $DIC;
-
-        $ilDB = $DIC->database();
-
-        if (($points > 0) && ($points <= $this->getPoints())) {
-            if (is_null($pass)) {
-                $pass = $this->getSolutionMaxPass($active_id);
-            }
-            $affectedRows = $ilDB->manipulateF(
-                "UPDATE tst_test_result SET points = %s WHERE active_fi = %s AND question_fi = %s AND pass = %s",
-                array('float', 'integer', 'integer', 'integer'),
-                array($points, $active_id, $this->getId(), $pass)
-            );
-            self::_updateTestPassResults($active_id, $pass);
-            return true;
-        } else {
-            return true;
-        }
     }
 
     /**
@@ -575,7 +444,7 @@ class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable
      *
      * @return boolean $status
      */
-    public function saveWorkingData($active_id, $pass = null, $authorized = true): bool
+    public function saveWorkingData(int $active_id, ?int $pass = null, bool $authorized = true): bool
     {
         if (is_null($pass)) {
             $pass = ilObjTest::_getPass($active_id);
@@ -604,125 +473,10 @@ class assSQLQuestion extends assQuestion implements ilAssQuestionAutosaveable
         });
 
 
-        // Log whether the user entered values
-        if (ilObjAssessmentFolder::_enabledAssessmentLogging()) {
-            assQuestion::logAction(
-                $this->lng->txtlng(
-                    'assessment',
-                    $entered_values ? 'log_user_entered_values' : 'log_user_not_entered_values',
-                    ilObjAssessmentFolder::_getLogLanguage()
-                ),
-                $active_id,
-                $this->getId()
-            );
-        }
-
         // submitted solution is valid
         return true;
     }
 
-
-    /**
-     * Reworks the already saved working data if neccessary
-     * @param integer $active_id
-     * @param integer $pass
-     * @param boolean $obligationsAnswered
-     * @param boolean $authorized
-     */
-    protected function reworkWorkingData($active_id, $pass, $obligationsAnswered, $authorized)
-    {
-        // usually nothing needs to be reworked
-    }
-
-
-    /**
-     * Creates an Excel worksheet for the detailed cumulated results of this question
-     *
-     * @param object $worksheet    Reference to the parent excel worksheet
-     * @param int $startrow     Startrow of the output in the excel worksheet
-     * @param int $active_id    Active id of the participant
-     * @param int $pass         Test pass
-     *
-     * @return int
-     */
-    public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $active_id, int $pass): int
-    {
-        $worksheet->setFormattedExcelTitle($worksheet->getColumnCoord(0) . $startrow, $this->getPlugin()->txt('assSQLQuestion'));
-        $worksheet->setFormattedExcelTitle($worksheet->getColumnCoord(1) . $startrow, $this->getTitle());
-
-        $solution = $this->getSolutionStored($active_id, $pass, true);
-
-        // Transform value1 of solution into a ParticipantInput
-        $participant_input = isset($solution["value1"]) ? ParticipantInput::fromJSON($solution["value1"]) : new ParticipantInput();
-
-        $row = $startrow + 1;
-
-        $worksheet->setCell($row, 0, "Sequence");
-        $worksheet->setBold($worksheet->getColumnCoord(0) . $row);
-        $worksheet->setCell($row, 1, $participant_input->getSequence());
-        $row++;
-
-        $worksheet->setCell($row, 0, "Error_Bool");
-        $worksheet->setBold($worksheet->getColumnCoord(0) . $row);
-        $worksheet->setCell($row, 1, $participant_input->getErrorBool());
-        $row++;
-
-        $worksheet->setCell($row, 0, "Error");
-        $worksheet->setBold($worksheet->getColumnCoord(0) . $row);
-        $worksheet->setCell($row, 1, $participant_input->getError());
-        $row++;
-
-        $worksheet->setCell($row, 0, "Executed_Bool");
-        $worksheet->setBold($worksheet->getColumnCoord(0) . $row);
-        $worksheet->setCell($row, 1, $participant_input->getExecutedBool());
-        $row++;
-
-        $worksheet->setCell($row, 0, "Output_Relation");
-        $worksheet->setBold($worksheet->getColumnCoord(0) . $row);
-        $worksheet->setCell($row, 1, $participant_input->getOutputRelation());
-        $row++;
-
-        return $row + 1;
-    }
-
-    /**
-     * Creates a question from a QTI file
-     *
-     * Receives parameters from a QTI parser and creates a valid ILIAS question object
-     *
-     * @param object $item The QTI item object
-     * @param integer $questionpool_id The id of the parent questionpool
-     * @param integer $tst_id The id of the parent test if the question is part of a test
-     * @param object $tst_object A reference to the parent test object
-     * @param integer $question_counter A reference to a question counter to count the questions of an imported question pool
-     * @param array $import_mapping An array containing references to included ILIAS objects
-     * @access public
-     */
-    public function fromXML($item, int $questionpool_id, ?int $tst_id, &$tst_object, int &$question_counter, array $import_mapping, array &$solutionhints = []): array
-    {
-        $import = new assSQLQuestionImport($this);
-        $import_mapping = $import->fromXML($item, $questionpool_id, $tst_id, $tst_object, $question_counter, $import_mapping);
-
-        return $import_mapping;
-    }
-
-    /**
-     * Returns a QTI xml representation of the question and sets the internal
-     * domxml variable with the DOM XML representation of the QTI xml representation
-     *
-     * @return string The QTI xml representation of the question
-     * @access public
-     */
-    public function toXML(
-        bool $a_include_header = true,
-        bool $a_include_binary = true,
-        bool $a_shuffle = false,
-        bool $test_output = false,
-        bool $force_image_references = false
-    ): string {
-        $export = new assSQLQuestionExport($this);
-        return $export->toXML($a_include_header, $a_include_binary, $a_shuffle, $test_output, $force_image_references);
-    }
 
     /**
      * Custom member functions only needed in an assSQLQuestion

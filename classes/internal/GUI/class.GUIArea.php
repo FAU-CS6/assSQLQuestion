@@ -39,6 +39,8 @@ abstract class GUIArea extends ilCustomInputGUI
      */
     public function __construct($plugin, $object)
     {
+        parent::__construct();
+
         // Set plugin and object
         $this->plugin = $plugin;
         $this->object = $object;

@@ -6,6 +6,20 @@ pipeline {
     agent any
 
     stages {
+        stage('Test plugin') {
+            agent {
+                docker {
+                    image 'srsolutions/ilias:11'
+                    args '--entrypoint ""'
+                }
+            }
+            steps {
+                sh 'composer install --no-interaction --prefer-dist'
+                sh 'composer test'
+                sh 'php tests/ilias11/check-classes.php'
+            }
+        }
+
         stage('Build image') {
             steps {
                 echo 'Starting to build docker image'

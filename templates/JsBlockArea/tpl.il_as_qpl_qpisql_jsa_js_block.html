@@ -1,8 +1,15 @@
 <p class="js-is-loading" style="color: #6c757d;">{LOADING_TEXT}</p>
-<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/js/min.js.php"></script>
-<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/codemirror/codemirror_sqlquestion.bundle.js"></script>
-<script src="./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/sql.js/sql.js"></script>
+<script>window.QPISQL_URL_PATH = '{PLUGIN_PATH}';</script>
+<script src="{PLUGIN_PATH}/js/min.js.php"></script>
 <script>
+  if ({INITIALIZE_HANDLER}) {
+    window.EXECUTE_HANDLER = new ExecutionHandler();
+  }
+</script>
+<script src="{PLUGIN_PATH}/lib/codemirror/codemirror_sqlquestion.bundle.js"></script>
+<script src="{PLUGIN_PATH}/lib/sql.js/sql.js"></script>
+<script>
+(function () {
   /* Here, we regularly check for elements that only exist after CodeMirror is done loading */
   function hide(elem) {
     elem.style.display = 'none';
@@ -13,9 +20,10 @@
       exists = document.getElementsByClassName('cm-gutters');
     } catch (e) {}
 
-    if (exists) {
+    if (exists.length > 0) {
       clearInterval(callbackTimer);
-      document.getElementsByClassName('js-is-loading').forEach(hide);
+      Array.from(document.getElementsByClassName('js-is-loading')).forEach(hide);
     }
   }, 100);
+})();
 </script>

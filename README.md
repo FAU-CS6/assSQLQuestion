@@ -8,33 +8,36 @@ In this project - called ***Q**uestion **P**lugin for **I**LIAS - **SQL** (**QPI
 
 ## Installation
 
+Version 0.1.0 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
+reproducible tests are documented in [the ILIAS 11 upgrade guide](docs/ilias-11.md).
+
 There are two different options to install this plugin. One for demonstration and testing purposes and one to install the plugin to an existing ILIAS instance for production use.
 
 ### Installation as part of an existing ILIAS instance
 
-1. Copy the content of this repository into the `Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion` subfolder of your ILIAS installation. It might be necessary to create the subfolders if they do not exist.
+1. Copy the content of this repository into the `public/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion` subfolder of your ILIAS installation. Create the subfolders if needed. In ILIAS 11, `public/` is the web root; `Modules/TestQuestionPool/Questions` remains the legacy plugin slot path.
 
-1. Access Adminstration -> Extending ILIAS -> Plugins
+1. Run `composer install --no-dev` in the plugin directory.
 
-1. Press "Install" for the assSQLQuestion plugin
+1. Run `composer dump-autoload` in the **ILIAS root directory**, followed by `php cli/setup.php install --legacy-plugin assSQLQuestion`. For an existing plugin installation use `php cli/setup.php update --legacy-plugin assSQLQuestion` instead.
 
-1. Press "Activate" for the assSQLQuestion plugin
+1. Check the plugin status under Administration -> Extending ILIAS -> Plugins. A new CLI installation activates the plugin automatically; updates preserve its activation status.
 
 ### Installation for testing purposes
 
 1. Install Docker-compose on your device
 
-1. Start the test installation of ILIAS by executing `docker-compose up` in the root folder of this repository and write down the login data for ILIAS, which will be displayed in the console at the end of the installation process.
+1. Start the test installation of ILIAS 11 by executing `docker compose -p ass_sql_ilias11 up -d` in the root folder of this repository. Read the generated login credentials with `docker compose -p ass_sql_ilias11 logs ilias` after setup completes.
 
 1. Access the ILIAS installation at `localhost:8080`
 
-1. Access Adminstration -> Extending ILIAS -> Plugins
-
-1. Press "Install" for the assSQLQuestion plugin
-
-1. Press "Activate" for the assSQLQuestion plugin
+1. The test installation installs and activates the plugin automatically. See the [upgrade guide](docs/ilias-11.md) for unit, database and browser tests.
 
 ## Development
+
+Run `composer install` followed by `composer test` for the scoring unit tests.
+Run the ILIAS integration suite with ILIAS's own PHPUnit executable to avoid
+mixing two PHPUnit installations; instructions are in the [upgrade guide](docs/ilias-11.md).
 
 Some of the artifacts are uploaded to the repository in built form, some need to be built during installation. For the PHP part of the plugin, we adhere to the suggestions of ILIAS, namely to `composer install --no-dev` all dependencies during installation and not check in dependency artifacts into git (c.f. https://github.com/ILIAS-eLearning/ILIAS/pull/1833 and specifically https://docu.ilias.de/go/wiki/wpage_6371_1357 for plugins).
 

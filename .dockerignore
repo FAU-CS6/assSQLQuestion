@@ -1,3 +1,7 @@
 docs/
 docker-compose.yml
 vendor/
+.git/
+**/node_modules/
+.phpunit.cache/
+test-results/

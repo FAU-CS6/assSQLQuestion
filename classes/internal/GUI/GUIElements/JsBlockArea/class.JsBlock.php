@@ -23,6 +23,8 @@ class JsBlock extends GUIElement
     {
         $tpl = $this->plugin->getTemplate('JsBlockArea/tpl.il_as_qpl_qpisql_jsa_js_block.html');
         $tpl->setVariable("LOADING_TEXT", $this->plugin->txt('ai_js_is_loading'));
+        $tpl->setVariable('PLUGIN_PATH', $this->plugin->getRelativeDirectory());
+        $tpl->setVariable('INITIALIZE_HANDLER', 'true');
         return $tpl->get();
     }
 
@@ -37,6 +39,8 @@ class JsBlock extends GUIElement
     {
         $tpl = $this->plugin->getTemplate('JsBlockArea/tpl.il_as_qpl_qpisql_jsa_js_block.html');
         $tpl->setVariable("LOADING_TEXT", $this->plugin->txt('ai_js_is_loading'));
+        $tpl->setVariable('PLUGIN_PATH', $this->plugin->getRelativeDirectory());
+        $tpl->setVariable('INITIALIZE_HANDLER', 'true');
         return $tpl->get();
     }
 
@@ -51,6 +55,8 @@ class JsBlock extends GUIElement
     {
         $tpl = $this->plugin->getTemplate('JsBlockArea/tpl.il_as_qpl_qpisql_jsa_js_block.html');
         $tpl->setVariable("LOADING_TEXT", $this->plugin->txt('ai_js_is_loading'));
+        $tpl->setVariable('PLUGIN_PATH', $this->plugin->getRelativeDirectory());
+        $tpl->setVariable('INITIALIZE_HANDLER', 'false');
         return $tpl->get();
     }
 

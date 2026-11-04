@@ -215,6 +215,3 @@ class ExecutionHandler
      }
    }
 }
-
-// Construct a basic EXECUTE HANDLER that can be used at every page
-window.EXECUTE_HANDLER = new ExecutionHandler();

@@ -22,11 +22,18 @@ class assSQLQuestionImport extends assQuestionImport
      * @param array $import_mapping An array containing references to included ILIAS objects
      * @access public
      */
-    public function fromXML(&$item, $questionpool_id, &$tst_id, &$tst_object, &$question_counter, $import_mapping): array
-    {
+    public function fromXML(
+        string $importdirectory,
+        int $user_id,
+        ilQTIItem $item,
+        int $questionpool_id,
+        ?int $tst_id,
+        ?ilObject &$tst_object,
+        int &$question_counter,
+        array $import_mapping
+    ): array {
         global $DIC;
 
-        $ilUser = $DIC->user();
         $ilLog = $DIC->logger()->root();
 
         // Empty session variable for imported xhtml mobs
@@ -81,16 +88,8 @@ class assSQLQuestionImport extends assQuestionImport
         $this->object->setNrOfTries((int) $item->getMaxattempts());
         $this->object->setComment($item->getComment());
         $this->object->setAuthor($item->getAuthor());
-        $this->object->setOwner((int) $ilUser->getId());
-
-        // Temporary workaround to support ILIAS 8 and 9+
-        if (method_exists($this->object, "QTIMaterialToString")) {
-            // ILIAS 8
-            $this->object->setQuestion($this->object->QTIMaterialToString($item->getQuestiontext()));
-        } else {
-            // ILIAS 9
-            $this->object->setQuestion($this->QTIMaterialToString($item->getQuestiontext()));
-        }
+        $this->object->setOwner($user_id);
+        $this->object->setQuestion($this->QTIMaterialToString($item->getQuestiontext()));
         $this->object->setObjId($questionpool_id);
         $this->object->setPoints((float) $item->getMetadataEntry("POINTS"));
 
@@ -112,18 +111,11 @@ class assSQLQuestionImport extends assQuestionImport
 
         // First save the question to get a new question id
         $this->object->saveToDb();
+        $this->importSuggestedSolutions($this->object->getId(), $item->suggested_solutions);
 
         // Convert the generic feedback
         foreach ($feedbacksgeneric as $correctness => $material) {
-            // Temporary workaround to support ILIAS 8 and 9+
-            if (method_exists($this->object, "QTIMaterialToString")) {
-                // ILIAS 8
-                $m = $this->object->QTIMaterialToString($material);
-            } else {
-                // ILIAS 9
-                $m = $this->QTIMaterialToString($material);
-            }
-            $m = $this->object->QTIMaterialToString($material);
+            $m = $this->QTIMaterialToString($material);
             $feedbacksgeneric[$correctness] = $m;
         }
 
@@ -131,11 +123,7 @@ class assSQLQuestionImport extends assQuestionImport
         $questiontext = $this->object->getQuestion();
         if (is_array(ilSession::get("import_mob_xhtml"))) {
             foreach (ilSession::get("import_mob_xhtml") as $mob) {
-                if ($tst_id > 0) {
-                    $importfile = $this->getTstImportArchivDirectory() . '/' . $mob["uri"];
-                } else {
-                    $importfile = $this->getQplImportArchivDirectory() . '/' . $mob["uri"];
-                }
+                $importfile = $importdirectory . DIRECTORY_SEPARATOR . $mob["uri"];
                 $ilLog->write($importfile);
                 $media_object = ilObjMediaObject::_saveTempFileAsMediaObject(basename($importfile), $importfile, false);
                 ilObjMediaObject::_saveUsage($media_object->getId(), "qpl:html", $this->object->getId());
@@ -153,7 +141,7 @@ class assSQLQuestionImport extends assQuestionImport
         foreach ($feedbacksgeneric as $correctness => $material) {
             $this->object->feedbackOBJ->importGenericFeedback(
                 $this->object->getId(),
-                $correctness,
+                (bool) $correctness,
                 ilRTE::_replaceMediaObjectImageSrc($material, 1)
             );
         }
@@ -162,14 +150,12 @@ class assSQLQuestionImport extends assQuestionImport
         $this->object->saveToDb();
 
         // Import mapping for tests
-        if ($tst_id > 0) {
-            $q_1_id = $this->object->getId();
-            $question_id = $this->object->duplicate(true, null, null, null, $tst_id);
-            $tst_object->questions[$question_counter++] = $question_id;
-            $import_mapping[$item->getIdent()] = array("pool" => $q_1_id, "test" => $question_id);
-        } else {
-            $import_mapping[$item->getIdent()] = array("pool" => $this->object->getId(), "test" => 0);
-        }
+        $import_mapping[$item->getIdent()] = $this->addQuestionToParentObjectAndBuildMappingEntry(
+            $questionpool_id,
+            $tst_id,
+            $question_counter,
+            $tst_object
+        );
 
         return $import_mapping;
     }

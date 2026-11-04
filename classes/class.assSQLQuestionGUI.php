@@ -29,11 +29,6 @@ class assSQLQuestionGUI extends assQuestionGUI
     public assQuestion $object;
 
     /**
-     * @const string URL base path for including used javascript and css files
-     */
-    private const QPISQL_URL_PATH = "./Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion";
-
-    /**
      * Member functions that have to be part of every assQuestionGUI
      */
 
@@ -64,7 +59,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param bool $checkonly
      * @return bool
      */
-    public function editQuestion($checkonly = false): bool
+    public function editQuestion(bool $checkonly = false, ?bool $is_save_cmd = null): bool
     {
         // Initialize the Language module
         global $DIC;
@@ -75,6 +70,7 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         // Initialize the form
         $form = new ilPropertyFormGUI();
+        $this->editForm = $form;
         $form->setFormAction($this->ctrl->getFormAction($this));
         $form->setTitle($this->outQuestionType());
         $form->setDescription($this->plugin->txt('gi_info'));
@@ -97,7 +93,7 @@ class assSQLQuestionGUI extends assQuestionGUI
         $errors = false;
 
         // If the question is to be saved
-        if ($this->isSaveCommand()) {
+        if ($is_save_cmd ?? $this->isSaveCommand()) {
             // Set the values to the ones send by POST
             $form->setValuesByPost();
 
@@ -115,8 +111,7 @@ class assSQLQuestionGUI extends assQuestionGUI
         }
 
         if (!$checkonly) {
-            $this->getQuestionTemplate();
-            $this->tpl->setVariable("QUESTION_DATA", $form->getHTML());
+            $this->renderEditForm($form);
         }
 
         return $errors;
@@ -128,7 +123,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param bool $always
      * @return integer A positive value, if one of the required fields wasn't set, else 0
      */
-    protected function writePostData($always = false): int
+    protected function writePostData(bool $always = false): int
     {
         $hasErrors = (!$always) ? $this->editQuestion(true) : false;
         if (!$hasErrors) {
@@ -169,7 +164,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param boolean $show_specific_inline_feedback	Show a specific inline feedback
      * @return string
      */
-    public function getTestOutput($active_id, $pass = null, $is_postponed = false, $use_post_solutions = false, $show_specific_inline_feedback = false): string
+    public function getTestOutput(int $active_id, int $pass, bool $is_question_postponed = false, array|bool $user_post_solutions = false, bool $show_specific_inline_feedback = false): string
     {
         // Get the stored solution
         $solution = $this->object->getSolutionStored($active_id, $pass, null);
@@ -197,7 +192,7 @@ class assSQLQuestionGUI extends assQuestionGUI
             $questionoutput .= $guiArea->getQuestionOutput($participant_input);
         }
 
-        $pageoutput = $this->outQuestionPage("", $is_postponed, $active_id, $questionoutput);
+        $pageoutput = $this->outQuestionPage("", $is_question_postponed, $active_id, $questionoutput);
         return $pageoutput;
     }
 
@@ -209,7 +204,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @param boolean	$show_question_only
      * @return string
      */
-    public function getPreview($show_question_only = false, $showInlineFeedback = false): string
+    public function getPreview(bool $show_question_only = false, bool $show_inline_feedback = false): string
     {
         if (is_object($this->getPreviewSession())) {
             $solution = $this->getPreviewSession()->getParticipantsSolution();
@@ -256,15 +251,16 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @return string solution output of the question as HTML code
      */
     public function getSolutionOutput(
-        $active_id,
-        $pass = null,
-        $graphicalOutput = false,
-        $result_output = false,
-        $show_question_only = true,
-        $show_feedback = false,
-        $show_correct_solution = false,
-        $show_manual_scoring = false,
-        $show_question_text = true
+        int $active_id,
+        ?int $pass = null,
+        bool $graphical_output = false,
+        bool $result_output = false,
+        bool $show_question_only = true,
+        bool $show_feedback = false,
+        bool $show_correct_solution = false,
+        bool $show_manual_scoring = false,
+        bool $show_question_text = true,
+        bool $show_inline_feedback = true
     ): string {
         // If we want to show the pattern solution we have no participant input
         $participant_input = null;
@@ -303,7 +299,7 @@ class assSQLQuestionGUI extends assQuestionGUI
      * @return string HTML Code with the answer specific feedback
      * @access public
      */
-    public function getSpecificFeedbackOutput($userSolution): string
+    public function getSpecificFeedbackOutput(array $userSolution): string
     {
         // By default no answer specific feedback is defined
         $output = '';
@@ -325,14 +321,15 @@ class assSQLQuestionGUI extends assQuestionGUI
         // Add CSS files
 
         // Custom CSS
-        $this->tpl->addCss(self::QPISQL_URL_PATH . '/css/custom.css');
+        $path = $this->plugin->getRelativeDirectory();
+        $this->tpl->addCss($path . '/css/custom.css');
 
         // Add JS files
 
         // Add custom JS code
 
         // Add path to the plugin file to be accessible in JS, too
-        $this->tpl->addOnLoadCode("window.QPISQL_URL_PATH = \"" . self::QPISQL_URL_PATH . "\"");
+        $this->tpl->addOnLoadCode('window.QPISQL_URL_PATH = ' . json_encode($path, JSON_THROW_ON_ERROR));
 
     }
 

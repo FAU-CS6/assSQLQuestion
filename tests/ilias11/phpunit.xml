@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="bootstrap.php" cacheResult="false" failOnWarning="true" failOnRisky="true">
+    <testsuites>
+        <testsuite name="ILIAS 11 integration">
+            <file>SQLQuestionIntegrationTest.php</file>
+        </testsuite>
+    </testsuites>
+    <source restrictWarnings="true" restrictNotices="true">
+        <include><directory>../../classes</directory></include>
+    </source>
+</phpunit>

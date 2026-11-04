@@ -1,13 +1,13 @@
 <script>
   // Insert the different error messages we might need later on
-  const error_no_execution = "{ERROR_NO_EXECUTION}";
-  const error_db_creation = "{ERROR_DB_CREATION}";
-  const error_integrity_check = "{ERROR_INTEGRITY_CHECK}";
-  const error_no_visible_result = "{ERROR_NO_VISIBLE_RESULT}";
-  const error_running_sequence = "{ERROR_RUNNING_SEQUENCE}";
+  var error_no_execution = "{ERROR_NO_EXECUTION}";
+  var error_db_creation = "{ERROR_DB_CREATION}";
+  var error_integrity_check = "{ERROR_INTEGRITY_CHECK}";
+  var error_no_visible_result = "{ERROR_NO_VISIBLE_RESULT}";
+  var error_running_sequence = "{ERROR_RUNNING_SEQUENCE}";
 
   // Create the corresponding ExecutionOutput
-  const outputAreaOutput = new OutputAreaOutput();
+  var outputAreaOutput = new OutputAreaOutput();
 </script>
 
 <div class="qpisql-hidden-fields">
@@ -33,10 +33,10 @@
 
 <script>
   // Use the values of the hidden fields to dynamicly generate values of the visible area
-  const default_error_bool = document.getElementById("qpisql-error-bool").value;
-  const default_error = document.getElementById("qpisql-error").value;
-  const default_executed_bool = document.getElementById("qpisql-executed-bool").value;
-  const default_output_relation = document.getElementById("qpisql-output-relation").value;
+  var default_error_bool = document.getElementById("qpisql-error-bool").value;
+  var default_error = document.getElementById("qpisql-error").value;
+  var default_executed_bool = document.getElementById("qpisql-executed-bool").value;
+  var default_output_relation = document.getElementById("qpisql-output-relation").value;
 
   // In case of the default result being an error
   if(default_error_bool == "true" && default_error != "")
