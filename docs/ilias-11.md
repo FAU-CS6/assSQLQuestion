@@ -143,6 +143,11 @@ docker compose -p ass_sql_ilias11 exec -T -e ILIAS_TEST_WRITES=1 ilias \
 
 ## Testergebnis vom 4. November 2026
 
+Ergänzend wurden am 5. November drei vollständige Testversuche im installierten
+Google Chrome durchgeführt. Siehe [Chrome-Abnahme](chrome-abnahme-2026-11-05.md)
+für die Ergebnisse 10/10, 2/10 und 5/10 sowie den echten Autosave- und
+Datenbankabgleich.
+
 | Prüfung | Umgebung | Ergebnis |
 | --- | --- | --- |
 | PHP-Syntax und 23 Bewertungs-Unit-Tests | PHP 8.3.36 | erfolgreich |
@@ -178,8 +183,9 @@ Die Compose-Datei verfolgt weiterhin den Major-Tag `11` und erhält damit späte
 ### Grenzen und Hinweise aus dem ILIAS-Kern
 
 Die Tests liefen lokal gegen den offiziellen ILIAS-Code, nicht auf einer
-StudOn-Installation mit FAU-Anpassungen. Der vollständige Browser-Test lief in
-Chromium; andere Browser, ILIAS-11.0-Laufzeitabläufe, reale Altbestände,
+StudOn-Installation mit FAU-Anpassungen. Die automatisierten Browser-Tests vom
+4. November liefen in Chromium; die ergänzende Prüfung vom 5. November im
+installierten Google Chrome. Weitere Browser, ILIAS-11.0-Laufzeitabläufe, reale Altbestände,
 gleichzeitige Prüfungsteilnahmen und die konkrete StudOn-Konfiguration wurden
 nicht durch einen Produktivtest abgedeckt. Die Update-Simulation prüft den
 Plugin-Updater und den Erhalt bestehender Daten, keinen vollständigen ILIAS-9-
