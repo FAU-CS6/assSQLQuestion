@@ -1,10 +1,8 @@
-<div class="qpisql-input-area">
-
-  <input type="button" class="btn-default btn-sm btn" id="qpisql-execute-button" value="{BUTTONTEXT}" onclick="window.EXECUTE_HANDLER.execute()">
-
+<div class="qpisql-input-area qpisql-execution-controls">
+  <button type="button" class="btn-default btn-sm btn" id="qpisql-execute-button" onclick="window.EXECUTE_HANDLER.execute()" aria-keyshortcuts="Control+Enter Meta+Enter">{BUTTONTEXT}</button>
+  <button type="button" class="btn-default btn-sm btn" id="qpisql-cancel-button" onclick="window.EXECUTE_HANDLER.cancel()" data-cancelled="{CANCELLED}" hidden>{CANCELTEXT}</button>
+  <span class="help-block qpisql-shortcut">{SHORTCUT}</span>
   <script>
-    // Create an ExecutionOutput out of this
     window.EXECUTE_HANDLER.registerOutput(new ExecuteButtonOutput());
   </script>
-
 </div>

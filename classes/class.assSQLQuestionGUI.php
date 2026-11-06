@@ -47,7 +47,7 @@ class assSQLQuestionGUI extends assQuestionGUI
         /** @var ilComponentFactory $component_factory */
         $component_factory = $DIC["component.factory"];
         $this->plugin = $component_factory->getPlugin('qpisql');
-        $this->object = new assSQLQuestion();
+        $this->object = new assSQLQuestion(owner: $DIC->user()->getId());
         if ($id >= 0) {
             $this->object->loadFromDb($id);
         }

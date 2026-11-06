@@ -127,9 +127,8 @@ async function main() {
     assert.match(jasmineResult, /0 failures/);
     console.log(`PASS: existing Jasmine tests: ${jasmineResult.trim()}`);
 
-    // sql.js reports invalid SQL through the Worker's error event; this is
-    // the deliberate negative test above, which must also reach the error UI.
-    assert.deepEqual(pageErrors, ['no such column: missing_column'], 'Unexpected JavaScript errors');
+    // Worker SQL errors are handled in the error UI and prevented from becoming uncaught page errors.
+    assert.deepEqual(pageErrors, [], 'Unexpected JavaScript errors');
     assert.deepEqual(failedPluginRequests, [], 'Failed plugin asset requests');
     console.log('PASS: no unexpected JavaScript errors or failed plugin assets');
   } catch (error) {

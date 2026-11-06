@@ -123,7 +123,7 @@ abstract class ScoringMetric
             $points = (int) $_POST["points_" . static::$type];
         }
 
-        $tpl->setVariable("VALUE", $value);
+        $tpl->setVariable("VALUE", htmlspecialchars((string) ($value), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 
         $default_points = array(
             "" /* 0 */ ,
@@ -210,7 +210,7 @@ abstract class ScoringMetric
         $tpl->setVariable("GETTER", static::$getter);
 
         // Set the default Value
-        $tpl->setVariable("VALUE", $participant_metric->getValue());
+        $tpl->setVariable("VALUE", htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 
         return $tpl->get();
     }
@@ -246,17 +246,17 @@ abstract class ScoringMetric
         $tpl->setVariable("HEADER_MAX_POINTS", $plugin->txt('ai_sca_so_max_points'));
 
         // Expected values
-        $tpl->setVariable("EXPECTED_VALUE", static::getSolutionMetric($object->getAllSolutionMetrics())->getValue());
+        $tpl->setVariable("EXPECTED_VALUE", htmlspecialchars((string) (static::getSolutionMetric($object->getAllSolutionMetrics())->getValue()), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->setVariable("MAX_POINTS", static::getSolutionMetric($object->getAllSolutionMetrics())->getPoints());
 
         // If we display the pattern solution
         if (is_null($participant_input)) {
-            $tpl->setVariable("COMPUTED_VALUE", static::getSolutionMetric($object->getAllSolutionMetrics())->getValue());
+            $tpl->setVariable("COMPUTED_VALUE", htmlspecialchars((string) (static::getSolutionMetric($object->getAllSolutionMetrics())->getValue()), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
             $tpl->setVariable("POINTS", static::getSolutionMetric($object->getAllSolutionMetrics())->getPoints());
         }
         // If we display the participants solution
         else {
-            $tpl->setVariable("COMPUTED_VALUE", static::getParticipantMetric($participant_input->getAllParticipantMetrics())->getValue());
+            $tpl->setVariable("COMPUTED_VALUE", htmlspecialchars((string) (static::getParticipantMetric($participant_input->getAllParticipantMetrics())->getValue()), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
             $solution_metrics = $object->getAllSolutionMetrics();
             $participant_metrics = $participant_input->getAllParticipantMetrics();
             $tpl->setVariable("POINTS", static::calculateReachedPoints(

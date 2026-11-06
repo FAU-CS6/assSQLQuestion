@@ -1,50 +1,8 @@
-<div class="qpisql-output-area">
-
-  <div id="qpisql-output-area-error-{ID}" class="qpisql-inner-output-area qpisql-output-area-error" style="display:none">
-  </div>
-  <div id="qpisql-output-area-execution-running-{ID}" class="qpisql-inner-output-area qpisql-output-area-execution-running" style="display:none">
-    {STATUS_EXECUTION_RUNNING}
-  </div>
-  <div id="qpisql-output-area-relation-{ID}" class="qpisql-inner-output-area qpisql-output-area-relation" style="display:none">
-  </div>
-
+<div id="qpisql-stored-output-{ID}" class="qpisql-output-area" data-labels="{LABELS}"
+     data-error-bool="{ERROR_BOOL}" data-error="{ERROR}" data-executed-bool="{EXECUTED_BOOL}" data-relation="{OUTPUT_RELATION}">
+  <div class="qpisql-inner-output-area qpisql-output-area-error" style="display:none"></div>
+  <div class="qpisql-inner-output-area qpisql-output-area-relation" style="display:none"></div>
 </div>
-
 <script>
-  // Use the values of the hidden fields to dynamicly generate values of the visible area
-  var default_error_bool_{ID} = "{ERROR_BOOL}";
-  var default_error_{ID} = '{ERROR}';
-  var default_executed_bool_{ID} = "{EXECUTED_BOOL}";
-  var default_output_relation_{ID} = '{OUTPUT_RELATION}';
-
-  // In case of the default result being an error
-  if(default_error_bool_{ID} == "true" && default_error_{ID} != "")
-  {
-    var error = JSON.parse(default_error_{ID});
-
-    document.getElementById('qpisql-output-area-error-{ID}').innerHTML = error.errorMessage;
-    document.getElementById('qpisql-output-area-error-{ID}').style.display = "inherit";
-  }
-  // Otherwise we can display a result
-  else if(default_executed_bool_{ID} == "true" && default_output_relation_{ID} != "")
-  {
-    try
-    {
-      var result = new SQLResult(JSON.parse(default_output_relation_{ID}));
-
-      document.getElementById('qpisql-output-area-relation-{ID}').innerHTML = result.toHTMLTable();
-      document.getElementById('qpisql-output-area-relation-{ID}').style.display = "inherit";
-    }
-    catch (err)
-    {
-      document.getElementById('qpisql-output-area-error-{ID}').innerHTML = "{ERROR_NO_EXECUTION}";
-      document.getElementById('qpisql-output-area-error-{ID}').style.display = "inherit";
-    }
-  }
-  // Otherwise
-  else
-  {
-    document.getElementById('qpisql-output-area-error-{ID}').innerHTML = "{ERROR_NO_EXECUTION}";
-    document.getElementById('qpisql-output-area-error-{ID}').style.display = "inherit";
-  }
+  OutputAreaOutput.renderStored(document.getElementById('qpisql-stored-output-{ID}'));
 </script>

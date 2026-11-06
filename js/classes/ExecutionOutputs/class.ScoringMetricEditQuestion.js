@@ -26,7 +26,7 @@
      this.beautifier = beautifier;
 
      // Beautify any existing content
-     document.getElementById('qpisql-scoring-metric-output-' + this.type).innerHTML = this.beautifier(document.getElementById('qpisql-scoring-metric-output-' + this.type).innerHTML);
+     document.getElementById('qpisql-scoring-metric-output-' + this.type).textContent = this.beautifier(document.getElementById('qpisql-scoring-metric-output-' + this.type).textContent);
    }
 
    /**
@@ -36,7 +36,7 @@
    {
      document.getElementById('qpisql-scoring-metric-not-executed-' + this.type).style.display = "inherit";
      document.getElementById('qpisql-scoring-metric-executed-' + this.type).style.display = "none";
-     document.getElementById('qpisql-scoring-metric-output-' + this.type).innerHTML = "";
+     document.getElementById('qpisql-scoring-metric-output-' + this.type).textContent = "";
      document.getElementById('qpisql-scoring-metric-value-' + this.type).value = "false";
    }
 
@@ -47,7 +47,7 @@
    {
      document.getElementById('qpisql-scoring-metric-not-executed-' + this.type).style.display = "inherit";
      document.getElementById('qpisql-scoring-metric-executed-' + this.type).style.display = "none";
-     document.getElementById('qpisql-scoring-metric-output-' + this.type).innerHTML = "";
+     document.getElementById('qpisql-scoring-metric-output-' + this.type).textContent = "";
      document.getElementById('qpisql-scoring-metric-value-' + this.type).value = "false";
    }
 
@@ -60,7 +60,7 @@
    {
      document.getElementById('qpisql-scoring-metric-not-executed-' + this.type).style.display = "inherit";
      document.getElementById('qpisql-scoring-metric-executed-' + this.type).style.display = "none";
-     document.getElementById('qpisql-scoring-metric-output-' + this.type).innerHTML = "";
+     document.getElementById('qpisql-scoring-metric-output-' + this.type).textContent = "";
      document.getElementById('qpisql-scoring-metric-value-' + this.type).value = "false";
    }
 
@@ -73,7 +73,7 @@
    {
      document.getElementById('qpisql-scoring-metric-not-executed-' + this.type).style.display = "none";
      document.getElementById('qpisql-scoring-metric-executed-' + this.type).style.display = "inherit";
-     document.getElementById('qpisql-scoring-metric-output-' + this.type).innerHTML = this.beautifier(this.getter(result));
+     document.getElementById('qpisql-scoring-metric-output-' + this.type).textContent = this.beautifier(this.getter(result));
      document.getElementById('qpisql-scoring-metric-value-' + this.type).value = this.getter(result);
    }
 

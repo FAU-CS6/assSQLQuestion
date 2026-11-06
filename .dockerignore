@@ -1,7 +1,10 @@
 docs/
 docker-compose.yml
-vendor/
+/vendor/
 .git/
 **/node_modules/
 .phpunit.cache/
 test-results/
+.DS_Store
+
+# Keep the committed lib/minify/vendor runtime dependency in the image.

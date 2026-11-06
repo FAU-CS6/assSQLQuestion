@@ -1,6 +1,6 @@
 # Umstieg auf ILIAS 11
 
-Plugin-Version **0.1.0**, Branch **ilias-11-update**. Diese Version setzt ILIAS 11
+Plugin-Version **0.1.1**, Branch **ilias-11-update**. Diese Version setzt ILIAS 11
 und PHP 8.3 oder 8.4 voraus. Für ILIAS 8/9 bleibt der bisherige Plugin-Stand nötig.
 
 ## Änderungen
@@ -34,8 +34,52 @@ und PHP 8.3 oder 8.4 voraus. Für ILIAS 8/9 bleibt der bisherige Plugin-Stand n�
   aktualisiert. Jenkins führt Unit-Tests und einen Klassenabgleich vor dem Build aus.
 
 Die Tabellen `il_qpl_qst_qpisql_qd` und `il_qpl_qst_qpisql_qsm` sowie das gespeicherte
-Antwortformat bleiben erhalten. Es ist kein zusätzlicher Datenbank-Update-Schritt
-des Plugins nötig; der Plugin-Datenbankstand bleibt **5**.
+Antwortformat bleiben erhalten. Datenbank-Schritt **6** ergänzt ausschließlich die
+Opt-in-Einstellung `editor_assistance` mit Standardwert `0`. Bestehende Fragen
+und alte QTI-Importe erhalten damit weiterhin keine zusätzlichen Hilfen.
+
+## Bedienung und Kompatibilität ab 0.1.1
+
+- **Ausführen:** Der Button und `Strg+Enter` beziehungsweise `Cmd+Enter` starten
+  dieselbe Ausführung. Das Tastenkürzel verändert den SQL-Text nicht.
+- **Manuell abbrechen:** Der Abbruch beendet den SQLite-Worker, erhält den SQL-Text
+  und gibt den Editor wieder frei. Eine abgebrochene Antwort erhält keine Punkte
+  für frühere Ergebnisse. Das Plugin hat **keinen Ausführungs-Timeout**.
+- **Status:** Ausführungsstatus und Speicherstatus werden getrennt angezeigt.
+  „Gespeichert“ erscheint erst nach bestätigter erfolgreicher ILIAS-Autosave-Antwort;
+  Änderungen während einer laufenden Speicherung verwerfen deren Statusbestätigung.
+- **Ergebnistabellen:** 100 Zeilen pro Seite, Zeilenanzahl, feste Überschriften,
+  horizontales Scrollen und unterscheidbare NULL-/Leerstring-Werte. Alle Ergebniszeilen
+  bleiben für Speicherung und Bewertung erhalten. Die FD-Gruppierung verwendet
+  effizientere Schlüssel-Lookups bei unveränderter Vergleichssemantik.
+- **Hilfen je Frage:** Die Autorenoption aktiviert SQL-Vervollständigung und eine
+  Schemaübersicht für Teilnehmende. Tabellen und Spalten werden auf ausdrücklichen
+  Klick ausschließlich aus Sequenz A ermittelt; Musterlösung B und Kontrollabfrage C
+  werden dafür nicht ausgeführt. Auch das Laden des Schemas ist manuell abbrechbar.
+  Neue Hilfen sind bei bestehenden Fragen und alten Importen ausgeschaltet.
+- **Anonyme Beispiele:** Die Autorenmaske enthält neue kleine Beispiele für JOIN/
+  Gruppierung und UPDATE, DELETE sowie INSERT mit Kontrollabfrage C. Sie orientieren
+  sich an den Aufgabentypen der Bestände, enthalten keine Original-Prüfungsdaten und
+  können ausschließlich in leere SQL-Felder übernommen werden. Fragetext und
+  Bewertungsgewichte legt die Lehrperson fest.
+- **Bewertung:** Spaltennamen und FD-Einträge werden für den Jaccard-Vergleich
+  dedupliziert. Wiederholte Namen oder gleichwertige FD-Einträge können die Punkte
+  damit nicht mehr über das Maximum der Metrik erhöhen.
+- **Eigentümer:** Nativ neu angelegte Fragen werden dem aktuellen Lehrendenkonto
+  zugeordnet. Beim Laden vorhandener Fragen bleibt der gespeicherte Eigentümer
+  erhalten.
+- **Darstellung:** SQL, Ergebniswerte, Spaltennamen, Metriken und Fehlermeldungen
+  werden in ihrem jeweiligen HTML-Kontext sicher ausgegeben. Gespeicherte SQL- und
+  QTI-Daten werden dabei nicht umgeschrieben. Nicht ausgeführte Antworten zeigen
+  auch in der Detailansicht eine Erklärung; der Fragetypname wird übersetzt.
+
+Gespeicherte Altbewertungen bleiben bis zu einer nativen ILIAS-Neuberechnung
+bestehen. Diese wendet die korrigierte Mengensemantik an; bei den nachgewiesenen
+Dopplungen wird damit eine frühere Überbewertung korrigiert.
+
+Die neue Option wird als QTI-Metadatum `EDITOR_ASSISTANCE` exportiert und importiert
+und beim Kopieren, Duplizieren und Synchronisieren erhalten. Das Teilnehmer-
+Antwortformat und die drei vorhandenen Bewertungsmetriken bleiben kompatibel.
 
 ## Installation und Update
 
@@ -59,6 +103,29 @@ relativ zum ILIAS-Hauptverzeichnis:
 Die Befehle mit dem für die ILIAS-Installation vorgesehenen Systembenutzer
 ausführen. Der Webserver muss das ILIAS-Verzeichnis `public/` ausliefern.
 
+### Erforderliche ILIAS-Kernkorrektur
+
+Die unveränderte ILIAS-Version 11.5 enthält einen Fehler in
+`ilAssQuestionType::completeMissingPluginName()`: Nach einem erfolgreichen Import
+stürzt die native Fragenliste für aktive Fragenplugins mit `Undefined array key
+"type_tag"` ab. Im offiziellen `release_11` wurde dies am 27. Oktober 2026 mit
+[Commit 635bd4ec40200c7b6e88aab71eca4a914c9dc6f4](https://github.com/ILIAS-eLearning/ILIAS/commit/635bd4ec40200c7b6e88aab71eca4a914c9dc6f4)
+behoben. Der eingesetzte ILIAS-Patchstand muss diese Korrektur enthalten.
+
+Die Chrome-Abnahme verwendet ILIAS 11.5 mit genau dieser verifizierten
+Upstream-Korrektur. Das Plugin verändert selbst keine Kerndateien. Für das
+wegwerfbare `srsolutions/ilias:11`-Testimage ist die Vorbereitung reproduzierbar:
+
+```sh
+docker compose -p ass_sql_ilias11 exec -T -e ILIAS_TEST_CORE_PATCH=1 ilias \
+  php public/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/tests/ilias11/prepare-question-type-core.php
+docker compose -p ass_sql_ilias11 exec -T ilias apache2ctl -k graceful
+```
+
+Das Testskript akzeptiert ausschließlich die geprüften SHA-256-Werte der
+unveränderten und korrigierten Kerndatei; bei unbekanntem Stand bricht es ohne
+Änderung ab. Es wird niemals vom Plugin geladen.
+
 ## Reproduzierbare Tests
 
 ### Unit-Tests und Klassenabgleich
@@ -77,7 +144,7 @@ docker run --rm --entrypoint sh -v "$PWD:/plugin" -w /plugin \
   srsolutions/ilias:11 -c 'composer install --no-interaction && composer test && php tests/ilias11/check-classes.php'
 ```
 
-`tests/ilias11/check-classes.php` lädt alle 33 Plugin-Klassen gegen die echten
+`tests/ilias11/check-classes.php` lädt alle 34 Plugin-Klassen gegen die echten
 ILIAS-Basisklassen. Es benötigt keine Datenbank. Mit `ILIAS_PATH` kann ein anderer
 ILIAS-Quellstand mit generiertem Composer-Autoloader angegeben werden.
 
@@ -141,6 +208,16 @@ docker compose -p ass_sql_ilias11 exec -T -e ILIAS_TEST_WRITES=1 ilias \
   php public/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/tests/ilias11/browser-fixture.php delete
 ```
 
+## Abnahme der Bestandsfragen vom 6. November 2026
+
+Plugin 0.1.1 wurde mit allen **699 Fragen aus fünf realen StudOn-Pools** geprüft:
+native Chrome-Importe, Exporte und erneute Importe über ein reguläres Lehrendenkonto
+sowie 699 echte Abgaben über ein getrenntes Studierendenkonto. Ergebnis:
+**699/699 beantwortet, nach korrigierter Mengenbewertung 2259/2259 Punkte**.
+Alle 699 Antworten blieben bei der nativen Neuberechnung nachweislich unverändert.
+Siehe [vollständigen Abnahmebericht](chrome-abnahme-2026-11-06.md) für Umgebungsstand,
+Prüfgrenzen, den gefundenen Bewertungsfehler und die reproduzierbaren Werkzeuge.
+
 ## Testergebnis vom 4. November 2026
 
 Ergänzend wurden am 5. November drei vollständige Testversuche im installierten
@@ -185,7 +262,7 @@ Die Compose-Datei verfolgt weiterhin den Major-Tag `11` und erhält damit späte
 Die Tests liefen lokal gegen den offiziellen ILIAS-Code, nicht auf einer
 StudOn-Installation mit FAU-Anpassungen. Die automatisierten Browser-Tests vom
 4. November liefen in Chromium; die ergänzende Prüfung vom 5. November im
-installierten Google Chrome. Weitere Browser, ILIAS-11.0-Laufzeitabläufe, reale Altbestände,
+installierten Google Chrome. Weitere Browser und ILIAS-11.0-Laufzeitabläufe,
 gleichzeitige Prüfungsteilnahmen und die konkrete StudOn-Konfiguration wurden
 nicht durch einen Produktivtest abgedeckt. Die Update-Simulation prüft den
 Plugin-Updater und den Erhalt bestehender Daten, keinen vollständigen ILIAS-9-

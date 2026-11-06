@@ -23,6 +23,6 @@
 <script>
   var beautifier_{TYPE}_{ID}={BEAUTIFIER};
 
-  document.getElementById('computed-value-{TYPE}-{ID}').innerHTML = beautifier_{TYPE}_{ID}(document.getElementById('computed-value-{TYPE}-{ID}').innerHTML);
-  document.getElementById('expected-value-{TYPE}-{ID}').innerHTML = beautifier_{TYPE}_{ID}(document.getElementById('expected-value-{TYPE}-{ID}').innerHTML);
+  document.getElementById('computed-value-{TYPE}-{ID}').textContent = beautifier_{TYPE}_{ID}(document.getElementById('computed-value-{TYPE}-{ID}').textContent);
+  document.getElementById('expected-value-{TYPE}-{ID}').textContent = beautifier_{TYPE}_{ID}(document.getElementById('expected-value-{TYPE}-{ID}').textContent);
 </script>

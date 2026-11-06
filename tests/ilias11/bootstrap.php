@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 // This suite creates and deletes repository objects. Use a disposable test client.
-if (getenv('ILIAS_TEST_WRITES') !== '1') {
-    throw new RuntimeException('Set ILIAS_TEST_WRITES=1 on a disposable ILIAS 11 installation.');
+if (PHP_SAPI !== 'cli' || getenv('ILIAS_TEST_WRITES') !== '1') {
+    throw new RuntimeException('Run from CLI with ILIAS_TEST_WRITES=1 on a disposable ILIAS 11 installation.');
 }
 
 $ilias_path = getenv('ILIAS_PATH') ?: '/var/www/html';

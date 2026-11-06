@@ -20,6 +20,8 @@ class ExecutionHandler
 
     // Initialize the ExecutionOutput array
     this.outputs = [];
+    this.activeRun = null;
+    this.running = false;
   }
 
   /**
@@ -31,23 +33,23 @@ class ExecutionHandler
    */
   execute()
   {
-    // Call the onExecution event handlers
+    if (this.running) return;
+    this.running = true;
     this.onExecution();
+    try {
+      const run = new SQLRun(this.getSequenceA(), this.getSequenceB(), this.getSequenceC(), this.getIntegrityCheck(), this);
+      // Empty sequences or validation errors can finish synchronously in the constructor.
+      this.activeRun = this.running ? run : null;
+    } catch (error) {
+      this.onError(new SQLRunErrorAbstract(error.message));
+    }
+  }
 
-    // Get sequence a
-    const sequenceA = this.getSequenceA();
-
-    // Get sequence b
-    const sequenceB = this.getSequenceB();
-
-    // Get sequence c
-    const sequenceC = this.getSequenceC();
-
-    // Get the state of the integrityCheck checkbox
-    const integrityCheck = this.getIntegrityCheck();
-
-    // Execute the SQLRun
-    new SQLRun(sequenceA, sequenceB, sequenceC, integrityCheck, this);
+  cancel()
+  {
+    if (!this.activeRun) return;
+    const button = document.getElementById('qpisql-cancel-button');
+    this.activeRun.cancel(button ? button.dataset.cancelled : 'Execution cancelled.');
   }
 
   /**
@@ -85,7 +87,7 @@ class ExecutionHandler
     */
    getSequenceA()
    {
-     for(var i = 0; i <= this.inputs.length; i++)
+     for(var i = 0; i < this.inputs.length; i++)
      {
        if(this.inputs[i].getName() == "sequence_a")
        {
@@ -103,7 +105,7 @@ class ExecutionHandler
     */
    getSequenceB()
    {
-     for(var i = 0; i <= this.inputs.length; i++)
+     for(var i = 0; i < this.inputs.length; i++)
      {
        if(this.inputs[i].getName() == "sequence_b")
        {
@@ -121,7 +123,7 @@ class ExecutionHandler
     */
    getSequenceC()
    {
-     for(var i = 0; i <= this.inputs.length; i++)
+     for(var i = 0; i < this.inputs.length; i++)
      {
        if(this.inputs[i].getName() == "sequence_c")
        {
@@ -139,7 +141,7 @@ class ExecutionHandler
     */
    getIntegrityCheck()
    {
-     for(var i = 0; i <= this.inputs.length; i++)
+     for(var i = 0; i < this.inputs.length; i++)
      {
        if(this.inputs[i].getName() == "integrity_check")
        {
@@ -196,6 +198,8 @@ class ExecutionHandler
     */
    onError(error)
    {
+     this.running = false;
+     this.activeRun = null;
      for(var i = 0; i < this.outputs.length; i++)
      {
        this.outputs[i].onError(error);
@@ -209,6 +213,8 @@ class ExecutionHandler
     */
    onResult(result)
    {
+     this.running = false;
+     this.activeRun = null;
      for(var i = 0; i < this.outputs.length; i++)
      {
        this.outputs[i].onResult(result);

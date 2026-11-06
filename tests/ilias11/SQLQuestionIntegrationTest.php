@@ -41,6 +41,7 @@ final class SQLQuestionIntegrationTest extends TestCase
         $question->setSequence('sequence_a', "CREATE TABLE people (id INTEGER, name TEXT); INSERT INTO people VALUES (1, 'Ada'), (2, 'Grace');");
         $question->setSequence('sequence_b', 'SELECT name FROM people ORDER BY id;');
         $question->setSequence('sequence_c', '');
+        $question->setEditorAssistance(true);
         $question->setExecutedBool(true);
         $question->setOutputRelation('{"columns":["name"],"values":[["Ada"],["Grace"]]}');
         $question->setAllSolutionMetrics([
@@ -64,6 +65,7 @@ final class SQLQuestionIntegrationTest extends TestCase
         self::assertSame($question->getSequence('sequence_a'), $loaded->getSequence('sequence_a'));
         self::assertSame($question->getSequence('sequence_b'), $loaded->getSequence('sequence_b'));
         self::assertSame($question->getAllSolutionMetricsAsJSON(), $loaded->getAllSolutionMetricsAsJSON());
+        self::assertTrue($loaded->getEditorAssistance());
         self::assertSame(5.0, $loaded->getMaximumPoints());
         self::assertSame(3, $loaded->getNrOfTries());
         self::assertSame('sql-integration-test', $loaded->getExternalId());
@@ -79,16 +81,19 @@ final class SQLQuestionIntegrationTest extends TestCase
         self::assertSame('Copy', $copy->getTitle());
         self::assertSame($question->getAllSolutionMetricsAsJSON(), $copy->getAllSolutionMetricsAsJSON());
         self::assertNull($copy->getOriginalId());
+        self::assertTrue($copy->getEditorAssistance());
 
         $duplicate_id = $question->duplicate(true, '', '', -1, $this->pool->getId());
         $this->question_ids[] = $duplicate_id;
         $duplicate = assQuestion::instantiateQuestion($duplicate_id);
         self::assertSame($question->getId(), $duplicate->getOriginalId());
         $duplicate->setSequence('sequence_b', 'SELECT DISTINCT name FROM people;');
+        $duplicate->setEditorAssistance(false);
         $duplicate->saveToDb();
         $duplicate->syncWithOriginal();
         $original = assQuestion::instantiateQuestion($question->getId());
         self::assertSame($duplicate->getSequence('sequence_b'), $original->getSequence('sequence_b'));
+        self::assertFalse($original->getEditorAssistance());
     }
 
     public function testDeletionRemovesBothPluginTables(): void
@@ -117,7 +122,64 @@ final class SQLQuestionIntegrationTest extends TestCase
         $imported = assQuestion::instantiateQuestion($mapping['pool']);
         self::assertSame($question->getSequence('sequence_b'), $imported->getSequence('sequence_b'));
         self::assertSame($question->getAllSolutionMetricsAsJSON(), $imported->getAllSolutionMetricsAsJSON());
+        self::assertTrue($imported->getEditorAssistance());
         self::assertStringContainsString('Correct SQL!', $imported->feedbackOBJ->getGenericFeedbackContent($imported->getId(), true));
+    }
+
+    public function testLegacyImportKeepsParticipantHintsDisabled(): void
+    {
+        $question = $this->question();
+        $xml = new DOMDocument();
+        $xml->loadXML($question->toXML());
+        $xpath = new DOMXPath($xml);
+        foreach ($xpath->query('//qtimetadatafield[fieldlabel="EDITOR_ASSISTANCE"]') as $field) {
+            $field->parentNode->removeChild($field);
+        }
+        $parser = new ilQTIParser(sys_get_temp_dir(), null, ilQTIParser::IL_MO_PARSE_QTI, $this->pool->getId());
+        $parser->setXMLContent($xml->saveXML());
+        $parser->startParsing();
+        $mapping = current($parser->import_mapping);
+        $this->question_ids[] = $mapping['pool'];
+        $imported = assQuestion::instantiateQuestion($mapping['pool']);
+        self::assertFalse($imported->getEditorAssistance());
+        self::assertSame('', (new EditorAssistance($imported->getPlugin(), $imported))->getQuestionOutput(new ParticipantInput()));
+    }
+
+    public function testSQLAndMetricsAreEscapedOnlyForHTMLPresentation(): void
+    {
+        $question = $this->question();
+        $sql = "SELECT '</textarea><img src=x onerror=alert(1)>&' AS sample;";
+        $question->setSequence('sequence_a', $sql);
+        $question->setSequence('sequence_b', $sql);
+        $question->saveToDb();
+        $loaded = assQuestion::instantiateQuestion($question->getId());
+        self::assertSame($sql, $loaded->getSequence('sequence_b'));
+        $plugin = $loaded->getPlugin();
+        $input = (new SequenceB($plugin, $loaded))->getEditOutput();
+        $hidden = (new SequenceA($plugin, $loaded))->getQuestionOutput(new ParticipantInput());
+        foreach ([$input, $hidden] as $html) {
+            self::assertStringNotContainsString('<img src=x', $html);
+            $dom = new DOMDocument();
+            $dom->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
+            self::assertSame($sql, $dom->getElementsByTagName('textarea')->item(0)->textContent);
+        }
+        $loaded->setSingleSolutionMetric(new SolutionMetric('column_names', 1, '["</td><img src=x onerror=alert(1)>"]'));
+        $html = ColumnNames::getSolutionOutput($plugin, $loaded, null);
+        self::assertStringNotContainsString('<img src=x', $html);
+        self::assertStringContainsString('&lt;/td&gt;&lt;img', $html);
+        self::assertSame($plugin->txt('gi_name'), $GLOBALS['DIC']->language()->txt('assSQLQuestion'));
+    }
+
+    public function testNativeAuthoringAssignsOwnerAndLoadingPreservesExistingOwner(): void
+    {
+        global $DIC;
+        $gui = new assSQLQuestionGUI();
+        self::assertSame($DIC->user()->getId(), $gui->getObject()->getOwner());
+        $question = $this->question();
+        $question->setOwner(ANONYMOUS_USER_ID);
+        $question->saveToDb();
+        $loaded = new assSQLQuestionGUI($question->getId());
+        self::assertSame(ANONYMOUS_USER_ID, $loaded->getObject()->getOwner());
     }
 
     public function testQuestionPreviewAndSolutionRenderWithPluginAssets(): void
@@ -125,6 +187,7 @@ final class SQLQuestionIntegrationTest extends TestCase
         $question = $this->question();
         $gui = assQuestion::instantiateQuestionGUI($question->getId());
         self::assertStringContainsString('codemirror_sqlquestion.bundle.js', $gui->getPreview());
+        self::assertStringContainsString('%from%', $gui->getPreview());
         self::assertStringContainsString('worker.sql.js', file_get_contents($question->getPlugin()->getDirectory() . '/js/classes/SQL/class.SQLRun.js'));
         self::assertStringContainsString('SELECT name', $gui->getSolutionOutput(0, null, show_correct_solution: true));
     }

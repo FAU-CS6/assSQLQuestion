@@ -65,6 +65,8 @@ class SequenceArea extends GUIArea
             $object // Object
         ));
 
+        $this->addSubElement(new EditorAssistance($plugin, $object));
+
         // Execute Button
         $this->addSubElement(new ExecuteButton(
             $plugin, // Plugin

@@ -181,3 +181,13 @@ if($ilDB->tableColumnExists('qpl_qst_type', 'plugin_name'))
     $ilDB->manipulate("UPDATE qpl_qst_type set plugin_name = type_tag WHERE type_tag ='assSQLQuestion'");
 }
 ?>
+
+<#6>
+<?php
+// New hints are opt-in, including all existing questions.
+if (!$ilDB->tableColumnExists('il_qpl_qst_qpisql_qd', 'editor_assistance')) {
+    $ilDB->addTableColumn('il_qpl_qst_qpisql_qd', 'editor_assistance', [
+        'type' => 'integer', 'length' => 1, 'notnull' => true, 'default' => 0
+    ]);
+}
+?>

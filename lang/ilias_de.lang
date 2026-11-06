@@ -196,3 +196,39 @@ ai_sca_so_sm_fd_info#:#<b>Funktionale Abhängigkeiten</b>
 
 // Header of the metric
 ai_sca_so_sm_cn_info#:#<b>Namen der Attribute</b>
+
+// Execution and result usability
+qol_cancel#:#Abbrechen
+qol_cancelled#:#Ausführung manuell abgebrochen. Der SQL-Text bleibt erhalten.
+qol_shortcut#:#Ausführen: Strg+Enter / Cmd+Enter
+qol_not_executed#:#Noch nicht ausgeführt oder seit der letzten Ausführung geändert.
+qol_failed#:#Ausführung fehlgeschlagen.
+qol_success#:#Erfolgreich ausgeführt.
+qol_unsaved#:#Änderungen noch nicht gespeichert.
+qol_saved#:#Entwurf gespeichert
+qol_save_failed#:#Entwurf konnte nicht gespeichert werden.
+qol_loaded#:#Stand geladen.
+qol_rows#:#Zeilen %from%–%to% von %total%
+qol_result#:#SQL-Ergebnis
+qol_null#:#SQL NULL – fehlender Wert
+qol_empty#:#Leere Zeichenkette
+qol_no_rows#:#Das Ergebnis enthält keine Zeilen.
+qol_previous#:#Vorherige Seite
+qol_next#:#Nächste Seite
+
+help_hints#:#SQL-Vervollständigung und Schemaübersicht für Teilnehmende freigeben
+help_hints_info#:#Gilt nur für diese Frage. Bestehende Fragen und alte Importe behalten deaktivierte Hilfen. Das Schema wird bei Bedarf aus Sequenz A geladen.
+help_example#:#Anonyme SQL-Beispiele
+help_example_select#:#SELECT: JOIN und Gruppierung
+help_example_update#:#UPDATE mit Kontrollabfrage
+help_example_delete#:#DELETE mit Kontrollabfrage
+help_example_insert#:#INSERT mit Kontrollabfrage
+help_example_apply#:#In leere SQL-Felder übernehmen
+help_example_empty#:#Beispiele überschreiben keine vorhandenen SQL-Sequenzen. Fragetext und Bewertung legen Sie selbst fest.
+help_schema#:#Tabellen und Spalten
+help_schema_load#:#Schema aus Sequenz A laden
+help_schema_cancel#:#Laden abbrechen
+help_schema_loading#:#Schema wird geladen …
+help_schema_empty#:#Sequenz A definiert keine Tabellen oder Views.
+help_schema_cancelled#:#Laden abgebrochen.
+help_schema_changed#:#Sequenz A wurde geändert. Laden Sie das Schema erneut.

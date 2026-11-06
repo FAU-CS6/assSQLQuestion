@@ -82,6 +82,70 @@ final class FunctionalDependenciesTest extends TestCase
 
         $this->assertSame(7.0, $points);
     }
+
+    /** Encode the existing outer-array-of-JSON-strings storage format. */
+    private static function dependencies(array $entries): string
+    {
+        return json_encode(array_map(static fn(array $entry): string => json_encode([
+            'determinateAttributes' => $entry[0],
+            'dependentAttributes' => $entry[1],
+        ], JSON_THROW_ON_ERROR), $entries), JSON_THROW_ON_ERROR);
+    }
+
+    public function testRepeatedDependenciesComparedWithThemselvesReceiveExactlyMaximumPoints(): void
+    {
+        $dependencies = self::dependencies([
+            [['id', 'group'], ['first', 'last']],
+            [['GROUP', 'ID'], ['LAST', 'FIRST']],
+            [['Id', 'GROUP'], ['First', 'Last']],
+        ]);
+        self::assertSame(7.0, FunctionalDependencies::calculateReachedPoints(
+            [new SolutionMetric('functional_dependencies', 7, $dependencies)],
+            [new ParticipantMetric('functional_dependencies', $dependencies)]
+        ));
+    }
+
+    public function testDependencyDuplicatesAndCaseOrOrderVariantsDoNotChangeAFullMatch(): void
+    {
+        $repeated = self::dependencies([
+            [['id', 'group'], ['first', 'last']],
+            [['GROUP', 'ID'], ['LAST', 'FIRST']],
+            [['Id', 'GROUP'], ['First', 'Last']],
+        ]);
+        $single = self::dependencies([[['group', 'id'], ['last', 'first']]]);
+        foreach ([[$repeated, $single], [$single, $repeated]] as [$solution, $participant]) {
+            self::assertSame(7.0, FunctionalDependencies::calculateReachedPoints(
+                [new SolutionMetric('functional_dependencies', 7, $solution)],
+                [new ParticipantMetric('functional_dependencies', $participant)]
+            ));
+        }
+    }
+
+    public function testDependencyDuplicatesUseSetOverlapForPartialCreditInEitherDirection(): void
+    {
+        $a = self::dependencies([
+            [['id', 'group'], ['first', 'last']],
+            [['GROUP', 'ID'], ['LAST', 'FIRST']],
+            [['Id', 'GROUP'], ['First', 'Last']],
+            [['zip'], ['city']],
+        ]);
+        $b = self::dependencies([
+            [['group', 'id'], ['last', 'first']],
+            [['ID', 'GROUP'], ['FIRST', 'LAST']],
+            [['name'], ['age']],
+            [['NAME'], ['AGE']],
+        ]);
+        foreach ([[$a, $b], [$b, $a]] as [$solution, $participant]) {
+            $points = FunctionalDependencies::calculateReachedPoints(
+                [new SolutionMetric('functional_dependencies', 12, $solution)],
+                [new ParticipantMetric('functional_dependencies', $participant)]
+            );
+            // One common dependency, three different dependencies in the union.
+            self::assertEqualsWithDelta(4.0, $points, 1e-12);
+            self::assertGreaterThanOrEqual(0.0, $points);
+            self::assertLessThanOrEqual(12.0, $points);
+        }
+    }
 }
 
 

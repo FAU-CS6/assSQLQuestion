@@ -33,6 +33,7 @@
    {
      // Disable the input
      document.getElementById('qpisql-execute-button').disabled = true;
+     document.getElementById('qpisql-cancel-button').hidden = false;
    }
 
    /**
@@ -44,6 +45,8 @@
    {
      // Enable the input
      document.getElementById('qpisql-execute-button').disabled = false;
+     document.getElementById('qpisql-cancel-button').hidden = true;
+     if (error.errorType === 'SQLRunErrorCancelled') document.getElementById('qpisql-execute-button').focus();
    }
 
    /**
@@ -55,6 +58,7 @@
    {
      // Enable the input
      document.getElementById('qpisql-execute-button').disabled = false;
+     document.getElementById('qpisql-cancel-button').hidden = true;
    }
 
  }

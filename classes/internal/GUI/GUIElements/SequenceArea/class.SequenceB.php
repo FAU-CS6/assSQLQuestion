@@ -32,7 +32,7 @@ class SequenceB extends GUIElement
         $tpl->setVariable("HEADER", $this->plugin->txt('ai_sea_eo_seq_b'));
         $tpl->setVariable("ID", 'sequence_b');
         $tpl->setVariable("NAME", 'sequence_b');
-        $tpl->setVariable("CONTENT", $sequence_b);
+        $tpl->setVariable("CONTENT", htmlspecialchars($sequence_b, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         return $tpl->get();
     }
 
@@ -57,7 +57,7 @@ class SequenceB extends GUIElement
         $tpl->setVariable("HEADER", $this->plugin->txt('ai_sea_qo_seq_b'));
         $tpl->setVariable("ID", 'sequence_b');
         $tpl->setVariable("NAME", 'sequence_b');
-        $tpl->setVariable("CONTENT", $sequence_b);
+        $tpl->setVariable("CONTENT", htmlspecialchars($sequence_b, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         return $tpl->get();
     }
 
@@ -82,7 +82,7 @@ class SequenceB extends GUIElement
         $tpl = $this->plugin->getTemplate('SequenceArea/tpl.il_as_qpl_qpisql_sea_sequence_output.html');
         $tpl->setVariable("ID", "sequence_b_" . $id);
         $tpl->setVariable("HEADER", $this->plugin->txt('ai_sea_qo_seq_b'));
-        $tpl->setVariable("CONTENT", $sequence_b);
+        $tpl->setVariable("CONTENT", htmlspecialchars($sequence_b, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         return $tpl->get();
     }
 

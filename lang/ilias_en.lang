@@ -197,3 +197,39 @@ ai_sca_so_sm_fd_info#:#<b>Functional Dependencies</b>
 
 // Header of the metric
 ai_sca_so_sm_cn_info#:#<b>Names of the attributes</b>
+
+// Execution and result usability
+qol_cancel#:#Cancel
+qol_cancelled#:#Execution cancelled manually. Your SQL text is retained.
+qol_shortcut#:#Run: Ctrl+Enter / Cmd+Enter
+qol_not_executed#:#Not executed yet, or changed since the last execution.
+qol_failed#:#Execution failed.
+qol_success#:#Executed successfully.
+qol_unsaved#:#Changes have not been saved yet.
+qol_saved#:#Draft saved
+qol_save_failed#:#The draft could not be saved.
+qol_loaded#:#Answer loaded.
+qol_rows#:#Rows %from%–%to% of %total%
+qol_result#:#SQL result
+qol_null#:#SQL NULL – missing value
+qol_empty#:#Empty string
+qol_no_rows#:#The result contains no rows.
+qol_previous#:#Previous page
+qol_next#:#Next page
+
+help_hints#:#Enable SQL completion and schema overview for participants
+help_hints_info#:#Applies to this question only. Existing questions and legacy imports keep hints disabled. Load the schema from sequence A when needed.
+help_example#:#Anonymous SQL examples
+help_example_select#:#SELECT: JOIN and grouping
+help_example_update#:#UPDATE with verification query
+help_example_delete#:#DELETE with verification query
+help_example_insert#:#INSERT with verification query
+help_example_apply#:#Insert into empty SQL fields
+help_example_empty#:#Examples never overwrite existing SQL sequences. Set question text and scoring yourself.
+help_schema#:#Tables and columns
+help_schema_load#:#Load schema from sequence A
+help_schema_cancel#:#Cancel loading
+help_schema_loading#:#Loading schema …
+help_schema_empty#:#Sequence A defines no tables or views.
+help_schema_cancelled#:#Loading cancelled.
+help_schema_changed#:#Sequence A changed. Load the schema again.

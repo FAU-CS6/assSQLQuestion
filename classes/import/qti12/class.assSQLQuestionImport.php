@@ -98,6 +98,7 @@ class assSQLQuestionImport extends assQuestionImport
         $this->object->setSequence("sequence_b", $item->getMetadataEntry("SEQUENCE_B"));
         $this->object->setSequence("sequence_c", $item->getMetadataEntry("SEQUENCE_C"));
         $this->object->setIntegrityCheck((bool) $item->getMetadataEntry("INTEGRITY_CHECK"));
+        $this->object->setEditorAssistance($item->getMetadataEntry('EDITOR_ASSISTANCE') === '1');
         $this->object->setErrorBool((bool) $item->getMetadataEntry("ERROR_BOOL"));
         $this->object->setError($item->getMetadataEntry("ERROR"));
         $this->object->setExecutedBool((bool) $item->getMetadataEntry("EXECUTED_BOOL"));

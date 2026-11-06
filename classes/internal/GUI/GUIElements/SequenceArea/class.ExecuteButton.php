@@ -22,6 +22,9 @@ class ExecuteButton extends GUIElement
     {
         $tpl = $this->plugin->getTemplate('SequenceArea/tpl.il_as_qpl_qpisql_sea_execute_button.html');
         $tpl->setVariable("BUTTONTEXT", $this->plugin->txt('ai_sea_exec_text'));
+        $tpl->setVariable('CANCELTEXT', $this->plugin->txt('qol_cancel'));
+        $tpl->setVariable('CANCELLED', htmlspecialchars($this->plugin->txt('qol_cancelled'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $tpl->setVariable('SHORTCUT', $this->plugin->txt('qol_shortcut'));
         return $tpl->get();
     }
 
@@ -36,6 +39,9 @@ class ExecuteButton extends GUIElement
     {
         $tpl = $this->plugin->getTemplate('SequenceArea/tpl.il_as_qpl_qpisql_sea_execute_button.html');
         $tpl->setVariable("BUTTONTEXT", $this->plugin->txt('ai_sea_exec_text'));
+        $tpl->setVariable('CANCELTEXT', $this->plugin->txt('qol_cancel'));
+        $tpl->setVariable('CANCELLED', htmlspecialchars($this->plugin->txt('qol_cancelled'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $tpl->setVariable('SHORTCUT', $this->plugin->txt('qol_shortcut'));
         return $tpl->get();
     }
 

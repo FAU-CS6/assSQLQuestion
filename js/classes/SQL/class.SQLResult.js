@@ -40,39 +40,96 @@ class SQLResult
    *
    * @return {string} The HTML code of the table
    */
-  toHTMLTable()
+  static escapeHTML(value)
   {
-    // Begin the table
-    var html = "<table class='qpisql-output-table'>";
+    return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
 
-    // Insert attribute names as header row
-    html += "<tr class='qpisql-output-table-header'>";
+  toHTMLTable(page = 0, pageSize = 100)
+  {
+    // Retained for integrations using the original string API. Every SQL value is escaped.
+    let html = '<table class="qpisql-output-table"><thead><tr>';
+    this.columns.forEach(column => { html += '<th scope="col">' + SQLResult.escapeHTML(column) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    this.values.slice(page * pageSize, (page + 1) * pageSize).forEach(row => {
+      html += '<tr>';
+      row.forEach(value => { html += '<td>' + SQLResult.escapeHTML(value === null ? 'NULL' : value === '' ? "''" : value) + '</td>'; });
+      html += '</tr>';
+    });
+    return html + '</tbody></table>';
+  }
 
-    for(var i = 0; i < this.columns.length; i++)
-    {
-      // Insert a new column
-      html += "<td>" + this.columns[i] + "</td>";
-    }
-
-    html += "</tr>";
-
-    // Insert the single tuples
-    for(var i = 0; i < this.values.length; i++)
-    {
-      html += "<tr class='qpisql-output-table-tuple'>";
-
-      for(var ii = 0; ii < this.values[i].length; ii++)
-      {
-        html += "<td>" + this.values[i][ii] + "</td>";
+  /** Display a page of rows. Paging never truncates the result used for grading or storage. */
+  renderInto(container, labels = {})
+  {
+    const pageSize = 100;
+    let page = 0;
+    const text = (key, fallback) => labels[key] || fallback;
+    const draw = () => {
+      container.textContent = '';
+      const first = page * pageSize;
+      const last = Math.min(first + pageSize, this.values.length);
+      const summary = document.createElement('div');
+      summary.className = 'qpisql-result-summary';
+      summary.setAttribute('role', 'status');
+      summary.textContent = text('rows', 'Rows %from%–%to% of %total%')
+        .replace('%from%', this.values.length ? first + 1 : 0).replace('%to%', last).replace('%total%', this.values.length);
+      container.appendChild(summary);
+      const scroll = document.createElement('div');
+      scroll.className = 'qpisql-result-scroll';
+      scroll.tabIndex = 0;
+      scroll.setAttribute('role', 'region');
+      scroll.setAttribute('aria-label', text('result', 'SQL result'));
+      const table = document.createElement('table');
+      table.className = 'qpisql-output-table';
+      const head = table.createTHead().insertRow();
+      this.columns.forEach(column => {
+        const th = document.createElement('th');
+        th.scope = 'col';
+        th.textContent = String(column);
+        head.appendChild(th);
+      });
+      const body = table.createTBody();
+      this.values.slice(first, last).forEach(values => {
+        const row = body.insertRow();
+        values.forEach(value => {
+          const cell = row.insertCell();
+          cell.textContent = value === null ? 'NULL' : value === '' ? "''" : String(value);
+          if (value === null || value === '') {
+            cell.className = 'qpisql-special-value';
+            cell.title = value === null ? text('null', 'SQL NULL') : text('empty', 'Empty string');
+          }
+        });
+      });
+      if (this.values.length === 0) {
+        const empty = body.insertRow().insertCell();
+        empty.colSpan = Math.max(this.columns.length, 1);
+        empty.textContent = text('noRows', 'The result contains no rows.');
       }
-
-      html += "</tr>";
-    }
-
-    // End the table
-    html += "</table>";
-
-    return html;
+      scroll.appendChild(table);
+      container.appendChild(scroll);
+      if (this.values.length > pageSize) {
+        const navigation = document.createElement('div');
+        navigation.className = 'qpisql-result-pages';
+        const previous = document.createElement('button');
+        previous.type = 'button';
+        previous.className = 'btn btn-default btn-sm';
+        previous.textContent = text('previous', 'Previous');
+        previous.disabled = page === 0;
+        const next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'btn btn-default btn-sm';
+        next.textContent = text('next', 'Next');
+        next.disabled = last >= this.values.length;
+        previous.addEventListener('click', () => { page--; draw(); container.querySelector('button').focus(); });
+        next.addEventListener('click', () => { page++; draw(); container.querySelectorAll('button')[1].focus(); });
+        navigation.appendChild(previous);
+        navigation.appendChild(next);
+        container.appendChild(navigation);
+      }
+    };
+    draw();
   }
 
   /**
@@ -199,7 +256,9 @@ class SQLResult
   getAllFunctionalDependencies()
   {
     // As recursion is needed for this we pass this to the recursiv helper function
-    return this.findFunctionalDependencies([],this.columns.slice());
+    // A fresh cache belongs to this calculation only. Mutable result rows must
+    // be rechecked on the next call. Enumeration and output order stay intact.
+    return this.findFunctionalDependencies([],this.columns.slice(),new Map());
   }
 
   /**
@@ -207,10 +266,11 @@ class SQLResult
    *
    * @param {Array} currentDeterminate The attributes that are part of the determinate
    * @param {Array} undecidedAttributes The attributes that might become part of the determinate OR be dependent
+   * @param {Map|null} checks Local memo of equivalent determinant permutations
    *
    * @return {Array} A array of all SQLFunctionalDependencies found in this branch of the recursion
    */
-  findFunctionalDependencies(currentDeterminate, undecidedAttributes)
+  findFunctionalDependencies(currentDeterminate, undecidedAttributes, checks = null)
   {
     // Currently found functional dependencies
     var foundDependencies = [];
@@ -228,7 +288,21 @@ class SQLResult
       // Check whether the newCurrentDeterminate is part of a functional dependency with any of the undecidedAttributes
       for(var ii = 0; ii < newUndecidedAttributes.length; ii++)
       {
-        if(this.checkFunctionalDependency(newCurrentDeterminate,[newUndecidedAttributes[ii]]))
+        // checkFunctionalDependency sorts column positions, so permutations of
+        // the same names have identical results. Cache only that boolean; keep
+        // constructing every original FD with its original attribute ordering.
+        const key = checks ? JSON.stringify([newCurrentDeterminate.slice().sort(), [newUndecidedAttributes[ii]]]) : null;
+        let exists;
+        if(checks && checks.has(key))
+        {
+          exists = checks.get(key);
+        }
+        else
+        {
+          exists = this.checkFunctionalDependency(newCurrentDeterminate,[newUndecidedAttributes[ii]]);
+          if(checks) checks.set(key, exists);
+        }
+        if(exists)
         {
           // Add this to the found functional dependencies
           foundDependencies.push(new SQLFunctionalDependency(newCurrentDeterminate,[newUndecidedAttributes[ii]]));
@@ -236,7 +310,7 @@ class SQLResult
       }
 
       // Start the recursion
-      var recursionReturn = this.findFunctionalDependencies(newCurrentDeterminate,newUndecidedAttributes);
+      var recursionReturn = this.findFunctionalDependencies(newCurrentDeterminate,newUndecidedAttributes,checks);
 
       if(recursionReturn.length > 0)
       {
@@ -284,10 +358,9 @@ class SQLResult
      determinatePositions.sort();
      dependentPositions.sort();
 
-     // Initialize two empty arrays - one for the values of the determinateAttributes
-     // and one for the values of the dependentAttributes
-     var determinateValuesJSON = [];
-     var dependentValuesJSON = [];
+     // Preserve the existing JSON equality and first-seen row order, but look up
+     // each determinant in constant time instead of scanning all previous rows.
+     const valuesByDeterminate = new Map();
 
      // Now we iterate through the whole value array
      for(var i = 0; i < this.values.length; i++)
@@ -310,29 +383,16 @@ class SQLResult
        var determinateValueJSON = JSON.stringify(determinateValue);
        var dependentValueJSON = JSON.stringify(dependentValue);
 
-       // Check whether there is already a identical determinateValue in the determinateValuesJSON array
-       var positionInArray = determinateValuesJSON.indexOf(determinateValueJSON);
-
-       // If the value already exsists check whether the dependent value is the same like in this case
-       if(positionInArray != -1)
+       if(valuesByDeterminate.has(determinateValueJSON))
        {
-         if(determinateValueJSON == determinateValuesJSON[positionInArray] &&
-            dependentValueJSON == dependentValuesJSON[positionInArray])
-          {
-            // Do nothing ... this is fine
-          }
-          else
-          {
-            // If the same determinateValue has two different dependentValues linked to it the
-            // functional dependency is not valid
-            return false;
-          }
+         if(valuesByDeterminate.get(determinateValueJSON) !== dependentValueJSON)
+         {
+           return false;
+         }
        }
        else
        {
-         // Add the combination of determinateValue and dependentValue to the JSON array
-         determinateValuesJSON.push(determinateValueJSON);
-         dependentValuesJSON.push(dependentValueJSON);
+         valuesByDeterminate.set(determinateValueJSON, dependentValueJSON);
        }
      }
 

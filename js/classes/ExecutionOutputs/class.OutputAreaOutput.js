@@ -1,102 +1,175 @@
-/**
- * @file ExecutionOutput for the hidden fields of the output area
- * @author Dominik Probst <dominik.probst@fau.de>
- * @version 0.1
- */
+/** Execution state, persisted answer fields and safely rendered SQL output. */
+class OutputAreaOutput extends ExecutionOutput
+{
+  constructor()
+  {
+    super();
+    const area = document.getElementById('qpisql-output-area');
+    this.area = area;
+    this.labels = JSON.parse(area.dataset.labels);
+    this.restoring = false;
+    this.autosaveJQuery = null;
+    // Inline question templates can run before ILIAS loads jQuery at the end of the document.
+    const bindWhenReady = () => this.bindAutosave();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindWhenReady, { once: true });
+    if (document.readyState !== 'complete') window.addEventListener('load', bindWhenReady, { once: true });
+    this.bindAutosave();
+  }
 
- /**
-  * ExecutionOutput for visible area of the output area
-  */
- class OutputAreaOutput extends ExecutionOutput
- {
+  status(key)
+  {
+    document.getElementById('qpisql-execution-status').textContent = this.labels[key];
+  }
 
-   /**
-    * Constructor
-    */
-   constructor()
-   {
-     super();
-   }
+  changed()
+  {
+    if (this.restoring) return;
+    const saveStatus = document.getElementById('qpisql-save-status');
+    saveStatus.textContent = this.labels.unsaved;
+    document.getElementById('qpisql-executed-bool').dispatchEvent(new Event('change', { bubbles: true }));
+  }
 
-   /**
-    * Event handler that is called at the moment any input is changed
-    */
-   onChange()
-   {
-     this.onError(new SQLRunErrorNoExecution());
-   }
+  bindAutosave()
+  {
+    if (document.getElementById('qpisql-output-area') !== this.area || !window.jQuery) return;
+    if (this.autosaveJQuery === window.jQuery) return;
+    if (this.autosaveJQuery) this.autosaveJQuery(document).off('.qpisqlAutosave');
+    this.autosaveJQuery = window.jQuery;
+    // Use the actual ILIAS autosave response, never infer persistence from a local edit.
+    const jq = window.jQuery;
+    const isCurrentAnswer = (settings) => {
+      if (document.getElementById('qpisql-output-area') !== this.area) return false;
+      if (!/[?&]test_answer_changed=/.test(settings.url || '')) return false;
+      const sent = new URLSearchParams(settings.data || '');
+      const names = ['sequence_b', 'executed_bool', 'error_bool', 'error', 'output_relation'];
+      return names.every(name => {
+        const input = document.querySelector('[name="' + name + '"]');
+        // HTML form serialization canonicalizes textarea line endings to CRLF.
+        const normalizeNewlines = value => String(value).replace(/\r\n|\r/g, '\n');
+        return input && sent.has(name) && normalizeNewlines(sent.get(name)) === normalizeNewlines(input.value);
+      });
+    };
+    jq(document).off('.qpisqlAutosave');
+    jq(document).on('ajaxSuccess.qpisqlAutosave', (event, xhr, settings) => {
+      if (!isCurrentAnswer(settings) || !xhr.responseText || xhr.responseText === '-IGNORE-') return;
+      const confirmed = String(xhr.responseText).trim() === this.labels.autosaveSuccess;
+      document.getElementById('qpisql-save-status').textContent = confirmed
+        ? this.labels.saved + ' · ' + new Date().toLocaleTimeString() : this.labels.saveFailed;
+    });
+    jq(document).on('ajaxError.qpisqlAutosave', (event, xhr, settings) => {
+      if (isCurrentAnswer(settings)) document.getElementById('qpisql-save-status').textContent = this.labels.saveFailed;
+    });
+  }
 
-   /**
-    * Event handler that is called at the moment an execution is started
-    */
-   onExecution()
-   {
-     // Set the hidden fields
-     document.getElementById('qpisql-error-bool').value = "false";
-     document.getElementById('qpisql-error').value = "";
-     document.getElementById('qpisql-executed-bool').value = "false";
-     document.getElementById('qpisql-output-relation').value = "";
+  setFields(error, result)
+  {
+    document.getElementById('qpisql-error-bool').value = error ? 'true' : 'false';
+    document.getElementById('qpisql-error').value = error ? error.toJSON() : '';
+    document.getElementById('qpisql-executed-bool').value = result ? 'true' : 'false';
+    document.getElementById('qpisql-output-relation').value = result ? result.toJSON() : '';
+  }
 
-     // Set the other two qpisql-inner-output-areas to be hidden and emtpy
-     // In this case the error output area
-     document.getElementById('qpisql-output-area-error').innerHTML = "";
-     document.getElementById('qpisql-output-area-error').style.display = "none";
-     // And the relation output area
-     document.getElementById('qpisql-output-area-relation').innerHTML = "";
-     document.getElementById('qpisql-output-area-relation').style.display = "none";
+  clear()
+  {
+    ['error', 'relation', 'execution-running'].forEach(name => {
+      const element = document.getElementById('qpisql-output-area-' + name);
+      if (name !== 'execution-running') element.textContent = '';
+      element.style.display = 'none';
+    });
+  }
 
-     // Set the execution running to be visable
-     document.getElementById('qpisql-output-area-execution-running').style.display = "inherit";
-   }
+  onChange()
+  {
+    this.onError(new SQLRunErrorNoExecution());
+  }
 
-   /**
-    * Event handler that is called if a execution ends with an error
-    *
-    * @param {SQLRunErrorAbstract} error The error object
-    */
-   onError(error)
-   {
-     // Set the hidden fields
-     document.getElementById('qpisql-error-bool').value = "true";
-     document.getElementById('qpisql-error').value = error.toJSON();
-     document.getElementById('qpisql-executed-bool').value = "false";
-     document.getElementById('qpisql-output-relation').value = "";
+  onExecution()
+  {
+    this.setFields(null, null);
+    this.clear();
+    this.status('running');
+    document.getElementById('qpisql-output-area-execution-running').style.display = 'block';
+    this.changed();
+  }
 
-     // Set the other two qpisql-inner-output-areas to be hidden and emtpy
-     // In this case the execution running output area
-     document.getElementById('qpisql-output-area-execution-running').style.display = "none";
-     // And the relation output area
-     document.getElementById('qpisql-output-area-relation').innerHTML = "";
-     document.getElementById('qpisql-output-area-relation').style.display = "none";
+  onError(error)
+  {
+    this.setFields(error, null);
+    this.clear();
+    this.status(error.errorType === 'SQLRunErrorNoExecution' ? 'notExecuted' : error.errorType === 'SQLRunErrorCancelled' ? 'cancelled' : 'failed');
+    const element = document.getElementById('qpisql-output-area-error');
+    element.textContent = OutputAreaOutput.errorText(error, this.labels);
+    element.style.display = 'block';
+    this.changed();
+  }
 
-     // Set the error output area to be visable and output the error
-     document.getElementById('qpisql-output-area-error').innerHTML = error.getOutputText();
-     document.getElementById('qpisql-output-area-error').style.display = "inherit";
-   }
+  onResult(result)
+  {
+    this.setFields(null, result);
+    this.clear();
+    this.status('success');
+    const element = document.getElementById('qpisql-output-area-relation');
+    result.renderInto(element, this.labels);
+    element.style.display = 'block';
+    this.changed();
+  }
 
-   /**
-    * Event handler that is called if a execution ends with a result
-    *
-    * @param {SQLResult} result The result object
-    */
-   onResult(result)
-   {
-     // Set the hidden fields
-     document.getElementById('qpisql-error-bool').value = "false";
-     document.getElementById('qpisql-error').value = "";
-     document.getElementById('qpisql-executed-bool').value = "true";
-     document.getElementById('qpisql-output-relation').value = result.toJSON();
+  static errorText(error, labels)
+  {
+    const detail = String(error.errorMessage || '');
+    switch (error.errorType) {
+      case 'SQLRunErrorNoExecution': return labels.notExecuted;
+      case 'SQLRunErrorCancelled': return labels.cancelled;
+      case 'SQLRunErrorDBCreation': return labels.dbCreation + ' ' + detail;
+      case 'SQLRunErrorIntegrityCheck': return labels.integrity + ' ' + detail;
+      case 'SQLRunErrorNoVisibleResult': return labels.noVisibleResult + ' ' + detail;
+      case 'SQLRunErrorRunningSequence': return '(' + String(error.sequence || '') + ') ' + labels.sequenceError + ' ' + detail;
+      default: return detail || labels.failed;
+    }
+  }
 
-     // Set the other two qpisql-inner-output-areas to be hidden and emtpy
-     // In this case the execution running output area
-     document.getElementById('qpisql-output-area-execution-running').style.display = "none";
-     // And the error output area
-     document.getElementById('qpisql-output-area-error').innerHTML = "";
-     document.getElementById('qpisql-output-area-error').style.display = "none";
+  restore(errorBool, error, executedBool, relation)
+  {
+    this.restoring = true;
+    try {
+      if (errorBool === 'true' && error) {
+        const stored = JSON.parse(error);
+        const restored = new SQLRunErrorAbstract(stored.errorMessage || '');
+        restored.errorType = stored.errorType;
+        restored.sequence = stored.sequence;
+        // Preserve sequence when the restored answer is submitted again.
+        restored.toJSON = () => JSON.stringify(stored);
+        this.onError(restored);
+      } else if (executedBool === 'true' && relation) {
+        this.onResult(new SQLResult(JSON.parse(relation)));
+      } else {
+        this.onError(new SQLRunErrorNoExecution());
+      }
+    } catch (error) {
+      this.onError(new SQLRunErrorNoExecution());
+    }
+    this.restoring = false;
+  }
 
-     // Set the error output area to be visable and output the error
-     document.getElementById('qpisql-output-area-relation').innerHTML = result.toHTMLTable();
-     document.getElementById('qpisql-output-area-relation').style.display = "inherit";
-   }
-
- }
+  static renderStored(container)
+  {
+    const labels = JSON.parse(container.dataset.labels);
+    const errorArea = container.querySelector('.qpisql-output-area-error');
+    const resultArea = container.querySelector('.qpisql-output-area-relation');
+    try {
+      if (container.dataset.errorBool === 'true' && container.dataset.error) {
+        errorArea.textContent = OutputAreaOutput.errorText(JSON.parse(container.dataset.error), labels);
+        errorArea.style.display = 'block';
+      } else if (container.dataset.executedBool === 'true' && container.dataset.relation) {
+        new SQLResult(JSON.parse(container.dataset.relation)).renderInto(resultArea, labels);
+        resultArea.style.display = 'block';
+      } else {
+        errorArea.textContent = labels.notExecuted;
+        errorArea.style.display = 'block';
+      }
+    } catch (error) {
+      errorArea.textContent = labels.notExecuted;
+      errorArea.style.display = 'block';
+    }
+  }
+}

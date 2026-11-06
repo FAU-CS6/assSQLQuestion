@@ -118,6 +118,44 @@ final class ColumnNamesTest extends TestCase
 
         $this->assertSame(10.0, $points);
     }
+
+    public function testDuplicateColumnNamesComparedWithThemselvesReceiveExactlyMaximumPoints(): void
+    {
+        foreach (['["a","b","a","b"]', '["A","b","a","B"]', '["ID","id","Id","Name","NAME"]'] as $columns) {
+            $points = ColumnNames::calculateReachedPoints(
+                [new SolutionMetric('column_names', 1, $columns)],
+                [new ParticipantMetric('column_names', $columns)]
+            );
+            self::assertSame(1.0, $points);
+        }
+    }
+
+    public function testRepeatedAndCaseVariantNamesDoNotChangeAFullMatch(): void
+    {
+        foreach ([['["ID","id","name","NAME"]', '["Name","id"]'],
+                  ['["name","id"]', '["ID","Id","Name","NAME"]']] as [$solution, $participant]) {
+            self::assertSame(7.0, ColumnNames::calculateReachedPoints(
+                [new SolutionMetric('column_names', 7, $solution)],
+                [new ParticipantMetric('column_names', $participant)]
+            ));
+        }
+    }
+
+    public function testDuplicateNamesUseSetOverlapForPartialCreditInEitherDirection(): void
+    {
+        $a = '["id","ID","Name","NAME","age"]';
+        $b = '["iD","town","TOWN","id"]';
+        foreach ([[$a, $b], [$b, $a]] as [$solution, $participant]) {
+            $points = ColumnNames::calculateReachedPoints(
+                [new SolutionMetric('column_names', 12, $solution)],
+                [new ParticipantMetric('column_names', $participant)]
+            );
+            // {id, name, age} intersect {id, town} = {id}; union has four names.
+            self::assertSame(3.0, $points);
+            self::assertGreaterThanOrEqual(0.0, $points);
+            self::assertLessThanOrEqual(12.0, $points);
+        }
+    }
 }
 
 

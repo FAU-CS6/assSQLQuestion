@@ -8,8 +8,12 @@ In this project - called ***Q**uestion **P**lugin for **I**LIAS - **SQL** (**QPI
 
 ## Installation
 
-Version 0.1.0 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
+Version 0.1.1 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
 reproducible tests are documented in [the ILIAS 11 upgrade guide](docs/ilias-11.md).
+
+The [full Chrome acceptance report](docs/chrome-abnahme-2026-11-06.md) covers all
+699 existing StudOn questions, native import/export round trips, and separate
+lecturer/student accounts.
 
 There are two different options to install this plugin. One for demonstration and testing purposes and one to install the plugin to an existing ILIAS instance for production use.
 
@@ -33,6 +37,10 @@ There are two different options to install this plugin. One for demonstration an
 
 1. The test installation installs and activates the plugin automatically. See the [upgrade guide](docs/ilias-11.md) for unit, database and browser tests.
 
+The ILIAS 11.5 base image needs the verified upstream question-type correction
+before using its native question-pool list. See [test-image preparation](docs/ilias-11.md#erforderliche-ilias-kernkorrektur).
+The plugin itself does not modify ILIAS core files.
+
 ## Development
 
 Run `composer install` followed by `composer test` for the scoring unit tests.
@@ -47,20 +55,30 @@ At the same time, there is the file `js/min.js.php`, which depends on `MatthiasM
 
 From version 6 on, _Codemirror_ "exposes only modules, which will require some kind of build step before you can use them." (https://codemirror.net/docs/migration/) Therefore, we use _rollupjs_ and some glue code (c.f. `lib/codemirror/editor.mjs`) to make codemirror available from the global environment (i.e. `<script src="compiled.bundle.js"></script><script>here</script>`). This approach is taken from the official manual here: https://codemirror.net/examples/bundle/ The link gives an explanation about the later rollup invocation, too.
 
-To install codemirror, rollup and its plugins, use `npm install` in the `lib/codemirror` directory, which installs the packages as in `package-lock.json`.
-
-Use the following command to build the bundle:
+Use **Node.js 24 LTS** (also specified in `lib/codemirror/.nvmrc`) and install the
+locked editor and build dependencies with `npm ci --ignore-scripts`. From the
+`lib/codemirror` directory, run:
 
 ```sh
-node_modules/.bin/rollup editor.mjs \
-  -f iife \
-  -o codemirror_sqlquestion.bundle.js \
-  -p @rollup/plugin-node-resolve \
-  -p @rollup/plugin-terser \
-  --name codemirror_sqlquestion
+npm ci --ignore-scripts
+npm test
+npm run audit:security
+npm run build
+npm run build:check
 ```
 
 We do check in the resulting `codemirror_sqlquestion.bundle.js` file, as we cannot expect all administrators to set up their own JavaScript build environment to gather the file themselves.
+
+`build:check` rebuilds into a temporary directory and verifies that the checked-in
+bundle matches the sources and lockfile. CI runs the same checks and audits the
+two Composer lockfiles and the browser test dependencies separately. Dependabot
+monitors all four dependency directories.
+
+`audit:security` fails on every active npm advisory. It only excludes
+`GHSA-gcqx-w48m-w2h4` on `deepmerge` and findings that exclusively propagate that
+advisory: its [CVE-2026-93753 was officially rejected on 2 November 2026](https://github.com/CVEProject/cvelistV5/blob/main/cves/2026/93xxx/CVE-2026-93753.json).
+New advisories on `deepmerge` still fail. An unfiltered `npm audit` may continue to
+report this withdrawn advisory until the npm advisory database catches up.
 
 ## Documentation
 Additionally to the in source documentation there is a documentation educating about the interaction of components and further informations. Due to the origin of this project this part of the documentation is only available in German. It can be viewed by compiling the `dokumentation.tex` in the `docs/` folder with *pdflatex* or a comparable Latex compiler.

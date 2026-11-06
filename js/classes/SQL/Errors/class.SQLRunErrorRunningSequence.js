@@ -39,7 +39,7 @@ class SQLRunErrorRunningSequence extends SQLRunErrorAbstract
    */
   getOutputText()
   {
-    return "(" + this.sequence + ") " + error_running_sequence + " <i>" + this.errorMessage + "</i>";
+    return "(" + this.sequence + ") " + error_running_sequence + " " + this.errorMessage;
   }
 
   /**

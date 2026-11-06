@@ -1,89 +1,31 @@
-<script>
-  // Insert the different error messages we might need later on
-  var error_no_execution = "{ERROR_NO_EXECUTION}";
-  var error_db_creation = "{ERROR_DB_CREATION}";
-  var error_integrity_check = "{ERROR_INTEGRITY_CHECK}";
-  var error_no_visible_result = "{ERROR_NO_VISIBLE_RESULT}";
-  var error_running_sequence = "{ERROR_RUNNING_SEQUENCE}";
-
-  // Create the corresponding ExecutionOutput
-  var outputAreaOutput = new OutputAreaOutput();
-</script>
-
 <div class="qpisql-hidden-fields">
-
   <input type="hidden" name="error_bool" id="qpisql-error-bool" value="{ERROR_BOOL}" />
-  <input type="hidden" name="error" id="qpisql-error" value='{ERROR}' />
+  <input type="hidden" name="error" id="qpisql-error" value="{ERROR}" />
   <input type="hidden" name="executed_bool" id="qpisql-executed-bool" value="{EXECUTED_BOOL}" />
-  <input type="hidden" name="output_relation" id="qpisql-output-relation" value='{OUTPUT_RELATION}' />
-
+  <input type="hidden" name="output_relation" id="qpisql-output-relation" value="{OUTPUT_RELATION}" />
 </div>
-
-<div class="qpisql-output-area">
-
-  <div id="qpisql-output-area-error" class="qpisql-inner-output-area qpisql-output-area-error" style="display:none">
+<div id="qpisql-output-area" class="qpisql-output-area" data-labels="{LABELS}">
+  <div class="qpisql-answer-status">
+    <span id="qpisql-execution-status" role="status" aria-live="polite"></span>
+    <span id="qpisql-save-status" role="status" aria-live="polite">{STATUS_LOADED}</span>
   </div>
-  <div id="qpisql-output-area-execution-running" class="qpisql-inner-output-area qpisql-output-area-execution-running" style="display:none">
-    {STATUS_EXECUTION_RUNNING}
-  </div>
-  <div id="qpisql-output-area-relation" class="qpisql-inner-output-area qpisql-output-area-relation" style="display:none">
-  </div>
-
+  <div id="qpisql-output-area-error" class="qpisql-inner-output-area qpisql-output-area-error" style="display:none"></div>
+  <div id="qpisql-output-area-execution-running" class="qpisql-inner-output-area qpisql-output-area-execution-running" style="display:none">{STATUS_EXECUTION_RUNNING}</div>
+  <div id="qpisql-output-area-relation" class="qpisql-inner-output-area qpisql-output-area-relation" style="display:none"></div>
 </div>
-
 <script>
-  // Use the values of the hidden fields to dynamicly generate values of the visible area
-  var default_error_bool = document.getElementById("qpisql-error-bool").value;
-  var default_error = document.getElementById("qpisql-error").value;
-  var default_executed_bool = document.getElementById("qpisql-executed-bool").value;
-  var default_output_relation = document.getElementById("qpisql-output-relation").value;
-
-  // In case of the default result being an error
-  if(default_error_bool == "true" && default_error != "")
-  {
-    var error = JSON.parse(default_error);
-
-    switch(error.errorType)
-    {
-      case "SQLRunErrorAbstract":
-        outputAreaOutput.onError(new SQLRunErrorAbstract(error.errorMessage));
-        break;
-      case "SQLRunErrorDBCreation":
-        outputAreaOutput.onError(new SQLRunErrorDBCreation(error.errorMessage));
-        break;
-      case "SQLRunErrorIntegrityCheck":
-        outputAreaOutput.onError(new SQLRunErrorIntegrityCheck(error.errorMessage));
-        break;
-      case "SQLRunErrorNoExecution":
-        outputAreaOutput.onError(new SQLRunErrorNoExecution(error.errorMessage));
-        break;
-      case "SQLRunErrorNoVisibleResult":
-        outputAreaOutput.onError(new SQLRunErrorNoVisibleResult(error.errorMessage));
-        break;
-      case "SQLRunErrorRunningSequence":
-        outputAreaOutput.onError(new SQLRunErrorRunningSequence(error.errorMessage, error.sequence));
-        break;
-      default:
-        outputAreaOutput.onError(new SQLRunErrorNoExecution());
-    }
-  }
-  // Otherwise we can display a result
-  else if(default_executed_bool == "true" && default_output_relation != "")
-  {
-    try
-    {
-      outputAreaOutput.onResult(new SQLResult(JSON.parse(default_output_relation)));
-    }
-    catch (err)
-    {
-      outputAreaOutput.onError(new SQLRunErrorNoExecution());
-    }
-  }
-  // Otherwise
-  else
-  {
-    outputAreaOutput.onError(new SQLRunErrorNoExecution());
-  }
-
+  var outputAreaOutput = new OutputAreaOutput();
+  // Keep the existing error-class API available to integrations.
+  var error_no_execution = outputAreaOutput.labels.notExecuted;
+  var error_db_creation = outputAreaOutput.labels.dbCreation;
+  var error_integrity_check = outputAreaOutput.labels.integrity;
+  var error_no_visible_result = outputAreaOutput.labels.noVisibleResult;
+  var error_running_sequence = outputAreaOutput.labels.sequenceError;
+  outputAreaOutput.restore(
+    document.getElementById('qpisql-error-bool').value,
+    document.getElementById('qpisql-error').value,
+    document.getElementById('qpisql-executed-bool').value,
+    document.getElementById('qpisql-output-relation').value
+  );
   window.EXECUTE_HANDLER.registerOutput(outputAreaOutput);
 </script>

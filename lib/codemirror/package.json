@@ -1,9 +1,27 @@
 {
+  "name": "ass-sql-question-editor",
+  "private": true,
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "rollup --config",
+    "build:check": "node scripts/check-bundle.mjs",
+    "test": "node --test scripts/audit.test.mjs",
+    "audit:security": "node scripts/audit.mjs"
+  },
   "dependencies": {
-    "@codemirror/lang-sql": "^6.8.0",
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "@rollup/plugin-terser": "^0.4.4",
-    "codemirror": "^6.0.1",
-    "rollup": "^4.40.0"
+    "@codemirror/autocomplete": "^6.20.4",
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/search": "^6.7.2",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^1.0.2",
+    "rollup": "^4.67.5"
   }
 }

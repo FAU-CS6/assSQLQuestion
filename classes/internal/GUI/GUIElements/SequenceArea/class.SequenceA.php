@@ -32,7 +32,7 @@ class SequenceA extends GUIElement
         $tpl->setVariable("HEADER", $this->plugin->txt('ai_sea_eo_seq_a'));
         $tpl->setVariable("ID", 'sequence_a');
         $tpl->setVariable("NAME", 'sequence_a');
-        $tpl->setVariable("CONTENT", $sequence_a);
+        $tpl->setVariable("CONTENT", htmlspecialchars($sequence_a, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         return $tpl->get();
     }
 
@@ -48,7 +48,7 @@ class SequenceA extends GUIElement
         $tpl = $this->plugin->getTemplate('SequenceArea/tpl.il_as_qpl_qpisql_sea_hidden_textarea.html');
         $tpl->setVariable("ID", 'sequence_a');
         $tpl->setVariable("NAME", 'sequence_a');
-        $tpl->setVariable("VALUE", $this->object->getSequence('sequence_a'));
+        $tpl->setVariable("VALUE", htmlspecialchars($this->object->getSequence('sequence_a'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         return $tpl->get();
     }
 

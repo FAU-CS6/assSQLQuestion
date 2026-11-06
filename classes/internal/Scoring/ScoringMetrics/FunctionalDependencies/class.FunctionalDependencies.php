@@ -43,11 +43,11 @@ class FunctionalDependencies extends ScoringMetric
 
           if(ii != decoded_inner_json['determinateAttributes'].length - 1)
           {
-              return_string += ' &times; ';
+              return_string += ' × ';
           }
         }
 
-        return_string += ' &rArr; ';
+        return_string += ' ⇒ ';
 
         for(var ii = 0; ii < decoded_inner_json['dependentAttributes'].length; ii++)
         {
@@ -55,7 +55,7 @@ class FunctionalDependencies extends ScoringMetric
 
           if(ii != decoded_inner_json['dependentAttributes'].length - 1)
           {
-              return_string += ' &times; ';
+              return_string += ' × ';
           }
         }
 
@@ -117,6 +117,11 @@ class FunctionalDependencies extends ScoringMetric
             return 0; // One empty but not the other --> no points
         }
 
+        // Use the same case/order-insensitive FD equality for both sets. Without
+        // this, duplicates in the solution inflate only the intersection.
+        $solution_metric_decoded = self::uniqueFunctionalDependencies($solution_metric_decoded);
+        $participant_metric_decoded = self::uniqueFunctionalDependencies($participant_metric_decoded);
+
         // Compute the UNION of both
         $union = array();
 
@@ -170,6 +175,21 @@ class FunctionalDependencies extends ScoringMetric
 
         // Compute 1 - Jaccard distance
         return (1 - ((sizeof($union) - sizeof($intersect)) / sizeof($union))) * $solution_metric->getPoints();
+    }
+
+    /** Preserve the first representation of each semantically equal FD entry. */
+    private static function uniqueFunctionalDependencies(array $dependencies): array
+    {
+        $unique = [];
+        foreach ($dependencies as $candidate) {
+            foreach ($unique as $existing) {
+                if (self::compareFunctionalDependencies($existing, $candidate)) {
+                    continue 2;
+                }
+            }
+            $unique[] = $candidate;
+        }
+        return $unique;
     }
 
     /**

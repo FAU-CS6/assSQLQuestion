@@ -42,16 +42,17 @@ class Output extends GUIElement
         }
 
         $tpl = $this->plugin->getTemplate('OutputArea/tpl.il_as_qpl_qpisql_oa_output.html');
-        $tpl->setVariable("ERROR_BOOL", $error_bool);
-        $tpl->setVariable("ERROR", $error);
-        $tpl->setVariable("EXECUTED_BOOL", $executed_bool);
-        $tpl->setVariable("OUTPUT_RELATION", $output_relation);
+        $tpl->setVariable("ERROR_BOOL", $error_bool === "true" ? "true" : "false");
+        $tpl->setVariable("ERROR", htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $tpl->setVariable("EXECUTED_BOOL", $executed_bool === "true" ? "true" : "false");
+        $tpl->setVariable("OUTPUT_RELATION", htmlspecialchars($output_relation, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->setVariable("STATUS_EXECUTION_RUNNING", $this->plugin->txt('ai_oa_st_run'));
         $tpl->setVariable("ERROR_NO_EXECUTION", $this->plugin->txt('ai_oa_er_no_exec'));
         $tpl->setVariable("ERROR_DB_CREATION", $this->plugin->txt('ai_oa_er_db_crea'));
         $tpl->setVariable("ERROR_INTEGRITY_CHECK", $this->plugin->txt('ai_oa_er_int_che'));
         $tpl->setVariable("ERROR_NO_VISIBLE_RESULT", $this->plugin->txt('ai_oa_er_no_vis'));
         $tpl->setVariable("ERROR_RUNNING_SEQUENCE", $this->plugin->txt('ai_oa_er_run_seq'));
+        $this->setOutputLabels($tpl);
         return $tpl->get();
     }
 
@@ -82,16 +83,17 @@ class Output extends GUIElement
         }
 
         $tpl = $this->plugin->getTemplate('OutputArea/tpl.il_as_qpl_qpisql_oa_output.html');
-        $tpl->setVariable("ERROR_BOOL", $error_bool);
-        $tpl->setVariable("ERROR", $error);
-        $tpl->setVariable("EXECUTED_BOOL", $executed_bool);
-        $tpl->setVariable("OUTPUT_RELATION", $output_relation);
+        $tpl->setVariable("ERROR_BOOL", $error_bool === "true" ? "true" : "false");
+        $tpl->setVariable("ERROR", htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $tpl->setVariable("EXECUTED_BOOL", $executed_bool === "true" ? "true" : "false");
+        $tpl->setVariable("OUTPUT_RELATION", htmlspecialchars($output_relation, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->setVariable("STATUS_EXECUTION_RUNNING", $this->plugin->txt('ai_oa_st_run'));
         $tpl->setVariable("ERROR_NO_EXECUTION", $this->plugin->txt('ai_oa_er_no_exec'));
         $tpl->setVariable("ERROR_DB_CREATION", $this->plugin->txt('ai_oa_er_db_crea'));
         $tpl->setVariable("ERROR_INTEGRITY_CHECK", $this->plugin->txt('ai_oa_er_int_che'));
         $tpl->setVariable("ERROR_NO_VISIBLE_RESULT", $this->plugin->txt('ai_oa_er_no_vis'));
         $tpl->setVariable("ERROR_RUNNING_SEQUENCE", $this->plugin->txt('ai_oa_er_run_seq'));
+        $this->setOutputLabels($tpl);
         return $tpl->get();
     }
 
@@ -122,12 +124,50 @@ class Output extends GUIElement
 
         $tpl = $this->plugin->getTemplate('OutputArea/tpl.il_as_qpl_qpisql_oa_solution.html');
         $tpl->setVariable("ID", $id);
-        $tpl->setVariable("ERROR_BOOL", $error_bool);
-        $tpl->setVariable("ERROR", $error);
-        $tpl->setVariable("EXECUTED_BOOL", $executed_bool);
-        $tpl->setVariable("OUTPUT_RELATION", $output_relation);
+        $tpl->setVariable("ERROR_BOOL", $error_bool === "true" ? "true" : "false");
+        $tpl->setVariable("ERROR", htmlspecialchars($error, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $tpl->setVariable("EXECUTED_BOOL", $executed_bool === "true" ? "true" : "false");
+        $tpl->setVariable("OUTPUT_RELATION", htmlspecialchars($output_relation, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->setVariable("ERROR_NO_EXECUTION", $this->plugin->txt('ai_oa_er_no_exec'));
+        $this->setOutputLabels($tpl);
         return $tpl->get();
+    }
+
+    /** Supply plain text labels as an HTML attribute, never as JavaScript source. */
+    private function setOutputLabels($tpl): void
+    {
+        $keys = [
+            'running' => 'ai_oa_st_run',
+            'notExecuted' => 'qol_not_executed',
+            'cancelled' => 'qol_cancelled',
+            'failed' => 'qol_failed',
+            'success' => 'qol_success',
+            'unsaved' => 'qol_unsaved',
+            'saved' => 'qol_saved',
+            'saveFailed' => 'qol_save_failed',
+            'rows' => 'qol_rows',
+            'result' => 'qol_result',
+            'null' => 'qol_null',
+            'empty' => 'qol_empty',
+            'noRows' => 'qol_no_rows',
+            'previous' => 'qol_previous',
+            'next' => 'qol_next',
+            'dbCreation' => 'ai_oa_er_db_crea',
+            'integrity' => 'ai_oa_er_int_che',
+            'noVisibleResult' => 'ai_oa_er_no_vis',
+            'sequenceError' => 'ai_oa_er_run_seq',
+        ];
+        global $DIC;
+        $labels = ['autosaveSuccess' => $DIC->language()->txt('autosave_success')];
+        foreach ($keys as $name => $key) {
+            $labels[$name] = strip_tags($this->plugin->txt($key));
+        }
+        $tpl->setVariable('LABELS', htmlspecialchars(
+            json_encode($labels, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE),
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        ));
+        $tpl->setVariable('STATUS_LOADED', htmlspecialchars($this->plugin->txt('qol_loaded'), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
     }
 
     /*

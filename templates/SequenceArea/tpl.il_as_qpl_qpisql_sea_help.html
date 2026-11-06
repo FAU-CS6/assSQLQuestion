@@ -1,0 +1,30 @@
+<div id="qpisql-editor-help" class="qpisql-input-area" data-enabled="{ENABLED}" data-author="{AUTHOR}"
+     data-loading="{SCHEMA_LOADING}" data-empty="{SCHEMA_EMPTY}" data-cancelled="{SCHEMA_CANCELLED}" data-changed="{SCHEMA_CHANGED}">
+  <!-- BEGIN author_options -->
+  <input type="hidden" name="editor_assistance_present" value="1">
+  <label><input type="checkbox" name="editor_assistance" id="qpisql-editor-assistance" value="1" {CHECKED}> {HINTS}</label>
+  <p class="help-block">{HINTS_INFO}</p>
+  <details>
+    <summary>{EXAMPLE}</summary>
+    <label for="qpisql-example">{EXAMPLE}</label>
+    <select id="qpisql-example" class="form-control">
+      <option value="select">{EXAMPLE_SELECT}</option>
+      <option value="update">{EXAMPLE_UPDATE}</option>
+      <option value="delete">{EXAMPLE_DELETE}</option>
+      <option value="insert">{EXAMPLE_INSERT}</option>
+    </select>
+    <pre id="qpisql-example-preview"></pre>
+    <button type="button" id="qpisql-example-apply" class="btn btn-default">{EXAMPLE_APPLY}</button>
+    <p class="help-block">{EXAMPLE_EMPTY}</p>
+  </details>
+  <!-- END author_options -->
+  <details>
+    <summary>{SCHEMA}</summary>
+    <button type="button" id="qpisql-schema-load" class="btn btn-default">{SCHEMA_LOAD}</button>
+    <button type="button" id="qpisql-schema-cancel" class="btn btn-default" hidden>{SCHEMA_CANCEL}</button>
+    <p id="qpisql-schema-status" role="status" aria-live="polite"></p>
+    <ul id="qpisql-schema-tables"></ul>
+  </details>
+</div>
+<script src="{PLUGIN_PATH}/js/editor-assistance.js"></script>
+<script>window.QPISQL_ATTACH_HELP(document.getElementById('qpisql-editor-help'));</script>

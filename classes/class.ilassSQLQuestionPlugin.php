@@ -25,4 +25,13 @@ class ilassSQLQuestionPlugin extends ilQuestionsPlugin
     {
         return $this->txt('gi_name');
     }
+
+    public function loadLanguageModule(): void
+    {
+        parent::loadLanguageModule();
+        global $DIC;
+        // ILIAS 11's attempt results ask for the raw type tag.
+        // Register a request-local alias without changing core language files.
+        $DIC->language()->text[$this->getQuestionType()] = $this->getQuestionTypeTranslation();
+    }
 }

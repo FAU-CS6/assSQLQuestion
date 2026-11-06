@@ -29,7 +29,6 @@
   width: 100%;
   max-width: 100%;
   min-height: 28px;
-  max-height: 280px;
   color: #555555;
   font-size: 12px;
   font-family: "Open Sans", Verdana, Arial, Helvetica, sans-serif;
@@ -73,13 +72,15 @@
   text-transform: uppercase;
 }
 
-.qpisql-output-table-header td {
+.qpisql-output-table-header td,
+.qpisql-output-table th {
   background-color: #f7f7f7;
   color: rgb(153, 153, 153);
   text-transform: uppercase;
 }
 
-.qpisql-output-table tr td {
+.qpisql-output-table tr td,
+.qpisql-output-table th {
   min-width: 50px;
   padding-left: 8px;
   padding-right: 8px;
@@ -149,3 +150,41 @@
   background-color: #ffffff;
   font-size: 12px;
 }
+
+/* Keep controls available while a result table scrolls. */
+.qpisql-execution-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 10px;
+}
+.qpisql-execution-controls #qpisql-execute-button { margin-top: 0; }
+#qpisql-cancel-button[hidden] { display: none; }
+.qpisql-execution-controls .qpisql-shortcut { margin: 0; }
+.qpisql-answer-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+#qpisql-save-status { color: #5b5b5b; }
+.qpisql-result-summary { padding: 4px 0; }
+.qpisql-result-scroll {
+  max-height: 360px;
+  max-width: 100%;
+  overflow: auto;
+}
+.qpisql-output-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: #555;
+  text-align: left;
+  text-transform: none;
+}
+.qpisql-output-table td { white-space: pre-wrap; overflow-wrap: anywhere; }
+.qpisql-special-value { color: #666; font-style: italic; }
+.qpisql-result-pages { display: flex; gap: 8px; padding-top: 6px; }
+.qpisql-output-area-error { white-space: pre-wrap; overflow-wrap: anywhere; }

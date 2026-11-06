@@ -46,6 +46,19 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
      */
     public bool $integrity_check = false;
 
+    /** Optional hints are disabled for existing questions and legacy imports. */
+    public bool $editor_assistance = false;
+
+    public function getEditorAssistance(): bool
+    {
+        return $this->editor_assistance;
+    }
+
+    public function setEditorAssistance(bool $enabled): void
+    {
+        $this->editor_assistance = $enabled;
+    }
+
     /**
      * @var boolean A boolean indicating whether the questions sequences contain errors (true) or not (false)
      */
@@ -771,17 +784,19 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
                 sequence_b,
                 sequence_c,
                 integrity_check,
+                editor_assistance,
                 error_bool,
                 error,
                 executed_bool,
                 output_relation
             )
-			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             array(
                 "integer",
                 "text",
                 "text",
                 "text",
+                "integer",
                 "integer",
                 "integer",
                 "clob",
@@ -794,6 +809,7 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
                 $this->getSequence('sequence_b'),
                 $this->getSequence('sequence_c'),
                 $this->getIntegrityCheck(),
+                $this->getEditorAssistance(),
                 $this->getErrorBool(),
                 $this->getError(),
                 $this->getExecutedBool(),
@@ -856,6 +872,7 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
             $this->setSequence('sequence_b', (string) $data_qd['sequence_b']);
             $this->setSequence('sequence_c', (string) $data_qd['sequence_c']);
             $this->setIntegrityCheck((bool) $data_qd['integrity_check']);
+            $this->setEditorAssistance((bool) ($data_qd['editor_assistance'] ?? false));
             $this->setErrorBool((bool) $data_qd['error_bool']);
             $this->setError((string) $data_qd['error']);
             $this->setExecutedBool((bool) $data_qd['executed_bool']);

@@ -104,6 +104,11 @@ class ColumnNames extends ScoringMetric
             array_push($participant_columns, strtolower($v));
         }
 
+        // Jaccard compares sets. Repeated names, including case variants, must
+        // contribute once to both the union and the intersection.
+        $solution_columns = array_unique($solution_columns);
+        $participant_columns = array_unique($participant_columns);
+
         // Compute the UNION of both
         $union = array_unique(array_merge($solution_columns, $participant_columns));
 

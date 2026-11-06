@@ -28,156 +28,103 @@ class SQLRun
     this.checkIntegrity = checkIntegrity;
     this.callback = callback;
 
-    // Initialize a worker as we do not want the SQL to block our page
-    this.worker = new Worker(window.QPISQL_URL_PATH + '/lib/sql.js/worker.sql.js');
-
-    // Initalize a member variable for the lastResult
-    // This will be set to the result of the last SELECT query in the sequence
+    this.worker = null;
+    this.finished = false;
     this.lastResult = null;
 
-    // Call the executeSequenceA
+    try {
+      this.worker = new Worker(window.QPISQL_URL_PATH + '/lib/sql.js/worker.sql.js');
+    } catch (error) {
+      this.fail(new SQLRunErrorDBCreation(error.message));
+      return;
+    }
     this.executeSequenceA();
   }
 
-  /**
-   * Executes SequenceA and calls executeSequenceB() if no errors have been found.
-   * Otherwise it calls the onError callback function.
-   */
-  executeSequenceA()
+  /** Terminate the worker on every completion path. There is deliberately no timeout. */
+  dispose()
   {
-    // We have to save this object to a const as we need it in the callbacks
-    const thisrun = this;
-
-    // Callback in case there is an error
-    this.worker.onerror = function(e, run = thisrun)
-    {
-      run.callback.onError(new SQLRunErrorRunningSequence(e.message, "A"));
+    if (this.worker) {
+      this.worker.onmessage = null;
+      this.worker.onerror = null;
+      this.worker.terminate();
+      this.worker = null;
     }
-
-    // Callback in case there was no error
-    this.worker.onmessage = function(e, run = thisrun)
-    {
-      if(e.data.results.length > 0)
-      {
-        run.lastResult = new SQLResult(e.data.results.pop());
-      }
-
-      // Go to the nextSequence
-      run.executeSequenceB();
-    }
-
-    if(this.sequenceA.length > 0)
-    {
-      this.worker.postMessage({action:'exec', sql: this.sequenceA});
-    }
-    else
-    {
-      // Go to the nextSequence
-      this.executeSequenceB();
-    }
-
   }
 
-  /**
-   * Executes SequenceB and calls executeSequenceC() if no errors have been found.
-   * Otherwise it calls the onError callback function.
-   */
-  executeSequenceB()
+  fail(error)
   {
-    // If integrity check is active we have to start this integrityCheck
-    if(this.checkIntegrity)
-    {
-      // If sequenceB fails the integrityCheck we have to throw an error
-      if(!this.checkIntegrityOfSequence(this.sequenceB))
-      {
-        this.callback.onError(new SQLRunErrorIntegrityCheck(""));
+    if (this.finished) return;
+    this.finished = true;
+    this.dispose();
+    this.callback.onError(error);
+  }
+
+  finish()
+  {
+    if (this.finished) return;
+    if (this.lastResult === null) {
+      this.fail(new SQLRunErrorNoVisibleResult(''));
+      return;
+    }
+    this.finished = true;
+    this.dispose();
+    this.callback.onResult(this.lastResult);
+  }
+
+  cancel(message)
+  {
+    const error = new SQLRunErrorAbstract(message || 'Execution cancelled.');
+    error.errorType = 'SQLRunErrorCancelled';
+    this.fail(error);
+  }
+
+  executeSequence(sequence, name, next)
+  {
+    if (this.finished) return;
+    if (sequence.length === 0) {
+      next.call(this);
+      return;
+    }
+    this.worker.onerror = (event) => {
+      // The error is handled visibly in the question, not as an uncaught page error.
+      if (event.preventDefault) event.preventDefault();
+      this.fail(new SQLRunErrorRunningSequence(event.message, name));
+    };
+    this.worker.onmessage = (event) => {
+      if (this.finished) return;
+      if (event.data.error) {
+        this.fail(new SQLRunErrorRunningSequence(event.data.error, name));
         return;
       }
-    }
-
-    // We have to save this object to a const as we need it in the callbacks
-    const thisrun = this;
-
-    // Callback in case there is an error
-    this.worker.onerror = function(e, run = thisrun)
-    {
-      run.callback.onError(new SQLRunErrorRunningSequence(e.message, "B"));
-    }
-
-    // Callback in case there was no error
-    this.worker.onmessage = function(e, run = thisrun)
-    {
-      if(e.data.results.length > 0)
-      {
-        run.lastResult = new SQLResult(e.data.results.pop());
-      }
-
-      // Go to the nextSequence
-      run.executeSequenceC();
-    }
-
-    if(this.sequenceB.length > 0)
-    {
-      this.worker.postMessage({action:'exec', sql: this.sequenceB});
-    }
-    else
-    {
-      // Go to the nextSequence
-      this.executeSequenceC();
+      const results = event.data.results || [];
+      if (results.length > 0) this.lastResult = new SQLResult(results[results.length - 1]);
+      next.call(this);
+    };
+    try {
+      this.worker.postMessage({action: 'exec', sql: sequence});
+    } catch (error) {
+      this.fail(new SQLRunErrorRunningSequence(error.message, name));
     }
   }
 
-  /**
-   * Executes SequenceC and calls the onResult callback function if no errors have been found.
-   * Otherwise it calls the onError callback function.
-   */
+  executeSequenceA()
+  {
+    this.executeSequence(this.sequenceA, 'A', this.executeSequenceB);
+  }
+
+  executeSequenceB()
+  {
+    if (this.checkIntegrity && !this.checkIntegrityOfSequence(this.sequenceB)) {
+      this.fail(new SQLRunErrorIntegrityCheck(''));
+      return;
+    }
+    this.executeSequence(this.sequenceB, 'B', this.executeSequenceC);
+  }
+
   executeSequenceC()
   {
-    // We have to save this object to a const as we need it in the callbacks
-    const thisrun = this;
-
-    // Callback in case there is an error
-    this.worker.onerror = function(e, run = thisrun)
-    {
-      run.callback.onError(new SQLRunErrorRunningSequence(e.message, "C"));
-    }
-
-    // Callback in case there was no error
-    this.worker.onmessage = function(e, run = thisrun)
-    {
-      if(e.data.results.length > 0)
-      {
-        run.lastResult = new SQLResult(e.data.results.pop());
-      }
-
-      // Check if there is a last result
-      if(run.lastResult == null)
-      {
-        run.callback.onError(new SQLRunErrorNoVisibleResult(""));
-      }
-      // If there is one call callbackResult
-      else
-      {
-        run.callback.onResult(run.lastResult);
-      }
-    }
-
-    if(this.sequenceC.length > 0)
-    {
-      this.worker.postMessage({action:'exec', sql: this.sequenceC});
-    }
-    else
-    {
-      if(this.lastResult == null)
-      {
-        this.callback.onError(new SQLRunErrorNoVisibleResult(""));
-      }
-      // If there is one call callbackResult
-      else
-      {
-        this.callback.onResult(this.lastResult);
-      }
-    }
+    this.executeSequence(this.sequenceC, 'C', this.finish);
   }
 
   /**
