@@ -21,11 +21,7 @@ class JsBlock extends GUIElement
      */
     public function getEditOutput()
     {
-        $tpl = $this->plugin->getTemplate('JsBlockArea/tpl.il_as_qpl_qpisql_jsa_js_block.html');
-        $tpl->setVariable("LOADING_TEXT", $this->plugin->txt('ai_js_is_loading'));
-        $tpl->setVariable('PLUGIN_PATH', $this->plugin->getRelativeDirectory());
-        $tpl->setVariable('INITIALIZE_HANDLER', 'true');
-        return $tpl->get();
+        return $this->render('author', null);
     }
 
     /**
@@ -37,11 +33,7 @@ class JsBlock extends GUIElement
      */
     public function getQuestionOutput($participant_input)
     {
-        $tpl = $this->plugin->getTemplate('JsBlockArea/tpl.il_as_qpl_qpisql_jsa_js_block.html');
-        $tpl->setVariable("LOADING_TEXT", $this->plugin->txt('ai_js_is_loading'));
-        $tpl->setVariable('PLUGIN_PATH', $this->plugin->getRelativeDirectory());
-        $tpl->setVariable('INITIALIZE_HANDLER', 'true');
-        return $tpl->get();
+        return $this->render('participant', $participant_input);
     }
 
     /**
@@ -53,11 +45,76 @@ class JsBlock extends GUIElement
      */
     public function getSolutionOutput($participant_input)
     {
+        return $this->render('solution', $participant_input);
+    }
+
+    private function render(string $context, ?ParticipantInput $participant_input): string
+    {
         $tpl = $this->plugin->getTemplate('JsBlockArea/tpl.il_as_qpl_qpisql_jsa_js_block.html');
         $tpl->setVariable("LOADING_TEXT", $this->plugin->txt('ai_js_is_loading'));
         $tpl->setVariable('PLUGIN_PATH', $this->plugin->getRelativeDirectory());
-        $tpl->setVariable('INITIALIZE_HANDLER', 'false');
+        $tpl->setVariable('INITIALIZE_HANDLER', $context === 'solution' ? 'false' : 'true');
+        if ($context !== 'solution') {
+            $config = [
+                'version' => 1,
+                'mode' => 'shadow',
+                'context' => $context,
+                'enabled' => true,
+                // Client-side structural comparison necessarily exposes the
+                // reference. These diagnostics never determine ILIAS grades.
+                'referenceSql' => $context === 'author' ? null : $this->object->getSequence('sequence_b'),
+                'maxPoints' => $this->object->getMaximumPoints(),
+                'referenceRevision' => self::getQssReferenceRevision($this->object),
+                'labels' => self::getQssLabels($this->plugin),
+            ];
+            if ($context === 'participant') {
+                $config['referenceExecutionValid'] = $this->object->getExecutedBool() && !$this->object->getErrorBool();
+            }
+            $evaluation = $participant_input?->getQssEvaluation();
+            if (isset($_POST['qss_evaluation']) && is_string($_POST['qss_evaluation'])) {
+                $posted = new ParticipantInput();
+                $posted->setQssEvaluationFromJSON($_POST['qss_evaluation']);
+                $evaluation = $posted->getQssEvaluation();
+            }
+            $tpl->setCurrentBlock('qss_config');
+            $tpl->setVariable('QSS_CONFIG', self::jsonAttribute($config));
+            $tpl->setVariable('QSS_EVALUATION', $evaluation === null ? '' : self::jsonAttribute($evaluation));
+            $tpl->parseCurrentBlock();
+        }
         return $tpl->get();
+    }
+
+    public static function getQssReferenceRevision($question): string
+    {
+        return hash('sha256', json_encode([
+            'version' => 1,
+            'sequence_a' => $question->getSequence('sequence_a'),
+            'sequence_b' => $question->getSequence('sequence_b'),
+            'sequence_c' => $question->getSequence('sequence_c'),
+            'metrics' => $question->getAllSolutionMetricsAsJSON(),
+        ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+    }
+
+    public static function getQssLabels($plugin): array
+    {
+        $labels = [];
+        foreach (['title', 'shadow', 'sqlRunning', 'parsing', 'normalizing', 'comparing',
+            'completed', 'unsupported', 'failed', 'cancelled', 'notEvaluated', 'distance',
+            'points', 'edits', 'model', 'visited', 'lowerBound', 'waiting', 'stale', 'details',
+            'editInsert', 'editDelete', 'editReplace', 'cost'] as $key) {
+            $labels[$key] = strip_tags($plugin->txt('qss_' . strtolower($key)));
+        }
+        return $labels;
+    }
+
+    public static function jsonAttribute(array $value): string
+    {
+        $json = json_encode($value, JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+        // ilTemplate removes {VARIABLE} tokens even inside inserted JSON
+        // strings. Escape braces in strings only; structural JSON stays intact.
+        $json = preg_replace_callback('/"(?:[^"\\\\]|\\\\.)*"/s', static fn(array $match): string =>
+            str_replace(['{', '}'], ['\u007b', '\u007d'], $match[0]), $json);
+        return htmlspecialchars($json, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     }
 
     /*
@@ -82,6 +139,8 @@ class JsBlock extends GUIElement
      */
     public function writeParticipantInput($participant_input)
     {
-        // do nothing
+        if (isset($_POST['qss_evaluation']) && is_string($_POST['qss_evaluation'])) {
+            $participant_input->setQssEvaluationFromJSON($_POST['qss_evaluation']);
+        }
     }
 }

@@ -1,0 +1,21 @@
+{
+  "name": "ass-sql-question-qss-worker",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "build": "rollup --config",
+    "build:check": "node scripts/check-build.mjs",
+    "test": "node --test ../../tests/qss/*.test.*"
+  },
+  "dependencies": {
+    "@codemirror/lang-sql": "6.10.0",
+    "node-sql-parser": "5.4.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "29.0.3",
+    "rollup": "4.68.1"
+  }
+}

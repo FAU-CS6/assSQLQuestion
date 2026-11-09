@@ -188,3 +188,19 @@
 .qpisql-special-value { color: #666; font-style: italic; }
 .qpisql-result-pages { display: flex; gap: 8px; padding-top: 6px; }
 .qpisql-output-area-error { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.qpisql-qss-shadow {
+  border: 1px solid #c6d4df;
+  border-left: 4px solid #527d9e;
+  background: #f5f9fc;
+  padding: 10px 12px;
+  margin: 8px 0 12px;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.qpisql-qss-shadow p { margin: 4px 0; }
+.qpisql-qss-note { color: #555; }
+.qpisql-qss-status { margin: 6px 0; }
+.qpisql-qss-score { font-weight: 600; }
+.qpisql-qss-shadow progress { width: min(100%, 480px); height: 12px; }
+.qpisql-qss-shadow details { margin-top: 6px; }

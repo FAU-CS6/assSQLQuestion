@@ -130,6 +130,10 @@ class Output extends GUIElement
         $tpl->setVariable("OUTPUT_RELATION", htmlspecialchars($output_relation, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->setVariable("ERROR_NO_EXECUTION", $this->plugin->txt('ai_oa_er_no_exec'));
         $this->setOutputLabels($tpl);
+        $qss = $participant_input?->getQssEvaluation();
+        $tpl->setVariable('QSS_EVALUATION', $qss === null ? '' : JsBlock::jsonAttribute($qss));
+        $tpl->setVariable('QSS_LABELS', JsBlock::jsonAttribute(JsBlock::getQssLabels($this->plugin)));
+        $tpl->setVariable('QSS_REFERENCE_REVISION', JsBlock::getQssReferenceRevision($this->object));
         return $tpl->get();
     }
 

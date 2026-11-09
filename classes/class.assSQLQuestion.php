@@ -339,6 +339,17 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
             $guiArea->writeParticipantInput($participant_input);
         }
 
+        if (isset($_POST['qss_evaluation']) && is_string($_POST['qss_evaluation'])) {
+            $participant_input->setQssEvaluationFromJSON($_POST['qss_evaluation']);
+            $qss = $participant_input->getQssEvaluation();
+            $answer = str_replace(["\r\n", "\r"], "\n", $participant_input->getSequence());
+            if ($qss !== null &&
+                (!hash_equals(JsBlock::getQssReferenceRevision($this), $qss['referenceRevision'] ?? '') ||
+                 !hash_equals(hash('sha256', $answer), $qss['answerDigest'] ?? ''))) {
+                $participant_input->setQssEvaluation(null);
+            }
+        }
+
         // Set value1 to be $participant_input serialized to JSON
         $value1 = $participant_input->toJSON();
 

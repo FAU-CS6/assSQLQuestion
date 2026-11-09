@@ -1,5 +1,12 @@
 # Question Plugin for ILIAS - SQL
 
+This experimental branch adds browser-only QSS shadow assessment directly to each
+question. Regular ILIAS grades still use the established metrics. The comparison
+requires the reference SQL in the student's browser; this branch is intended for
+evaluation before any exam deployment. See [the model, workflow and limitations](docs/qss-shadow.md).
+The [QSS acceptance report](docs/qss-abnahme-2026-11-09.md) covers all 699
+questions, actual Chrome submissions, import/export and grading comparisons.
+
 The Open Source Learning Management System [ILIAS](https://www.ilias.de/) is a an extensive tool to support students at universities learning. One big feature of ILIAS is the testing module. Using this lecturers are enabled to give their students a test they have to solve before accessing important documents. Of course the testing module can be used to create real (online) exams, too.
 
 While the testing module supports a bunch of different question types by default, including [Single Choice](https://docu.ilias.de/ilias.php?ref_id=2221&obj_id=42830&obj_type=StructureObject&cmd=layout&cmdClass=illmpresentationgui&cmdNode=2c&baseClass=ilLMPresentationGUI), [Multiple Choice](https://docu.ilias.de/ilias.php?ref_id=2221&obj_id=41931&cmd=layout&cmdClass=illmpresentationgui&cmdNode=2c&baseClass=ilLMPresentationGUI) and [Ordering](https://docu.ilias.de/ilias.php?ref_id=2221&obj_id=41720&cmd=layout&cmdClass=illmpresentationgui&cmdNode=2c&baseClass=ilLMPresentationGUI) questions, more complex question types have to be added by installing a plugin.
@@ -8,7 +15,7 @@ In this project - called ***Q**uestion **P**lugin for **I**LIAS - **SQL** (**QPI
 
 ## Installation
 
-Version 0.1.1 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
+Version 0.2.0 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
 reproducible tests are documented in [the ILIAS 11 upgrade guide](docs/ilias-11.md).
 
 The [full Chrome acceptance report](docs/chrome-abnahme-2026-11-06.md) covers all
@@ -46,6 +53,10 @@ The plugin itself does not modify ILIAS core files.
 Run `composer install` followed by `composer test` for the scoring unit tests.
 Run the ILIAS integration suite with ILIAS's own PHPUnit executable to avoid
 mixing two PHPUnit installations; instructions are in the [upgrade guide](docs/ilias-11.md).
+
+Both QSS browser bundles are included. Node.js is needed only for development
+and rebuilding them; the ILIAS installation runs no Node service. See the
+[QSS build and test commands](lib/qss/README.md).
 
 Some of the artifacts are uploaded to the repository in built form, some need to be built during installation. For the PHP part of the plugin, we adhere to the suggestions of ILIAS, namely to `composer install --no-dev` all dependencies during installation and not check in dependency artifacts into git (c.f. https://github.com/ILIAS-eLearning/ILIAS/pull/1833 and specifically https://docu.ilias.de/go/wiki/wpage_6371_1357 for plugins).
 

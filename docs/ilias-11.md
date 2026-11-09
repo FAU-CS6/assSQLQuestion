@@ -126,6 +126,42 @@ Das Testskript akzeptiert ausschließlich die geprüften SHA-256-Werte der
 unveränderten und korrigierten Kerndatei; bei unbekanntem Stand bricht es ohne
 Änderung ab. Es wird niemals vom Plugin geladen.
 
+### StudOn-Zusatzdaten in Taxonomien vor der Migration prüfen
+
+Die fünf Bestandsarchive enthalten **36 nichtleere Beschreibungen von
+Taxonomieknoten**. Das Feld `TaxTree/Description` wird vom offiziellen ILIAS-11-
+Modell nicht abgebildet: Die Tabelle `tax_node`, die Knotenklasse und der native
+DataSet-Import/-Export besitzen dafür kein Feld. Das gilt auch für den geprüften
+aktuellen `release_11`; bereits die offiziellen DataSets von ILIAS 8 und 9
+enthalten dieses Feld nicht. Es handelt sich um eine zusätzliche Eigenschaft der
+StudOn-Exporte, nicht um einen nachgewiesenen neuen ILIAS-11-Fehler. Quellen:
+[ILIAS-11-DataSet](https://github.com/ILIAS-eLearning/ILIAS/blob/release_11/components/ILIAS/Taxonomy/classes/class.ilTaxonomyDataSet.php),
+[Knotenmodell](https://github.com/ILIAS-eLearning/ILIAS/blob/release_11/components/ILIAS/Taxonomy/classes/class.ilTaxonomyNode.php).
+
+Vor einer verlustfreien StudOn-Migration muss der eingesetzte StudOn-Kern diese
+Zusatzdaten nachweislich speichern und wieder exportieren können oder die Daten
+müssen gesondert übernommen werden. Der nur lesende CLI-Preflight prüft private
+ZIPs gegen die deklarierten DataSet-Felder des Zielkerns und gibt ausschließlich
+Dateinamen, Fähigkeiten und Anzahlen aus:
+
+```sh
+ILIAS_PATH=/pfad/zu/ilias php tests/ilias11/check-taxonomy-import.php /privater/pfad/zu/archiven
+```
+
+Exit-Code `2` bedeutet nicht unterstützte Knotenbeschreibungen, `1` einen
+Prüffehler, `0` keine anhand der Deklaration unabbildbaren Beschreibungen. Ein
+benutzerdefinierter Kern mit deklariertem `Description`-Feld wird erkannt;
+`needs_review` verlangt weiterhin eine tatsächliche Import-/Export-Abnahme.
+Das Hilfsskript startet keine Sitzung, schreibt keine Daten und beeinflusst den
+nativen Plugin-Import nicht.
+
+Die Chrome-Prüfung erhielt alle 699 SQL-Fragen einschließlich Bewertungsdaten,
+Taxonomiepfaden, Titeln, Reihenfolge und **581 gültigen Zuordnungen**. Sechs
+weitere Zuordnungen in den Originalarchiven verweisen bereits auf nicht darin
+enthaltene Fragen; ihr Wegfall ist keine neue Plugin-Regression. Die 36
+Zusatzbeschreibungen sind bei einem unveränderten offiziellen Kern ausdrücklich
+von einer Aussage über einen vollständig verlustfreien Pooltransfer ausgenommen.
+
 ## Reproduzierbare Tests
 
 ### Unit-Tests und Klassenabgleich

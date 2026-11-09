@@ -233,3 +233,29 @@ help_schema_loading#:#Loading schema …
 help_schema_empty#:#Sequence A defines no tables or views.
 help_schema_cancelled#:#Loading cancelled.
 help_schema_changed#:#Sequence A changed. Load the schema again.
+
+// Experimental structural shadow evaluation; these values do not determine test grades.
+qss_title#:#QSS structural comparison
+qss_shadow#:#Experimental parallel evaluation – not a test grade. Regular points remain unchanged.
+qss_sqlrunning#:#Executing SQL …
+qss_parsing#:#Parsing SQL structure …
+qss_normalizing#:#Normalizing structure …
+qss_comparing#:#Comparing structures …
+qss_completed#:#Structural comparison completed.
+qss_unsupported#:#This SQL structure is not supported by the current model.
+qss_failed#:#Structural comparison failed.
+qss_cancelled#:#Structural comparison cancelled manually.
+qss_notevaluated#:#No structural comparison available yet.
+qss_distance#:#Structural distance
+qss_points#:#QSS comparison points
+qss_edits#:#Structural edits
+qss_model#:#Comparison model
+qss_visited#:#Visited states
+qss_lowerbound#:#Certified lower bound
+qss_waiting#:#Preparing QSS comparison …
+qss_stale#:#The stored comparison belongs to another answer or reference revision.
+qss_details#:#Structural comparison details
+qss_editinsert#:#Insert
+qss_editdelete#:#Delete
+qss_editreplace#:#Replace
+qss_cost#:#Cost

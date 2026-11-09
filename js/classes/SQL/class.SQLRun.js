@@ -110,7 +110,39 @@ class SQLRun
 
   executeSequenceA()
   {
-    this.executeSequence(this.sequenceA, 'A', this.executeSequenceB);
+    this.executeSequence(this.sequenceA, 'A', this.captureSchema);
+  }
+
+  /** QSS receives the actual prepared SQLite schema, entirely from this worker.
+   * Metadata queries never become the user's visible result relation.
+   */
+  captureSchema()
+  {
+    if (typeof this.callback.onSchema !== 'function') { this.executeSequenceB(); return; }
+    const schema = { tables: [] };
+    const read = (sql, callback) => {
+      if (this.finished) return;
+      this.worker.onmessage = event => {
+        if (this.finished) return;
+        callback(event.data.error ? null : (event.data.results || [])[0] || null);
+      };
+      this.worker.postMessage({ action: 'exec', sql });
+    };
+    const finish = () => { this.callback.onSchema(schema); this.executeSequenceB(); };
+    read("SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY rowid", result => {
+      if (!result) { finish(); return; }
+      const names = result.values.map(row => String(row[0]));
+      const next = index => {
+        if (index >= names.length) { finish(); return; }
+        const name = names[index];
+        read('PRAGMA table_info("' + name.replace(/"/g, '""') + '")', info => {
+          if (info) schema.tables.push({ name, columns: info.values.map(row => ({ name: String(row[1]),
+            type: String(row[2]), notnull: Boolean(row[3]), pk: Number(row[5]) })) });
+          next(index + 1);
+        });
+      };
+      next(0);
+    });
   }
 
   executeSequenceB()

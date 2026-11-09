@@ -1,4 +1,4 @@
-name: Editor build and dependency checks
+name: Editor, QSS and dependency checks
 
 on:
   push:
@@ -40,6 +40,31 @@ jobs:
       - name: Audit browser test dependencies
         working-directory: tests/browser
         run: npm audit --package-lock-only
+  qss:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: lib/qss
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: lib/codemirror/.nvmrc
+          cache: npm
+          cache-dependency-path: lib/qss/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run build:check
+      - run: npm audit --audit-level=low
+      - name: Test question-local assessment barrier and worker lifecycle
+        working-directory: .
+        run: >-
+          docker run --rm -v "$PWD:/plugin:ro" -w /tmp/qss-browser
+          -e NODE_PATH=/tmp/qss-browser/node_modules -e ILIAS_CHROME_CHANNEL=chromium
+          mcr.microsoft.com/playwright:v1.56.1-noble
+          sh -c 'cp /plugin/tests/browser/package.json /plugin/tests/browser/package-lock.json . &&
+          npm ci --ignore-scripts --no-audit --no-fund &&
+          node /plugin/tests/browser/qss-ui.cjs'
   php-dependencies:
     runs-on: ubuntu-latest
     steps:

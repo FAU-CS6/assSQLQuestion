@@ -59,4 +59,9 @@
      document.getElementById('qpisql-scoring-metric-value-' + this.type).value = this.getter(result);
    }
 
+   onSQLResult(result)
+   {
+     this.onResult(result);
+   }
+
  }

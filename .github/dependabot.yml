@@ -16,6 +16,13 @@ updates:
       editor-build:
         patterns: ['*']
   - package-ecosystem: npm
+    directory: /lib/qss
+    schedule:
+      interval: weekly
+    groups:
+      qss-build:
+        patterns: ['*']
+  - package-ecosystem: npm
     directory: /tests/browser
     schedule:
       interval: weekly

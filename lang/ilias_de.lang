@@ -232,3 +232,29 @@ help_schema_loading#:#Schema wird geladen …
 help_schema_empty#:#Sequenz A definiert keine Tabellen oder Views.
 help_schema_cancelled#:#Laden abgebrochen.
 help_schema_changed#:#Sequenz A wurde geändert. Laden Sie das Schema erneut.
+
+// Experimental structural shadow evaluation; these values do not determine test grades.
+qss_title#:#QSS-Strukturvergleich
+qss_shadow#:#Experimentelle Parallelbewertung – keine Prüfungsnote. Die regulären Punkte bleiben unverändert.
+qss_sqlrunning#:#SQL wird ausgeführt …
+qss_parsing#:#SQL-Struktur wird gelesen …
+qss_normalizing#:#Struktur wird normalisiert …
+qss_comparing#:#Strukturen werden verglichen …
+qss_completed#:#Strukturvergleich abgeschlossen.
+qss_unsupported#:#Diese SQL-Struktur wird im aktuellen Modell nicht unterstützt.
+qss_failed#:#Strukturvergleich fehlgeschlagen.
+qss_cancelled#:#Strukturvergleich manuell abgebrochen.
+qss_notevaluated#:#Noch kein Strukturvergleich vorhanden.
+qss_distance#:#Struktureller Abstand
+qss_points#:#QSS-Vergleichspunkte
+qss_edits#:#Strukturelle Änderungen
+qss_model#:#Vergleichsmodell
+qss_visited#:#Untersuchte Zustände
+qss_lowerbound#:#Nachgewiesene Untergrenze
+qss_waiting#:#QSS-Vergleich wird vorbereitet …
+qss_stale#:#Der gespeicherte Vergleich gehört zu einem anderen Antwort- oder Referenzstand.
+qss_details#:#Details zum Strukturvergleich
+qss_editinsert#:#Einfügen
+qss_editdelete#:#Entfernen
+qss_editreplace#:#Ersetzen
+qss_cost#:#Kosten

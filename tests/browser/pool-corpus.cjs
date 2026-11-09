@@ -17,6 +17,7 @@ const pluginPath = '/Customizing/global/plugins/Modules/TestQuestionPool/Questio
 const prefix = process.env.ILIAS_CORPUS_EXAM_PREFIX || '';
 const start = Number(process.env.ILIAS_CORPUS_START || 0);
 const count = Number(process.env.ILIAS_CORPUS_COUNT || Infinity);
+const verifyQSS = process.env.ILIAS_CORPUS_QSS === '1';
 const canonical = value => JSON.stringify(value);
 // Both legacy HTML textareas and CodeMirror use normalized browser newlines.
 const normalizeSQL = sql => sql.replace(/\r\n?/g, '\n');
@@ -164,16 +165,27 @@ async function executeStudent(page, row, verifyAutosave) {
   }
   const executedAutosave = verifyAutosave ? waitForAutosave(page, row.sequences[1], true) : null;
   await page.locator('#qpisql-execute-button').click();
-  await page.waitForFunction(() => document.querySelector('#qpisql-executed-bool').value === 'true'
-    || document.querySelector('#qpisql-error-bool').value === 'true', null, { timeout: 0 });
+  await page.waitForFunction(() => !window.EXECUTE_HANDLER.running && (document.querySelector('#qpisql-executed-bool').value === 'true'
+    || document.querySelector('#qpisql-error-bool').value === 'true'), null, { timeout: 0 });
   const execution = await page.evaluate(() => {
     const field = name => document.querySelector(`[name="${name}"]`)?.value || '';
     if (field('error_bool') === 'true') return { error: JSON.parse(field('error')) };
     return { relation: JSON.parse(field('output_relation')), metrics: {
       result_lines: field('value_result_lines'), column_names: field('value_column_names'),
       functional_dependencies: field('value_functional_dependencies')
-    }, displayed_rows: document.querySelectorAll('#qpisql-output-area-relation tbody tr').length };
+    }, qss: field('qss_evaluation') ? JSON.parse(field('qss_evaluation')) : null,
+    qssProgress: window.__qssProgress || [],
+    displayed_rows: document.querySelectorAll('#qpisql-output-area-relation tbody tr').length };
   });
+  if (verifyQSS) {
+    assert.equal(execution.qss?.status, 'exact', `${row.key}: parallel QSS must finish`);
+    assert.equal(execution.qss.points, row.maximum_points, `${row.key}: model answer must receive full parallel points`);
+    assert.equal(execution.qss.distance, 0, `${row.key}: model answer has distance zero`);
+    assert.ok(execution.qssProgress.length > 0, `${row.key}: actual worker progress must be shown before the table`);
+    assert.ok(execution.qssProgress.every(state => state.resultHidden && state.nextDisabled), `${row.key}: result and next remain gated while evaluating`);
+    assert.match(execution.qss.answerDigest, /^[a-f0-9]{64}$/);
+    assert.match(execution.qss.referenceRevision, /^[a-f0-9]{64}$/);
+  }
   if (executedAutosave) {
     const response = await executedAutosave;
     const labels = await page.evaluate(() => JSON.parse(document.getElementById('qpisql-output-area').dataset.labels));
@@ -246,6 +258,22 @@ async function main() {
   assert.ok(cdp, 'CHROME_CDP_URL is required: this test must use installed Google Chrome.');
   const browser = await chromium.connectOverCDP(cdp, { timeout: 120000 });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1050 } });
+  if (verifyQSS) await context.addInitScript(() => {
+    const NativeWorker = window.Worker;
+    window.__qssProgress = [];
+    window.Worker = class extends NativeWorker {
+      constructor(url, options) {
+        super(url, options);
+        if (String(url).includes('/lib/qss/worker.qss.js')) this.addEventListener('message', event => {
+          if (event.data?.type !== 'progress') return;
+          const result = document.getElementById('qpisql-output-area-relation');
+          const next = document.querySelector('.ilTstNavigationBtn_Next button');
+          window.__qssProgress.push({ phase: event.data.phase,
+            resultHidden: result?.style.display === 'none', nextDisabled: !next || next.disabled });
+        });
+      }
+    };
+  });
   const accounts = JSON.parse(fs.readFileSync(process.env.ILIAS_CHROME_STATE || '/tmp/asssql-chrome-accounts.json', 'utf8'));
   const exam = JSON.parse(fs.readFileSync(path.join(directory, prefix + 'exam-state.json'), 'utf8'));
   context.setDefaultTimeout(30000);
@@ -297,6 +325,11 @@ async function main() {
   const report = { runtime_javascript_sha256: hash(await runtimeJavaScript.body()), browser: await browser.version(), user_agent: userAgent,
     headless: /HeadlessChrome/.test(userAgent), bundle_sha256: hash(await bundle.body()), role_checks: roleChecks, student_id: accounts.student.id, test_id: exam.test_id, questions: 0, ui_question_pages: 0, ui_answer_submissions: 0,
     same_execution: 0, same_metrics: 0, old_workers_executed: 0, hidden_textarea_initial_lf_normalizations: [], source_result_mismatches: [], source_metric_mismatches: [], failures: [], pools: {} };
+  if (verifyQSS) {
+    const worker = await context.request.get(`${base}${pluginPath}/lib/qss/worker.qss.js`);
+    assert.equal(worker.status(), 200);
+    report.qss_worker_sha256 = hash(await worker.body());
+  }
   if (start) {
     const previous = JSON.parse(fs.readFileSync(path.join(directory, prefix + 'browser-report.json'), 'utf8'));
     assert.equal(previous.test_id, exam.test_id, 'Resume the same actual test');
@@ -304,6 +337,7 @@ async function main() {
     assert.equal(previous.ui_answer_submissions, start);
     assert.equal(previous.runtime_javascript_sha256, report.runtime_javascript_sha256, 'Resume only the identical final runtime');
     assert.equal(previous.bundle_sha256, report.bundle_sha256, 'Resume only the identical final editor bundle');
+    if (verifyQSS) assert.equal(previous.qss_worker_sha256, report.qss_worker_sha256, 'Resume only the identical final QSS worker');
     assert.deepEqual(previous.failures, []);
     const records = fs.readFileSync(path.join(directory, prefix + 'browser-results.jsonl'), 'utf8').split('\n').filter(Boolean);
     assert.equal(records.length, start, 'Existing proof contains every previously submitted answer');
@@ -338,6 +372,7 @@ async function main() {
         old.metrics.functional_dependencies = recalculated;
       }
       report.questions++;
+      if (verifyQSS) report.qss_completed = (report.qss_completed || 0) + 1;
       report.ui_question_pages++;
       report.pools[row.pool] = (report.pools[row.pool] || 0) + 1;
       const sameExecution = canonical(old.error || old.relation) === canonical(current.error || current.relation);
@@ -349,7 +384,8 @@ async function main() {
       const stored = JSON.parse(row.output_relation || 'null');
       if (canonical(current.relation) !== canonical(stored)) report.source_result_mismatches.push({ key: row.key, error: current.error });
       const result = { key: row.key, question_id: row.question_id, actual_native_identity: identity, baseline: { metrics: old.metrics, error: old.error },
-        current: { metrics: current.metrics, error: current.error }, ui_points: current.ui_points, ui_maximum: current.ui_maximum,
+        current: { metrics: current.metrics, error: current.error }, qss: current.qss, qss_progress: current.qssProgress,
+        ui_points: current.ui_points, ui_maximum: current.ui_maximum,
         result_rows: current.relation?.values.length, displayed_rows: current.displayed_rows,
         baseline_result_sha256: hash(canonical(old.error || old.relation)), current_result_sha256: hash(canonical(current.error || current.relation)) };
       if (index < Object.keys(exam.questions).length) {
