@@ -126,4 +126,35 @@ final class ParticipantInputTest extends TestCase
         $answer->setQssEvaluation(null);
         self::assertNull($answer->getQssEvaluation());
     }
+
+    public function testPaperGraphSidecarKeepsTheScoreAndCompactNamedEditsWithoutReplayStates(): void
+    {
+        $report = array_replace($this->report(), [
+            'engine' => 'graph-qss-sqlite-v2', 'version' => '2.0.1',
+            'modelVersion' => 'sql-ast-v2', 'rubric' => 'paper-linear-v1',
+            'formula' => 'max(0, maxPoints - distance * scale)', 'scale' => 0.5,
+            'edits' => array_fill(0, 55, [
+                'type' => 'sql-edit', 'name' => 'setLiteral',
+                'description' => str_repeat('Bound SQL literal. ', 50),
+                'path' => '/statements/0/where/right', 'cost' => 1,
+                'operation' => ['root' => ['kind' => 'select', 'privateSql' => 'never persist']],
+                'before' => ['fullAst' => ['private']], 'after' => ['fullAst' => ['private']],
+            ]),
+        ]);
+        $answer = $this->answer();
+        $answer->setQssEvaluation($report);
+        $saved = $answer->getQssEvaluation();
+        self::assertNotNull($saved);
+        self::assertSame(0.5, $saved['scale']);
+        self::assertSame('sql-ast-v2', $saved['modelVersion']);
+        self::assertSame('paper-linear-v1', $saved['rubric']);
+        self::assertSame($report['points'], $saved['points']);
+        self::assertTrue($saved['editsTruncated']);
+        self::assertGreaterThan(0, count($saved['edits']));
+        self::assertLessThan(50, count($saved['edits']));
+        self::assertArrayNotHasKey('operation', $saved['edits'][0]);
+        self::assertArrayNotHasKey('before', $saved['edits'][0]);
+        self::assertArrayNotHasKey('after', $saved['edits'][0]);
+        self::assertLessThanOrEqual(16384, strlen(json_encode($saved, JSON_THROW_ON_ERROR)));
+    }
 }

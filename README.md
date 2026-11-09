@@ -1,11 +1,24 @@
 # Question Plugin for ILIAS - SQL
 
-This experimental branch adds browser-only QSS shadow assessment directly to each
-question. Regular ILIAS grades still use the established metrics. The comparison
-requires the reference SQL in the student's browser; this branch is intended for
-evaluation before any exam deployment. See [the model, workflow and limitations](docs/qss-shadow.md).
-The [QSS acceptance report](docs/qss-abnahme-2026-11-09.md) covers all 699
-questions, actual Chrome submissions, import/export and grading comparisons.
+This experimental branch adds browser-only Graph-based QSS shadow assessment
+following [Köberlein, Probst and Lenz, sections 4.2–4.7](https://www.cs6.tf.fau.eu/files/2025/03/Koeberlein-Graph-based_QSS-141_b.pdf).
+Concrete SQLite AST states are connected by named SQL edits with fixed costs;
+exact shortest-path search includes actual zero-cost semantic transformations.
+The score uses the paper's linear deduction formula. This replaces the earlier
+syntax-tree comparison. Regular ILIAS grades still use the established metrics.
+
+The comparison runs directly at each question with progress, a result/navigation
+barrier and manual cancellation. It has no execution timeout and starts no Node
+service. Reference SQL is accessible in the student's browser; this branch remains
+an experimental shadow/teaching pilot before any exam deployment. See
+[the model, workflow and limitations](docs/qss-shadow.md) and the
+[engine/edit catalogue](lib/qss/README.md).
+
+The [Graph-based QSS acceptance report](docs/qss-graph-abnahme-2026-11-09.md)
+covers all 699 original questions in actual headless Chrome, native student
+submissions, import/export and targeted grading comparisons. The
+[earlier QSS report](docs/qss-abnahme-2026-11-09.md) records the
+historical syntax experiment and is not acceptance of this replacement.
 
 The Open Source Learning Management System [ILIAS](https://www.ilias.de/) is a an extensive tool to support students at universities learning. One big feature of ILIAS is the testing module. Using this lecturers are enabled to give their students a test they have to solve before accessing important documents. Of course the testing module can be used to create real (online) exams, too.
 
@@ -15,7 +28,7 @@ In this project - called ***Q**uestion **P**lugin for **I**LIAS - **SQL** (**QPI
 
 ## Installation
 
-Version 0.2.0 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
+Version 0.2.1 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
 reproducible tests are documented in [the ILIAS 11 upgrade guide](docs/ilias-11.md).
 
 The [full Chrome acceptance report](docs/chrome-abnahme-2026-11-06.md) covers all

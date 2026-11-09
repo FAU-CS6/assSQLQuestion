@@ -99,7 +99,7 @@ class ExecutionHandler
     if (stored && stored.value) {
       try {
         const result = JSON.parse(stored.value);
-        if (result.referenceRevision === config.referenceRevision) {
+        if (result.referenceRevision === config.referenceRevision && QSSShadow.isCurrentModel(result, config)) {
           const answer = document.querySelector('[name="sequence_b"]')?.value || '';
           const token = this.runToken;
           this.qss.message(this.qss.label('notEvaluated'), false);
@@ -116,6 +116,9 @@ class ExecutionHandler
           });
           return;
         }
+        this.qss.clear();
+        this.qss.message(this.qss.label('stale'), false);
+        return;
       } catch (error) { /* An older or invalid sidecar is simply recalculated. */ }
     }
     this.qss.clear();

@@ -24,6 +24,45 @@ class QSSShadow
     } catch (error) { return null; }
   }
 
+  /** Historical syntax-comparison results must never appear as current QSS. */
+  static isCurrentModel(result, config = {})
+  {
+    if (!result || result.engine !== (config.engine || 'graph-qss-sqlite-v2')
+      || String(result.version) !== (config.engineVersion || '2.0.1')) return false;
+    if (result.status === 'exact' || result.status === 'score-zero-certified') {
+      return result.rubric === (config.rubric || 'paper-linear-v1')
+        && result.scale === (config.scale === undefined ? 1 : config.scale);
+    }
+    return true;
+  }
+
+  /** Keep autosave diagnostics bounded; full graph states stay in the worker. */
+  static sidecar(result)
+  {
+    const keys = ['status', 'engine', 'version', 'modelVersion', 'distance', 'points', 'maxPoints',
+      'exactWithinModel', 'answerDigest', 'referenceRevision', 'lowerBound', 'upperBound',
+      'runtimeMs', 'visited', 'visitedStates', 'formula', 'scale', 'pointsPerEdit',
+      'scoreCertifiedWithinModel', 'validation', 'code', 'message', 'provisionalRubric', 'rubric'];
+    const saved = {};
+    for (const key of keys) if (result[key] !== undefined) saved[key] = result[key];
+    saved.limitations = (result.limitations || []).slice(0, 12).map(value => String(value).slice(0, 512));
+    saved.edits = (result.edits || []).slice(0, 50).map(edit => {
+      if (!edit || typeof edit !== 'object') return String(edit).slice(0, 256);
+      const summary = {};
+      for (const key of ['type', 'name', 'description', 'path']) {
+        if (edit[key] !== undefined) summary[key] = String(edit[key]).slice(0, key === 'description' ? 512 : 256);
+      }
+      if (Number.isFinite(edit.cost)) summary.cost = edit.cost;
+      return summary;
+    });
+    saved.editsTruncated = Boolean(result.editsTruncated) || (result.edits || []).length > saved.edits.length;
+    // Reserve enough space for long Unicode descriptions and answer bindings.
+    while (saved.edits.length && new TextEncoder().encode(JSON.stringify(saved)).length > 16000) {
+      saved.edits.pop(); saved.editsTruncated = true;
+    }
+    return saved;
+  }
+
   label(key)
   {
     return this.labels[key] || key;
@@ -121,9 +160,9 @@ class QSSShadow
         this.resolve = null;
         result.referenceRevision = this.config.referenceRevision;
         if (digest) result.answerDigest = digest;
-        this.result = result;
+        this.result = QSSShadow.sidecar(result);
         const input = document.getElementById('qpisql-qss-evaluation');
-        if (input) input.value = JSON.stringify(result);
+        if (input) input.value = JSON.stringify(this.result);
         this.render(result);
         resolve(result);
       };
@@ -140,7 +179,8 @@ class QSSShadow
           if (event.preventDefault) event.preventDefault();
           finish({ status: 'error', engine: 'qss', version: '1', limitations: [String(event.message || this.label('failed'))] });
         };
-        this.worker.postMessage({ type: 'evaluate', id, reference: snapshot.reference,
+        this.worker.postMessage({ type: 'evaluate', id, engine: this.config.engine || 'graph-qss-sqlite-v2',
+          scale: this.config.scale === undefined ? 1 : this.config.scale, reference: snapshot.reference,
           answer: snapshot.answer, schema: snapshot.schema, schemaSql: snapshot.schemaSql, maxPoints: snapshot.maxPoints,
           referenceExecutionValid: snapshot.referenceExecutionValid,
           answerExecutionValid: snapshot.answerExecutionValid });
@@ -182,6 +222,10 @@ class QSSShadow
   render(result)
   {
     const success = result.status === 'exact' || result.status === 'score-zero-certified';
+    if (success && !QSSShadow.isCurrentModel(result, this.config)) {
+      this.message(this.label('stale'), false);
+      return;
+    }
     this.message(this.label(success ? 'completed' : result.status === 'unsupported' ? 'unsupported'
       : result.status === 'cancelled' ? 'cancelled' : 'failed'), false);
     if (!this.card) return;
@@ -208,7 +252,8 @@ class QSSShadow
     for (const edit of (result.edits || []).slice(0, 50)) {
       const item = document.createElement('li');
       if (edit === null || typeof edit !== 'object') item.textContent = String(edit);
-      else if (edit.description || edit.name) item.textContent = String(edit.description || edit.name);
+      else if (edit.description || edit.name) item.textContent = String(edit.description || edit.name)
+        + ' · ' + this.label('cost') + ': ' + Number(edit.cost || 0);
       else {
         const labels = { insert: 'editInsert', delete: 'editDelete', replace: 'editReplace' };
         const before = edit.before ? String(edit.before.value || edit.before.kind || '') : '';
@@ -233,7 +278,8 @@ class QSSShadow
       container.appendChild(qss.card);
       qss.mount = () => qss.card;
       const result = JSON.parse(container.dataset.qssEvaluation);
-      if (container.dataset.qssReferenceRevision && result.referenceRevision !== container.dataset.qssReferenceRevision) {
+      if (!QSSShadow.isCurrentModel(result) || (container.dataset.qssReferenceRevision
+        && result.referenceRevision !== container.dataset.qssReferenceRevision)) {
         qss.message(qss.label('stale'), false);
       } else qss.render(result);
     } catch (error) { /* Older answers and malformed sidecars retain their ordinary result. */ }

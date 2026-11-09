@@ -1,3 +1,7 @@
+> **Historischer Syntaxvergleich (Commit b04c305):** Dieser Bericht dokumentiert
+> das inzwischen ersetzte strukturelle Verfahren. Er ist kein Abnahmenachweis
+> für die aktuelle Implementierung nach dem Graph-based-QSS-Paper.
+
 **Experimentelle Punkteskala: Es lagen keine von Menschen benoteten Originalantworten von Studierenden vor. Ein Ersatz der bisherigen Notenbewertung ist durch diese Untersuchung nicht belegt.**
 
 Die folgenden elf anonymisierten Vergleichsfälle sind automatisch erzeugte Änderungen an vorhandenen Musterlösungen. Vorbereitung und Nachtest blieben jeweils gleich. Muster und Variante liefen im Browser-SQLite erfolgreich; unterschiedliche sichtbare Kontrollausgaben sind im privaten Corpusprotokoll nachgewiesen. Fall R11 zeigt ausdrücklich eine fachlich neutrale Schreibweise statt einer fehlerhaften Antwort. Die Referenzergebnisse stimmen mit den bereitgestellten Exporten überein. Aufgabenkennungen, SQL-Texte und Rohdaten bleiben im privaten Testprotokoll.

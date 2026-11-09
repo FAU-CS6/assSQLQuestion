@@ -207,9 +207,9 @@ class ParticipantInput
             'referenceNodes', 'candidateNodes', 'visitedStates', 'visited', 'reason',
             'message', 'searchStats', 'diagnostics', 'editsTruncated', 'referenceDistance',
             'pointsPerEdit', 'formula', 'scoreCertifiedWithinModel', 'validation', 'code',
-            'normalizationDistance', 'provisionalRubric', 'rubric'];
+            'normalizationDistance', 'provisionalRubric', 'rubric', 'scale', 'modelVersion'];
         $result = array_intersect_key($evaluation, array_fill_keys($keys, true));
-        foreach (['engine', 'method', 'answerDigest', 'referenceRevision', 'formula', 'code', 'rubric'] as $key) {
+        foreach (['engine', 'method', 'answerDigest', 'referenceRevision', 'formula', 'code', 'rubric', 'modelVersion'] as $key) {
             if (isset($result[$key]) && !is_string($result[$key])) {
                 return null;
             }
@@ -224,7 +224,7 @@ class ParticipantInput
         }
         foreach (['distance', 'points', 'maxPoints', 'lowerBound', 'upperBound', 'runtimeMs',
                   'nodeCount', 'referenceNodes', 'candidateNodes', 'visitedStates', 'visited',
-                  'referenceDistance', 'pointsPerEdit', 'normalizationDistance'] as $key) {
+                  'referenceDistance', 'pointsPerEdit', 'normalizationDistance', 'scale'] as $key) {
             if (isset($result[$key]) &&
                 ((!is_int($result[$key]) && !is_float($result[$key])) || !is_finite((float) $result[$key]) || $result[$key] < 0)) {
                 return null;
@@ -262,10 +262,37 @@ class ParticipantInput
                 $result[$key] = array_slice($result[$key], 0, 50);
             }
         }
+        if (isset($result['edits'])) {
+            foreach ($result['edits'] as &$edit) {
+                if (is_array($edit)) {
+                    // Replay operations may contain complete ASTs. Retain only
+                    // their compact feedback, never query/state snapshots.
+                    $edit = array_intersect_key($edit, array_fill_keys(
+                        ['type', 'name', 'description', 'path', 'cost'], true));
+                    foreach (['type', 'name', 'description', 'path'] as $key) {
+                        if (isset($edit[$key]) && !is_string($edit[$key])) {
+                            return null;
+                        }
+                    }
+                    if (isset($edit['cost']) && ((!is_int($edit['cost']) && !is_float($edit['cost'])) ||
+                        !is_finite((float) $edit['cost']) || $edit['cost'] < 0)) {
+                        return null;
+                    }
+                }
+            }
+            unset($edit);
+        }
         if (!self::isBoundedQssMetadata($result)) {
             return null;
         }
         try {
+            // Large but valid traces must not discard the whole assessment.
+            // Leave the score/bindings intact and identify abbreviated feedback.
+            while (!empty($result['edits']) &&
+                strlen(json_encode($result, JSON_THROW_ON_ERROR)) > self::QSS_MAX_JSON_BYTES - 32) {
+                array_pop($result['edits']);
+                $result['editsTruncated'] = true;
+            }
             return strlen(json_encode($result, JSON_THROW_ON_ERROR)) <= self::QSS_MAX_JSON_BYTES ? $result : null;
         } catch (JsonException $error) {
             return null;

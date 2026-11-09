@@ -18,6 +18,8 @@ Changes to upstream source:
   projections; joins and `SELECT *` are excluded because reordering may change
   semantics or output column order.
 
-The separate SQLite syntax edit graph is an extension with its own model name.
-It is not the original semantic QSS metric. Full source is distributed here;
+The separate SQLite SQL-AST edit graph follows the paper's implicit-graph and
+shortest-SQL-edit-path approach with an expanded AST and its own edit catalogue.
+It is not the prototype's exact metric or the former syntax-tree alignment.
+Full source is distributed here;
 generated browser bundles are built from this source and the pinned lockfile.

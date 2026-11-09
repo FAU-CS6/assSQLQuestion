@@ -11,8 +11,11 @@ const readline = require('node:readline');
 const { equivalentFormatting, formattingTokenProof, errorCandidates } = require('./fixture-mutations.cjs');
 
 const directory = path.resolve(process.env.ILIAS_CORPUS_DIRECTORY || '/corpus');
-const originalDirectory = path.resolve(process.env.QSS_REPORT_DIRECTORY || 'test-results/qss/final');
-const proofDirectory = path.resolve(process.env.QSS_CATALOG_PROOF_DIRECTORY || 'test-results/qss/catalog-proof');
+const originalDirectory = path.resolve(process.env.QSS_REPORT_DIRECTORY || 'test-results/qss-paper/final');
+// The renewed browser harness performs the narrow catalog/NULL probes in-line.
+// A separate focused browser rerun can still be supplied explicitly.
+const externalProof = Boolean(process.env.QSS_CATALOG_PROOF_DIRECTORY);
+const proofDirectory = externalProof ? path.resolve(process.env.QSS_CATALOG_PROOF_DIRECTORY) : originalDirectory;
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const readRows = file => fs.readFileSync(file, 'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
@@ -22,7 +25,11 @@ async function main() {
   const records = readRows(path.join(originalDirectory, 'corpus-results.jsonl'));
   const proof = readJSON(path.join(proofDirectory, 'corpus-report.json'));
   const proofRecords = new Map(readRows(path.join(proofDirectory, 'corpus-results.jsonl')).map(row => [row.key, row]));
+  assert.equal(original.engine, 'graph-qss-sqlite-v2');
+  assert.ok(Number.isFinite(original.scale) && original.scale > 0);
   assert.equal(original.worker_unchanged, true);
+  assert.equal(original.worker_sha256, hash(fs.readFileSync(path.join(__dirname, '../../lib/qss/worker.qss.js'))),
+    'Recorded observations use the current production bundle.');
   assert.equal(proof.worker_unchanged, true);
   assert.equal(original.worker_sha256, proof.worker_sha256, 'Focused proof uses the same unchanged production worker.');
   assert.deepEqual(proof.failures, []);
@@ -30,13 +37,16 @@ async function main() {
   const byKey = new Map(records.map(row => [row.key, row]));
   assert.equal(byKey.size, records.length, 'Every observed private question key is unique.');
   const approved = new Map((proof.known_control_representation_differences || []).filter(row => row.verified).map(row => [row.key, row]));
-  assert.equal(approved.get('anonymous:null-default-catalog')?.verified, true, 'The anonymous SQLite catalog regression passed.');
+  if (externalProof) assert.equal(approved.get('anonymous:null-default-catalog')?.verified, true, 'The anonymous SQLite catalog regression passed.');
   const accepted = { accepted: false, worker_sha256: original.worker_sha256, worker_unchanged: true,
     original_observations_sha256: hash(fs.readFileSync(path.join(originalDirectory, 'corpus-results.jsonl'))),
     focused_proof_sha256: hash(fs.readFileSync(path.join(proofDirectory, 'corpus-results.jsonl'))),
+    proof_mode: externalProof ? 'separate-browser-catalog-rerun' : 'inline-browser-catalog-and-NULL-probes',
+    engine: original.engine, version: '2.0.1', rubric: 'paper-linear-v1', scale: original.scale,
     questions: 0, self_full_points: 0, formatting_full_points: 0, safe_formatting_neutral: 0,
     exact_raw_format_result_hashes_equal: 0, case_normalized_bag_format_equal: 0, caption_case_or_unordered_row_differences: 0,
-    control_query_representation_differences: [], successful_adverse_answers: 0, execution_or_result_errors_ungraded: 0,
+    control_query_representation_differences: [], successful_adverse_answers: 0, execution_or_result_errors_graded: 0, execution_or_result_errors_ungraded: 0,
+    execution_or_result_error_statuses: {},
     original_model_identity: original.original_identity_coverage, maximum_points: 0, self_points: 0,
     original_raw_observations_preserved: true, original_failures_retained_in_original_report: original.failures };
   const seen = new Set();
@@ -51,6 +61,28 @@ async function main() {
     const formatted = equivalentFormatting(m.SEQUENCE_B);
     assert.equal(cases.formatting.answer_sha256, hash(formatted));
     assert.equal(formattingTokenProof(m.SEQUENCE_B, formatted).safe, true);
+    for (const current of row.cases) {
+      const qss = current.qss;
+      assert.equal(qss.engine, original.engine);
+      assert.equal(qss.version, '2.0.1');
+      if (qss.status === 'exact') {
+        assert.equal(qss.rubric, 'paper-linear-v1');
+        assert.equal(qss.scale, original.scale);
+        assert.ok(Number.isFinite(qss.distance) && qss.distance >= 0);
+        assert.equal(qss.exactWithinModel, true);
+        assert.equal(qss.edit_cost_sum, qss.distance);
+        const expected = Math.round((Math.max(0, row.maximum_points - qss.distance * original.scale) + Number.EPSILON) * 10000) / 10000;
+        assert.equal(qss.points, expected);
+      } else if (qss.status === 'score-zero-certified') {
+        assert.equal(qss.rubric, 'paper-linear-v1'); assert.equal(qss.scale, original.scale);
+        assert.equal(qss.points, 0); assert.equal(qss.distance, null);
+        assert.ok(qss.lowerBound >= row.maximum_points / original.scale);
+        assert.equal(qss.scoreCertifiedWithinModel, true);
+      } else {
+        assert.ok(['unsupported', 'error', 'cancelled'].includes(qss.status));
+        assert.equal(qss.points, null);
+      }
+    }
     for (const current of [cases.self, cases.formatting]) {
       assert.equal(current.qss.engine, original.engine);
       assert.equal(current.qss.status, 'exact');
@@ -90,12 +122,17 @@ async function main() {
     const wrong = cases.targeted_error;
     assert.ok(errorCandidates(m.SEQUENCE_B).some(candidate => hash(candidate.answer) === wrong.answer_sha256), 'The recorded mutation remains reproducible.');
     if (wrong.sqlite_error) {
-      assert.equal(wrong.qss.status, 'unsupported'); assert.equal(wrong.qss.points, null);
-      accepted.execution_or_result_errors_ungraded++;
+      // Faulty B and failed C are distinct from AST representability. Static
+      // graph QSS may still return an edit path/score; SQL errors are retained
+      // as observations and are never converted into a grading oracle.
+      const phase = wrong.sqlite_error_phase;
+      accepted.execution_or_result_error_statuses[phase] = (accepted.execution_or_result_error_statuses[phase] || 0) + 1;
+      if (Number.isFinite(wrong.qss.points)) accepted.execution_or_result_errors_graded++;
+      else accepted.execution_or_result_errors_ungraded++;
     } else {
       assert.equal(wrong.changed_visible_result, true);
-      assert.equal(wrong.qss.status, 'exact');
-      assert.ok(wrong.qss.points < row.maximum_points);
+      assert.ok(['exact', 'score-zero-certified'].includes(wrong.qss.status));
+      assert.ok(Number.isFinite(wrong.qss.points) && wrong.qss.points < row.maximum_points);
       accepted.successful_adverse_answers++;
     }
   }
@@ -104,7 +141,7 @@ async function main() {
   const knownKeys = new Set(accepted.control_query_representation_differences.map(value => value.key));
   assert.ok(original.failures.every(value => value.kind === 'formatting_changed_SQL_result' && knownKeys.has(value.key)), 'All unknown original failures remain fatal.');
   accepted.accepted = true;
-  accepted.note = 'This validates the recorded engine and its stated scoring model, not universal SQL equivalence or human grading calibration. Raw output differences and legacy scores are retained without alteration.';
+  accepted.note = 'This validates the recorded paper-style SQL edit graph, its declared fixed edit costs and linear scoring formula, not universal SQL equivalence or human grading calibration. Raw output differences and legacy scores are retained without alteration.';
   fs.writeFileSync(path.join(originalDirectory, 'acceptance-report.json'), JSON.stringify(accepted, null, 2) + '\n');
   console.log(JSON.stringify(accepted, null, 2));
 }

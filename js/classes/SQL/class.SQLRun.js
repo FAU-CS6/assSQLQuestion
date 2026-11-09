@@ -129,14 +129,14 @@ class SQLRun
       this.worker.postMessage({ action: 'exec', sql });
     };
     const finish = () => { this.callback.onSchema(schema); this.executeSequenceB(); };
-    read("SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY rowid", result => {
+    read("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY rowid", result => {
       if (!result) { finish(); return; }
-      const names = result.values.map(row => String(row[0]));
+      const names = result.values.map(row => ({ name: String(row[0]), type: String(row[1]) }));
       const next = index => {
         if (index >= names.length) { finish(); return; }
-        const name = names[index];
+        const { name, type } = names[index];
         read('PRAGMA table_info("' + name.replace(/"/g, '""') + '")', info => {
-          if (info) schema.tables.push({ name, columns: info.values.map(row => ({ name: String(row[1]),
+          if (info) schema.tables.push({ name, type, columns: info.values.map(row => ({ name: String(row[1]),
             type: String(row[2]), notnull: Boolean(row[3]), pk: Number(row[5]) })) });
           next(index + 1);
         });

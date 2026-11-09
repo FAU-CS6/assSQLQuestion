@@ -18,7 +18,7 @@ const plugin = '/Customizing/global/plugins/Modules/TestQuestionPool/Questions/a
 const workerPath = plugin + '/lib/qss/worker.qss.js';
 const expectedHash = process.env.QSS_EXPECTED_WORKER_SHA256 ||
   digest(fs.readFileSync(path.join(__dirname, '../../lib/qss/worker.qss.js')));
-const engine = 'sqlite-syntax-edit-graph-v1';
+const engine = 'graph-qss-sqlite-v2';
 const sampleSize = 20;
 let context;
 function digest(value) { return crypto.createHash('sha256').update(value).digest('hex'); }

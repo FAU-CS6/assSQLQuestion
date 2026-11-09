@@ -25,6 +25,65 @@ const normalizeSQL = sql => sql.replace(/\r\n?/g, '\n');
 const normalizeHiddenTextareaSQL = sql => normalizeSQL(sql).replace(/^\n/, '');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 
+/** Validate the native exam against original source keys before opening a test. */
+async function examSourceCoverage(exam) {
+  const keys = Object.keys(exam.questions);
+  assert.ok(keys.length > 0, 'The native exam must contain questions.');
+  const ids = Object.values(exam.questions).map(row => row.question_id);
+  assert.ok(ids.every(id => Number.isSafeInteger(id) && id > 0), 'Native test question IDs must be positive integers.');
+  assert.equal(new Set(ids).size, ids.length, 'Native test question IDs must be unique.');
+  if (!Object.hasOwn(exam, 'source_start')) return { declared: false, expected_questions: keys.length };
+  for (const field of ['source_start', 'source_count', 'source_end_exclusive', 'source_total_questions']) {
+    assert.ok(Number.isSafeInteger(exam[field]) && exam[field] >= 0, `Invalid exam ${field}`);
+  }
+  assert.ok(exam.source_count > 0 && exam.source_total_questions > 0);
+  assert.equal(exam.source_start + exam.source_count, exam.source_end_exclusive);
+  assert.ok(exam.source_end_exclusive <= exam.source_total_questions);
+  assert.equal(exam.source_count, keys.length, 'Declared source count matches this exam.');
+  assert.equal(exam.source_keys_sha256, hash(canonical(keys)), 'Declared source-key coverage hash.');
+  if (process.env.ILIAS_CORPUS_SOURCE_START !== undefined) {
+    assert.match(process.env.ILIAS_CORPUS_SOURCE_START, /^(0|[1-9][0-9]*)$/);
+    assert.equal(Number(process.env.ILIAS_CORPUS_SOURCE_START), exam.source_start, 'Requested source start matches the native exam.');
+  }
+  let originalKeys;
+  if (exam.source_kind === 'teacher-owned-example') {
+    originalKeys = ['example:1', 'example:2'];
+    assert.equal(exam.source_total_questions, originalKeys.length);
+    assert.equal(exam.source_questions_sha256, null);
+  } else {
+    assert.equal(exam.source_kind, 'original-corpus');
+    const manifest = JSON.parse(fs.readFileSync(path.join(directory, 'manifest.json'), 'utf8'));
+    assert.equal(exam.source_total_questions, manifest.questions, 'Declared total matches the complete source corpus.');
+    const digest = crypto.createHash('sha256');
+    const source = fs.createReadStream(path.join(directory, 'questions.jsonl'));
+    source.on('data', chunk => digest.update(chunk));
+    const lines = readline.createInterface({ input: source, crlfDelay: Infinity });
+    originalKeys = [];
+    for await (const line of lines) originalKeys.push(JSON.parse(line).key);
+    assert.equal(originalKeys.length, manifest.questions);
+    assert.equal(new Set(originalKeys).size, originalKeys.length, 'Original source keys must be unique.');
+    assert.equal(digest.digest('hex'), exam.source_questions_sha256, 'The exam was seeded from this exact original corpus.');
+    const originals = Object.values(exam.questions).map(row => row.original_question_id);
+    assert.ok(originals.every(id => Number.isSafeInteger(id) && id > 0), 'Original teacher question IDs must be positive integers.');
+    assert.equal(new Set(originals).size, originals.length, 'Original teacher questions must not be cloned within a range.');
+  }
+  assert.deepEqual(keys, originalKeys.slice(exam.source_start, exam.source_end_exclusive), 'Exact original source-key range in original order.');
+  const runtime = readline.createInterface({ input: fs.createReadStream(path.join(directory, prefix + 'exam-runtime.jsonl')), crlfDelay: Infinity });
+  let index = 0;
+  for await (const line of runtime) {
+    const row = JSON.parse(line);
+    assert.equal(row.key, keys[index], 'Runtime row belongs to the exact selected source range.');
+    assert.equal(row.original_source_ordinal, exam.source_start + index + 1, 'Runtime retains the original one-based source ordinal.');
+    assert.deepEqual({ question_id: row.question_id, original_question_id: row.original_question_id, original_source_ordinal: row.original_source_ordinal }, exam.questions[row.key]);
+    ++index;
+  }
+  assert.equal(index, keys.length, 'Every selected source has exactly one runtime row.');
+  return { declared: true, source_kind: exam.source_kind, corpus_total_questions: exam.source_total_questions,
+    source_start: exam.source_start, source_end_exclusive: exam.source_end_exclusive,
+    expected_questions: keys.length, expected_source_keys_sha256: exam.source_keys_sha256,
+    source_questions_sha256: exam.source_questions_sha256, completed_questions: 0, completed: false };
+}
+
 async function login(page, account) {
   await page.goto(`${base}/login.php?client_id=default`, { waitUntil: 'domcontentloaded' });
   if (await page.locator('input[type="password"]').count()) {
@@ -179,6 +238,10 @@ async function executeStudent(page, row, verifyAutosave) {
   });
   if (verifyQSS) {
     assert.equal(execution.qss?.status, 'exact', `${row.key}: parallel QSS must finish`);
+    assert.equal(execution.qss.engine, 'graph-qss-sqlite-v2', `${row.key}: paper-style graph engine must be used`);
+    assert.equal(execution.qss.version, '2.0.1');
+    assert.equal(execution.qss.rubric, 'paper-linear-v1');
+    assert.equal(execution.qss.scale, 1);
     assert.equal(execution.qss.points, row.maximum_points, `${row.key}: model answer must receive full parallel points`);
     assert.equal(execution.qss.distance, 0, `${row.key}: model answer has distance zero`);
     assert.ok(execution.qssProgress.length > 0, `${row.key}: actual worker progress must be shown before the table`);
@@ -256,6 +319,12 @@ async function verifyFinalResultTypes(page, exam, databaseReport) {
 
 async function main() {
   assert.ok(cdp, 'CHROME_CDP_URL is required: this test must use installed Google Chrome.');
+  assert.ok(Number.isSafeInteger(start) && start >= 0, 'ILIAS_CORPUS_START must be a nonnegative local resume index.');
+  assert.ok(count === Infinity || Number.isSafeInteger(count) && count > 0, 'ILIAS_CORPUS_COUNT must be a positive local end count.');
+  const accounts = JSON.parse(fs.readFileSync(process.env.ILIAS_CHROME_STATE || '/tmp/asssql-chrome-accounts.json', 'utf8'));
+  const exam = JSON.parse(fs.readFileSync(path.join(directory, prefix + 'exam-state.json'), 'utf8'));
+  const sourceCoverage = await examSourceCoverage(exam);
+  assert.ok(start < Object.keys(exam.questions).length, 'Resume index must be within this exam.');
   const browser = await chromium.connectOverCDP(cdp, { timeout: 120000 });
   const context = await browser.newContext({ viewport: { width: 1440, height: 1050 } });
   if (verifyQSS) await context.addInitScript(() => {
@@ -274,8 +343,6 @@ async function main() {
       }
     };
   });
-  const accounts = JSON.parse(fs.readFileSync(process.env.ILIAS_CHROME_STATE || '/tmp/asssql-chrome-accounts.json', 'utf8'));
-  const exam = JSON.parse(fs.readFileSync(path.join(directory, prefix + 'exam-state.json'), 'utf8'));
   context.setDefaultTimeout(30000);
   context.setDefaultNavigationTimeout(60000);
   const page = await context.newPage();
@@ -324,7 +391,8 @@ async function main() {
   assert.equal(runtimeJavaScript.status(), 200);
   const report = { runtime_javascript_sha256: hash(await runtimeJavaScript.body()), browser: await browser.version(), user_agent: userAgent,
     headless: /HeadlessChrome/.test(userAgent), bundle_sha256: hash(await bundle.body()), role_checks: roleChecks, student_id: accounts.student.id, test_id: exam.test_id, questions: 0, ui_question_pages: 0, ui_answer_submissions: 0,
-    same_execution: 0, same_metrics: 0, old_workers_executed: 0, hidden_textarea_initial_lf_normalizations: [], source_result_mismatches: [], source_metric_mismatches: [], failures: [], pools: {} };
+    same_execution: 0, same_metrics: 0, old_workers_executed: 0, source_coverage: sourceCoverage,
+    hidden_textarea_initial_lf_normalizations: [], source_result_mismatches: [], source_metric_mismatches: [], failures: [], pools: {} };
   if (verifyQSS) {
     const worker = await context.request.get(`${base}${pluginPath}/lib/qss/worker.qss.js`);
     assert.equal(worker.status(), 200);
@@ -338,9 +406,14 @@ async function main() {
     assert.equal(previous.runtime_javascript_sha256, report.runtime_javascript_sha256, 'Resume only the identical final runtime');
     assert.equal(previous.bundle_sha256, report.bundle_sha256, 'Resume only the identical final editor bundle');
     if (verifyQSS) assert.equal(previous.qss_worker_sha256, report.qss_worker_sha256, 'Resume only the identical final QSS worker');
+    if (sourceCoverage.declared) {
+      assert.equal(previous.source_coverage?.expected_source_keys_sha256, sourceCoverage.expected_source_keys_sha256);
+      assert.equal(previous.source_coverage?.source_questions_sha256, sourceCoverage.source_questions_sha256);
+    }
     assert.deepEqual(previous.failures, []);
-    const records = fs.readFileSync(path.join(directory, prefix + 'browser-results.jsonl'), 'utf8').split('\n').filter(Boolean);
+    const records = fs.readFileSync(path.join(directory, prefix + 'browser-results.jsonl'), 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line));
     assert.equal(records.length, start, 'Existing proof contains every previously submitted answer');
+    assert.deepEqual(records.map(row => row.key), Object.keys(exam.questions).slice(0, start), 'Resumed proof covers precisely the earlier source keys.');
     Object.assign(report, previous);
     report.resume_segments = [...(previous.resume_segments || []), { resumed_at_sequence: start + 1, already_submitted: start }];
   }
@@ -383,7 +456,8 @@ async function main() {
       else report.failures.push({ key: row.key, kind: 'metric_regression' });
       const stored = JSON.parse(row.output_relation || 'null');
       if (canonical(current.relation) !== canonical(stored)) report.source_result_mismatches.push({ key: row.key, error: current.error });
-      const result = { key: row.key, question_id: row.question_id, actual_native_identity: identity, baseline: { metrics: old.metrics, error: old.error },
+      const result = { key: row.key, original_source_ordinal: row.original_source_ordinal,
+        question_id: row.question_id, original_question_id: row.original_question_id, actual_native_identity: identity, baseline: { metrics: old.metrics, error: old.error },
         current: { metrics: current.metrics, error: current.error }, qss: current.qss, qss_progress: current.qssProgress,
         ui_points: current.ui_points, ui_maximum: current.ui_maximum,
         result_rows: current.relation?.values.length, displayed_rows: current.displayed_rows,
@@ -408,6 +482,11 @@ async function main() {
         report.ui_score = cells[4]?.trim();
       }
       report.ui_answer_submissions++;
+      if (sourceCoverage.declared) {
+        report.source_coverage.completed_questions = report.ui_answer_submissions;
+        report.source_coverage.completed_source_keys_sha256 = hash(canonical(Object.keys(exam.questions).slice(0, report.ui_answer_submissions)));
+        report.source_coverage.completed = report.ui_answer_submissions === Object.keys(exam.questions).length && report.finished === true;
+      }
       output.write(JSON.stringify(result) + '\n');
       fs.writeFileSync(path.join(directory, prefix + 'browser-report.json'), JSON.stringify(report, null, 2) + '\n');
       if (report.questions % 10 === 0) console.log(`PASS ${report.questions}: ${report.same_execution} equivalent executions, ${report.same_metrics} equivalent metrics`);
@@ -420,13 +499,19 @@ async function main() {
     await context.close();
     // CDP belongs to the caller's disposable Chrome profile. Do not close it.
   }
-  const expected = JSON.parse(fs.readFileSync(path.join(directory, 'manifest.json'), 'utf8')).questions;
-  if (!Number.isFinite(count)) {
+  const expected = sourceCoverage.declared ? Object.keys(exam.questions).length
+    : JSON.parse(fs.readFileSync(path.join(directory, 'manifest.json'), 'utf8')).questions;
+  if (!Number.isFinite(count) || sourceCoverage.declared && count >= expected) {
     assert.equal(report.questions, expected, 'Every exported question must be tested.');
     assert.equal(report.ui_answer_submissions, expected, 'Every answer must be submitted through native UI.');
     assert.equal(report.finished, true, 'The ordinary student must finish the actual test.');
+    if (sourceCoverage.declared) {
+      assert.equal(report.source_coverage.completed, true, 'Every question in this declared source range was finished.');
+      assert.equal(report.source_coverage.completed_source_keys_sha256, report.source_coverage.expected_source_keys_sha256);
+    }
   }
   console.log(JSON.stringify(report, null, 2));
   assert.deepEqual(report.failures, []);
 }
-main().then(() => process.exit(0)).catch(error => { console.error(error); process.exit(1); });
+module.exports = { examSourceCoverage };
+if (require.main === module) main().then(() => process.exit(0)).catch(error => { console.error(error); process.exit(1); });

@@ -1,7 +1,7 @@
 # QSS als experimentelle Parallelbewertung
 
-Der Branch `ilias-11-update-with-qss` ergänzt den strukturellen QSS-Vergleich als
-separate Diagnose. Die vorhandenen Bewertungsmetriken und die reguläre
+Der Branch `ilias-11-update-with-qss` ergänzt Graph-based QSS als
+separate Diagnose nach dem Vorgehen der verlinkten Arbeit. Die vorhandenen Bewertungsmetriken und die reguläre
 ILIAS-Punkteberechnung verwenden keine QSS-Werte. QSS ist keine weitere
 auswählbare Bewertungsmetrik.
 
@@ -30,50 +30,95 @@ neue Antworten noch deren Diagnosefelder verändern.
 
 ## Vergleichsmodell und vorläufige Punkte
 
-Das ursprüngliche Repository deckt nur einen begrenzten SELECT-Ausschnitt ab.
-Dieser Branch enthält dessen Quellcode, einen getrennten Originalmodell-Adapter
-und einen isolierten Suchalgorithmus. Die Voreinstellung für den gesamten
-Fragenbestand heißt ausdrücklich `sqlite-syntax-edit-graph-v1`: eine Erweiterung
-mit vollständigem SQLite-Syntaxbaum, konservativen Äquivalenzumformungen und
-gewichteten Änderungen an Knoten und Unterbäumen. Das ist nicht die unveränderte
-semantische Metrik des ursprünglichen Prototyps. Ein optimaler Abstand gilt nur
-innerhalb des angegebenen Edit-Modells; ein positiver Abstand beweist keine
-semantische Ungleichheit. Details, Herkunft und reproduzierbare Builds stehen in
-[lib/qss/README.md](../lib/qss/README.md).
+Das Modell `graph-qss-sqlite-v2` folgt den Abschnitten 4.2–4.7 von
+[Graph-based QSS](https://www.cs6.tf.fau.eu/files/2025/03/Koeberlein-Graph-based_QSS-141_b.pdf).
+Es erweitert die SQL-Abdeckung des SELECT-Prototyps durch einen neuen SQLite-AST
+und SQL-spezifische Editregeln. Der frühere Syntaxbaumabgleich und dessen Cap-5-Skala
+werden nicht mehr als Bewertung verwendet.
 
-Die vorläufige Skala lautet:
+Ein Knoten ist ein konkreter SQL-AST, der auch ungesetzte Attribute, fehlende
+Argumente und nicht ausführbare Referenzen enthalten darf. Benannte SQL-Edits mit
+festen, nichtnegativen Kosten erzeugen seine Nachbarn. Atomare Komponenten- und
+Attributänderungen sowie fachliche Shortcuts sind an allen kompatiblen Positionen
+zulässig; die Suche beschränkt sich nicht auf direkt zum Ziel führende Änderungen.
+
+Die gerichtete Suche läuft von der Studentenantwort zur Musterlösung. Eine exakte,
+verzögerte A*-Suche nutzt bewiesene Untergrenzen; ohne passenden Nachweis verwendet
+sie Uniform-Cost-Suche. Kostenfreie Äquivalenz-Edits sind tatsächliche Kanten auch
+an Zwischenzuständen. Dazu gehören abgesicherte Aliasumbenennungen, Boolesche
+Umformungen einschließlich der vergrößernden Idempotenzrichtung sowie geeignete
+INNER-JOIN-/WHERE-Umformungen. Unbewiesene Varianten, beispielsweise die pauschale
+Übertragung auf LEFT JOIN, werden nicht gleichgesetzt. Fertige Pfade werden
+nachgespielt und ihre Gesamtkosten geprüft.
+
+Bei der Verlagerung eines INNER-JOIN-Prädikats bleibt die Reihenfolge der
+FROM-Quellen erhalten. Daher ist diese kostenfreie Regel auch für `SELECT *`
+anwendbar. USING- und NATURAL-Joins sind von ihr ausgeschlossen. Änderungen an
+äußeren Joins können über gesonderte positive Reparaturkosten bewertet werden.
+
+Spalten können volatile Ausdrücke über SELECT-Aliase, Unterabfragen, CTEs oder
+Views verbergen. Solche Herkünfte sperren die betroffenen kostenfreien
+Ausdrucks-/JOIN-Regeln. Dafür liefert der SQL-Worker neben Spalteninformationen
+auch den SQLite-Objekttyp `table` oder `view`; ohne diese Angabe ist versteckte
+View-Volatilität für den statischen Vergleich nicht erkennbar. Ein unbeteiligter
+Funktionsausdruck in der Projektion sperrt dagegen keine Regel für gewöhnliche
+Basisspalten. Sichere Aliasumbenennungen bleiben kostenfrei möglich.
+
+Wertemengen und Konstruktoren sind durch beide Eingabe-ASTs und das Schema
+begrenzt. Zusätzlich nennt das Ergebnis endliche Grenzen für AST-Größe, Tiefe,
+Listenlänge und Boolesche Höhe. Sie lassen temporäre Lücken und Vergrößerungen zu,
+begrenzen aber ausdrücklich das konfigurierte Modell. Optimalität gilt innerhalb
+dieses Modells, nicht für einen unbeschränkten SQL-Graphen. Es gibt keinen
+Zeit-Timeout oder ein Limit besuchter Suchknoten. Auch ein endlicher Graph kann
+lange Rechenzeit erfordern.
+
+Die lineare Bewertung gemäß Abschnitt 4.7 lautet:
 
 ```text
-Bezugsabstand = min(Kosten von Leerantwort zu Musterlösung, 5)
-Vergleichspunkte = Maximalpunkte * max(0, 1 - Abstand / Bezugsabstand)
+Vergleichspunkte = max(Maximalpunkte - Abstand * Skala, 0)
 ```
 
-Sie verhindert, dass eine lange Abfrage durch viele unveränderte Syntaxknoten
-einen einzelnen materiellen Fehler fast vollständig verdünnt. Eine Änderung mit
-Kosten 1 zieht damit mindestens 20 % der Maximalpunkte ab. Die volle Normierung
-gegen die Leerantwort und ein Abzug von einem Punkt je Edit werden im
-Korpusbericht als weitere Kalibrierungsvarianten betrachtet. Keine dieser
-Skalen ist allein durch die technischen Tests als menschlich faire Benotung
-validiert. Dafür sind von Lehrenden bewertete echte Antwortpaare erforderlich.
+Die konstante Skala ist zunächst 1. Gewöhnliche atomare Änderungen und positive
+Shortcuts kosten zunächst 1, DISTINCT-Änderungen 2 und das Hinzufügen/Entfernen
+einer ganzen Skriptanweisung 5. Neue Komponenten werden als flache Konstruktoren
+mit Lücken aufgebaut; vollständige Musterteilbäume werden nicht zum Preis einer
+kleinen Änderung eingefügt. Semantisch abgesicherte Äquivalenz-Edits kosten 0.
+Ein positiver Shortcut entfernt beispielsweise eine binäre Operation unter
+Beibehaltung eines Operanden für Kosten 1 (`removeExtraneousBinaryTerm`). Eine
+zusätzliche Rechnung `+ 1` kann damit als ein logischer Reparaturschritt entfernt
+werden. Das ist keine kostenfreie Gleichsetzung und gilt unabhängig davon, ob
+die gewählte Position direkt zur Musterlösung führt.
+Diese konkrete Kostenkalibrierung ist vorläufig und nicht durch unabhängig von
+Lehrenden bewertete echte Antwortpaare validiert.
 
-`score-zero-certified` bezeichnet einen bewiesenen Nullpunktwert innerhalb
-dieses Modells, sobald der relevante Abstand vollständig ausgeschöpft ist.
-Dabei ist der exakte Abstand unbekannt (`distance: null`) und die Oberfläche
-zeigt eine Untergrenze. Nicht unterstützte, fehlerhafte oder abgebrochene
-Vergleiche erhalten keinen erfundenen QSS-Punktwert.
+`score-zero-certified` bedeutet, dass eine mathematische Untergrenze bereits
+Nullpunkte beweist. Dann bleibt der genaue Abstand unbekannt (`distance: null`),
+und die Oberfläche zeigt die Untergrenze. Nicht unterstützte, fehlerhafte oder
+abgebrochene Vergleiche bekommen keine erfundene Punktzahl.
 
-Ein ausdrücklich gemeldeter SQL-Laufzeitfehler führt im Parallelvergleich zu
-`unsupported` und `points: null`. Das gilt im aktuellen Ablauf auch für Fehler
-der Kontrollsequenz C, obwohl B allein gültig gewesen sein kann. Teilpunkte für
-solche Fälle sind noch nicht modelliert; die reguläre Fehlerbehandlung bleibt
-unverändert. Die Bewertung solcher Antworten wird im Korpusbericht getrennt
-von gültigen, aber inhaltlich falschen Antworten ausgewiesen.
+Ein Laufzeitfehler in B oder der separaten Kontrollsequenz C verhindert keine
+statische QSS-Bewertung, wenn B als SQL-AST darstellbar ist. Beispielsweise sind
+eine mehrdeutige Spaltenreferenz und eine fehlende Argumentstelle wie `AVG()`
+zulässige Startzustände. Nicht repräsentierbare Grammatik bleibt ausdrücklich
+`unsupported`; es erfolgt kein Wechsel auf String- oder Syntaxbaumähnlichkeit.
+Die vorhandene reguläre Fehlerbehandlung bleibt unabhängig davon erhalten.
+
+Der [Bericht vom 9. November](qss-abnahme-2026-11-09.md) beschreibt das vorherige
+Syntaxexperiment und belegt keine Abnahme dieser neuen Graph-QSS-Implementierung.
+Der [Graph-QSS-Abnahmebericht](qss-graph-abnahme-2026-11-09.md) dokumentiert die
+erneute vollständige Chrome-Prüfung aller 699 Originalfragen auf Modell 2.0.1,
+gespeicherte native Studentenabgaben und gezielt falsche Varianten. Er trennt
+diese technischen Nachweise von der noch ausstehenden menschlichen Kalibrierung
+der Editkosten und Punkteskala.
+Modell, Schnittstelle und reproduzierbare Builds stehen in
+[lib/qss/README.md](../lib/qss/README.md).
 
 ## Browser-Konfiguration und Vertrauensgrenze
 
 `JsBlock` stellt die Konfiguration als HTML-escaped JSON in
 `#qpisql-qss-config[data-config]` bereit. Der Kontext ist `author` oder
-`participant`. Im Autorenkontext wird die aktuelle Sequenz B im Editor als
+`participant`. Engine-/Modellversion, Rubrik und die konstante Skala sind ebenfalls
+Teil der Konfiguration; gespeicherte Diagnosen eines anderen Modells gelten als veraltet. Im Autorenkontext wird die aktuelle Sequenz B im Editor als
 Referenz verwendet. Im Teilnehmerkontext enthält `referenceSql` die gespeicherte
 Musterlösung B. `referenceExecutionValid` bezeichnet ausschließlich die bereits
 vorhandene erfolgreiche Ausführungsmarkierung dieser Musterlösung; der Server

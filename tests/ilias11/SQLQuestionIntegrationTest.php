@@ -198,6 +198,11 @@ final class SQLQuestionIntegrationTest extends TestCase
         $dom->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
         $config = json_decode($dom->getElementById('qpisql-qss-config')->getAttribute('data-config'), true, flags: JSON_THROW_ON_ERROR);
         self::assertSame('participant', $config['context']);
+        self::assertSame(2, $config['version']);
+        self::assertSame(JsBlock::QSS_ENGINE, $config['engine']);
+        self::assertSame(JsBlock::QSS_ENGINE_VERSION, $config['engineVersion']);
+        self::assertSame(JsBlock::QSS_RUBRIC, $config['rubric']);
+        self::assertSame(JsBlock::QSS_SCALE, $config['scale']);
         self::assertSame($sql, $config['referenceSql']);
         self::assertFalse($config['referenceExecutionValid']);
         self::assertSame(5, $config['maxPoints']);
@@ -225,6 +230,8 @@ final class SQLQuestionIntegrationTest extends TestCase
         global $DIC;
         $question = $this->question();
         $report = ['status' => 'exact', 'distance' => 9, 'points' => 0,
+            'engine' => JsBlock::QSS_ENGINE, 'version' => JsBlock::QSS_ENGINE_VERSION,
+            'rubric' => JsBlock::QSS_RUBRIC, 'scale' => JsBlock::QSS_SCALE,
             'maxPoints' => 5, 'exactWithinModel' => true,
             'referenceRevision' => JsBlock::getQssReferenceRevision($question),
             'answerDigest' => hash('sha256', 'SELECT name FROM people;')];

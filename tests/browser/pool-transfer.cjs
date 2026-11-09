@@ -3,6 +3,7 @@
  */
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const crypto = require('node:crypto');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
@@ -19,6 +20,7 @@ fs.mkdirSync(artifacts, { recursive: true, mode: 0o700 });
 fs.chmodSync(artifacts, 0o700);
 const report = fs.existsSync(reportFile) ? JSON.parse(fs.readFileSync(reportFile, 'utf8')) : { format: 1, account: accounts.teacher.login, category_ref_id: accounts.category_ref_id, pools: [] };
 const save = () => fs.writeFileSync(reportFile, JSON.stringify(report, null, 2) + '\n', { mode: 0o600 });
+const hash = data => crypto.createHash('sha256').update(data).digest('hex');
 const countQuestions = async page => {
   const match = (await page.locator('body').innerText()).match(/Number of Questions\s+(\d+)/);
   assert.ok(match, 'The native question list must report its total question count.');
@@ -94,7 +96,22 @@ async function main() {
       await page.goto(`${base}/goto.php/cat/${accounts.category_ref_id}`);
     }
     report.browser = await browser.version();
+    report.user_agent = await page.evaluate(() => navigator.userAgent);
+    assert.match(report.user_agent, /HeadlessChrome\//, 'Native acceptance uses an invisible dedicated Chrome process.');
+    report.headless = true;
     report.teacher_user_id = accounts.teacher.id;
+    const workerURL = base + '/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/qss/worker.qss.js';
+    const worker = await context.request.get(workerURL);
+    assert.ok(worker.ok());
+    const workerHash = hash(await worker.body());
+    if (report.qss_worker_sha256) assert.equal(report.qss_worker_sha256, workerHash, 'Resume only against the same final QSS bundle.');
+    report.qss_worker_sha256 = workerHash;
+    report.source_archive_sha256 = {};
+    for (const source of manifest.pools) {
+      const actualHash = hash(fs.readFileSync(path.join(directory, source.archive)));
+      if (source.sha256) assert.equal(actualHash, source.sha256, 'Import the unchanged private source ZIP.');
+      report.source_archive_sha256[source.key] = actualHash;
+    }
     if (phase !== 'roundtrip') {
       for (const source of manifest.pools) {
         let pool = report.pools.find(item => item.key === source.key);
@@ -110,7 +127,7 @@ async function main() {
         }
         await importQuestions(page, pool, path.join(directory, source.archive), source.count);
         pool.imported_count = source.count;
-        pool.chrome_mode ||= new URL(process.env.ILIAS_CHROME_CDP || 'http://localhost:9223').port === '9223' ? 'installed-google-chrome-headless' : 'installed-google-chrome-headed';
+        pool.chrome_mode = 'installed-google-chrome-headless';
         save();
         await page.screenshot({ path: path.join(artifacts, `source-${source.key}.png`), fullPage: true });
         console.log(`PASS: Chrome teacher imported pool ${source.key}: ${source.count} questions, ref ${pool.pool_ref_id}`);
@@ -138,6 +155,10 @@ async function main() {
       }
       report.reimported_questions = report.pools.reduce((total, pool) => total + pool.reimported_count, 0); save();
     }
+    const finalWorker = await context.request.get(workerURL);
+    report.qss_worker_unchanged = finalWorker.ok() && hash(await finalWorker.body()) === workerHash;
+    save();
+    assert.equal(report.qss_worker_unchanged, true, 'Import/export evidence must use one unchanged final plugin bundle.');
     await context.storageState({ path: storageFile }); fs.chmodSync(storageFile, 0o600);
   } catch (error) {
     console.error('Original Chrome transfer error:', error.stack || error);

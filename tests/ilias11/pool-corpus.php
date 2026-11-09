@@ -35,6 +35,20 @@ function corpusWrite(string $path, array $data): void
     file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . "\n");
 }
 
+/** Strict range options: reject malformed values before creating repository objects. */
+function corpusRangeInteger(string $name, int $default, int $minimum): int
+{
+    $value = getenv($name);
+    if ($value === false || $value === '') return $default;
+    if (!preg_match('/^(0|[1-9][0-9]*)$/D', $value)
+        || strlen($value) > strlen((string) PHP_INT_MAX)
+        || (strlen($value) === strlen((string) PHP_INT_MAX) && strcmp($value, (string) PHP_INT_MAX) > 0)
+        || (int) $value < $minimum) {
+        throw new InvalidArgumentException($name . ' must be an integer >= ' . $minimum . '.');
+    }
+    return (int) $value;
+}
+
 function corpusMetrics(string $json): array
 {
     $metrics = [];
@@ -264,9 +278,12 @@ if ($mode === 'score') {
 
 $manifest = corpusJSON($directory . '/manifest.json');
 $sourceQuestions = [];
+$sourceOrdinals = [];
 $source = fopen($directory . '/questions.jsonl', 'r');
 while (($line = fgets($source)) !== false) {
     $question = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
+    if (isset($sourceOrdinals[$question['key']])) throw new RuntimeException('Duplicate original corpus source key.');
+    $sourceOrdinals[$question['key']] = count($sourceOrdinals) + 1;
     $sourceQuestions[$question['pool']][] = $question;
 }
 fclose($source);
@@ -411,12 +428,59 @@ if ($mode === 'exam') {
         $second = $record;
         $second['key'] = 'example:2';
         $sourceQuestions = ['example' => [$record, $second]];
-        $manifest['pools'] = [['key' => 'example']];
+        $sourceOrdinals = ['example:1' => 1, 'example:2' => 2];
+        $manifest = ['questions' => 2, 'pools' => [['key' => 'example', 'count' => 2]]];
         $references = ilObject::_getAllReferences($example->getObjId());
         $teacherPools = ['example' => ['question_ids' => [$exampleId, $exampleId], 'pool_ref_id' => (int) reset($references)]];
     }
+    $sourceTotal = count($sourceOrdinals);
+    if ($sourceTotal !== (int) $manifest['questions']) throw new RuntimeException('Manifest and original corpus source count differ.');
+    $sourceStart = corpusRangeInteger('ILIAS_CORPUS_SOURCE_START', 0, 0);
+    if ($sourceStart >= $sourceTotal) throw new InvalidArgumentException('Corpus source start is outside the source corpus.');
+    $limit = corpusRangeInteger('ILIAS_CORPUS_LIMIT', $sourceTotal - $sourceStart, 1);
+    if ($limit > $sourceTotal - $sourceStart) throw new InvalidArgumentException('Corpus source range exceeds the source corpus.');
+    $sourceEnd = $sourceStart + $limit;
+    $orderedSourceKeys = [];
+    foreach ($manifest['pools'] as $sourcePool) {
+        $poolSources = $sourceQuestions[$sourcePool['key']] ?? throw new RuntimeException('Manifest source pool is missing.');
+        if (count($poolSources) !== (int) $sourcePool['count']) throw new RuntimeException('Manifest source pool count differs.');
+        foreach ($poolSources as $sourceQuestion) $orderedSourceKeys[] = $sourceQuestion['key'];
+    }
+    if ($orderedSourceKeys !== array_keys($sourceOrdinals)) throw new RuntimeException('Manifest pool order differs from original source order.');
+    $expectedSourceKeys = array_slice($orderedSourceKeys, $sourceStart, $limit);
+    $selected = [];
+    $selectedOriginalIds = [];
+    foreach ($manifest['pools'] as $sourcePool) {
+        $key = $sourcePool['key'];
+        if ($sourceOrdinals[$sourceQuestions[$key][0]['key']] > $sourceEnd) break;
+        $teacherPool = $teacherPools[$key] ?? throw new RuntimeException('Missing teacher-Chrome-imported pool ' . $key);
+        if ($exampleId <= 0 && count(array_unique($teacherPool['question_ids'])) !== count($teacherPool['question_ids'])) {
+            throw new RuntimeException('Teacher source pool contains duplicate question IDs.');
+        }
+        $candidates = [];
+        foreach ($teacherPool['question_ids'] as $id) {
+            $question = assQuestion::instantiateQuestion((int) $id);
+            $snapshot = corpusSnapshot($question);
+            $fingerprint = hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR));
+            $candidates[$fingerprint][] = ['id' => (int) $id, 'snapshot' => $snapshot];
+        }
+        foreach ($sourceQuestions[$key] as $sourceQuestion) {
+            $ordinal = $sourceOrdinals[$sourceQuestion['key']];
+            if ($ordinal > $sourceEnd) break;
+            $fingerprint = hash('sha256', json_encode(corpusExpected($sourceQuestion), JSON_THROW_ON_ERROR));
+            if (empty($candidates[$fingerprint])) throw new RuntimeException('Teacher UI import differs from original source at ' . $sourceQuestion['key']);
+            // Consume even skipped identical sources, so a later range never reuses their original question IDs.
+            $candidate = array_shift($candidates[$fingerprint]);
+            if ($ordinal <= $sourceStart) continue;
+            if ($exampleId <= 0 && isset($selectedOriginalIds[$candidate['id']])) throw new RuntimeException('Duplicate original teacher question in corpus range.');
+            $selectedOriginalIds[$candidate['id']] = true;
+            $selected[$sourceQuestion['key']] = ['pool' => $key, 'candidate' => $candidate, 'original_source_ordinal' => $ordinal];
+        }
+    }
+    if (array_keys($selected) !== $expectedSourceKeys) throw new RuntimeException('Selected source key coverage differs from the requested range.');
     $test = new ilObjTest();
-    $test->setTitle('SQL Chrome — all existing StudOn questions');
+    $test->setTitle($limit === $sourceTotal ? 'SQL Chrome — all existing StudOn questions'
+        : 'SQL Chrome — source questions ' . ($sourceStart + 1) . '–' . $sourceEnd . ' of ' . $sourceTotal);
     $test->setDescription('Disposable acceptance test. Every answer is entered by the ordinary student account in real Chrome.');
     $test->setOwner((int) $accounts['teacher']['id']);
     $test->create();
@@ -426,49 +490,38 @@ if ($mode === 'exam') {
     $DIC->rbac()->admin()->grantPermission(4, ilRbacReview::_getOperationIdsByName(['visible', 'read']), $test->getRefId());
     $test->saveToDb();
     $runtime = fopen($directory . '/' . $examPrefix . 'exam-runtime.jsonl', 'w');
-    $limit = (int) (getenv('ILIAS_CORPUS_LIMIT') ?: PHP_INT_MAX);
     $state = ['test_id' => $test->getTestId(), 'test_ref_id' => $test->getRefId(),
         'teacher_id' => $accounts['teacher']['id'], 'student_id' => $accounts['student']['id'],
+        'source_kind' => $exampleId > 0 ? 'teacher-owned-example' : 'original-corpus',
+        'source_range_explicit' => getenv('ILIAS_CORPUS_SOURCE_START') !== false || getenv('ILIAS_CORPUS_LIMIT') !== false,
+        'source_total_questions' => $sourceTotal, 'source_start' => $sourceStart, 'source_count' => $limit,
+        'source_end_exclusive' => $sourceEnd, 'source_keys_sha256' => hash('sha256', json_encode($expectedSourceKeys, JSON_THROW_ON_ERROR)),
+        'source_questions_sha256' => $exampleId > 0 ? null : hash_file('sha256', $directory . '/questions.jsonl'),
         'url' => ILIAS_HTTP_PATH . '/goto.php/tst/' . $test->getRefId(), 'questions' => []];
-    foreach ($manifest['pools'] as $sourcePool) {
-        if (count($state['questions']) >= $limit) break;
-        $key = $sourcePool['key'];
-        $poolQuestionStart = count($state['questions']);
-        $teacherPool = $teacherPools[$key] ?? throw new RuntimeException('Missing teacher-Chrome-imported pool ' . $key);
-        $candidates = [];
-        foreach ($teacherPool['question_ids'] as $id) {
-            $question = assQuestion::instantiateQuestion((int) $id);
-            $snapshot = corpusSnapshot($question);
-            $fingerprint = hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR));
-            $candidates[$fingerprint][] = ['id' => (int) $id, 'snapshot' => $snapshot];
+    foreach ($selected as $sourceKey => $selection) {
+        $key = $selection['pool'];
+        $candidate = $selection['candidate'];
+        $teacherPool = $teacherPools[$key];
+        if (!isset($state['role_check_urls'])) {
+            $sourceURLs = corpusURLs(new ilObjQuestionPool((int) $teacherPool['pool_ref_id']), $candidate['id']);
+            $state['role_check_urls'] = array_intersect_key($sourceURLs, array_flip(['edit_url', 'import_url', 'export_url']));
         }
-        foreach ($sourceQuestions[$key] as $sourceQuestion) {
-            if (count($state['questions']) >= $limit) break;
-            $expected = corpusExpected($sourceQuestion);
-            $fingerprint = hash('sha256', json_encode($expected, JSON_THROW_ON_ERROR));
-            if (empty($candidates[$fingerprint])) {
-                throw new RuntimeException('Teacher UI import differs from original source at ' . $sourceQuestion['key']);
-            }
-            $candidate = array_shift($candidates[$fingerprint]);
-            if (!isset($state['role_check_urls'])) {
-                $sourceURLs = corpusURLs(new ilObjQuestionPool((int) $teacherPool['pool_ref_id']), $candidate['id']);
-                $state['role_check_urls'] = array_intersect_key($sourceURLs, array_flip(['edit_url', 'import_url', 'export_url']));
-            }
-            $testQuestionId = $test->insertQuestion($candidate['id']);
-            $snapshot = corpusSnapshot(assQuestion::instantiateQuestion($testQuestionId));
-            if (corpusDifferences($candidate['snapshot'], $snapshot) !== []) {
-                throw new RuntimeException('Copy into student test changed question ' . $sourceQuestion['key']);
-            }
-            $state['questions'][$sourceQuestion['key']] = ['question_id' => $testQuestionId, 'original_question_id' => $candidate['id']];
-            fwrite($runtime, json_encode(['key' => $sourceQuestion['key'], 'pool' => $key,
-                'question_id' => $testQuestionId, 'original_question_id' => $candidate['id'],
-                'sequences' => [$snapshot['sequence_a'], $snapshot['sequence_b'], $snapshot['sequence_c']],
-                'integrity' => $snapshot['integrity_check'], 'output_relation' => $snapshot['output_relation'],
-                'metrics' => $snapshot['metrics'], 'maximum_points' => $snapshot['maximum_points']], JSON_THROW_ON_ERROR) . "\n");
+        $testQuestionId = $test->insertQuestion($candidate['id']);
+        $snapshot = corpusSnapshot(assQuestion::instantiateQuestion($testQuestionId));
+        if (corpusDifferences($candidate['snapshot'], $snapshot) !== []) {
+            throw new RuntimeException('Copy into student test changed question ' . $sourceKey);
         }
-        echo json_encode(['pool' => $key, 'copied_into_student_test' => count($state['questions']) - $poolQuestionStart], JSON_THROW_ON_ERROR), "\n";
+        $state['questions'][$sourceKey] = ['question_id' => $testQuestionId, 'original_question_id' => $candidate['id'],
+            'original_source_ordinal' => $selection['original_source_ordinal']];
+        fwrite($runtime, json_encode(['key' => $sourceKey, 'pool' => $key,
+            'original_source_ordinal' => $selection['original_source_ordinal'],
+            'question_id' => $testQuestionId, 'original_question_id' => $candidate['id'],
+            'sequences' => [$snapshot['sequence_a'], $snapshot['sequence_b'], $snapshot['sequence_c']],
+            'integrity' => $snapshot['integrity_check'], 'output_relation' => $snapshot['output_relation'],
+            'metrics' => $snapshot['metrics'], 'maximum_points' => $snapshot['maximum_points']], JSON_THROW_ON_ERROR) . "\n");
     }
     fclose($runtime);
+    if (array_keys($state['questions']) !== $expectedSourceKeys) throw new RuntimeException('Created exam source coverage differs from the requested range.');
     $main = $test->getMainSettings();
     $main = $main->withTestBehaviourSettings($main->getTestBehaviourSettings()->withNumberOfTries(5)->withBlockAfterPassedEnabled(false))
         ->withQuestionBehaviourSettings($main->getQuestionBehaviourSettings()->withAutosaveEnabled(true)->withAutosaveInterval(2000)->withShuffleQuestions(false))
@@ -496,12 +549,24 @@ if ($mode === 'report') {
     $passResult = $db->fetchAssoc($db->queryF('SELECT * FROM tst_pass_result WHERE active_fi = %s AND pass = %s',
         ['integer', 'integer'], [$active['active_id'], $pass]));
     $expectedInputs = [];
+    $runtimeSourceKeys = [];
     $stream = fopen($directory . '/' . $examPrefix . 'exam-runtime.jsonl', 'r');
     while (($line = fgets($stream)) !== false) {
         $row = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
+        if (isset($expectedInputs[(int) $row['question_id']])) throw new RuntimeException('Duplicate native runtime question ID.');
+        $runtimeSourceKeys[] = $row['key'];
+        if (isset($state['source_start'])) {
+            $expectedIdentity = $state['questions'][$row['key']] ?? throw new RuntimeException('Foreign source key in native runtime.');
+            if ((int) $row['original_source_ordinal'] !== (int) $state['source_start'] + count($runtimeSourceKeys)
+                || ['question_id' => $row['question_id'], 'original_question_id' => $row['original_question_id'],
+                    'original_source_ordinal' => $row['original_source_ordinal']] !== $expectedIdentity) {
+                throw new RuntimeException('Native runtime source identity differs from declared range.');
+            }
+        }
         $expectedInputs[(int) $row['question_id']] = $row;
     }
     fclose($stream);
+    if ($runtimeSourceKeys !== array_keys($state['questions'])) throw new RuntimeException('Native runtime source coverage differs from exam.');
     $results = [];
     $rows = $db->queryF('SELECT * FROM tst_test_result WHERE active_fi = %s AND pass = %s',
         ['integer', 'integer'], [$active['active_id'], $pass]);
@@ -513,6 +578,7 @@ if ($mode === 'report') {
     $report = ['student_id' => $state['student_id'], 'student_is_system_admin' => $DIC->rbac()->review()->isAssigned((int) $state['student_id'], SYSTEM_ROLE_ID), 'active_id' => $active['active_id'], 'pass' => $pass,
         'expected_questions' => count($state['questions']), 'authorized_rows' => (int) $authorized['rows_count'], 'authorized_unique_questions' => (int) $authorized['question_count'], 'saved_authorized_answers' => 0, 'graded_questions' => count($results),
         'points' => 0.0, 'maximum_points' => 0.0, 'pass_result' => $passResult,
+        'source_coverage' => array_intersect_key($state, array_flip(['source_kind', 'source_total_questions', 'source_start', 'source_count', 'source_end_exclusive', 'source_keys_sha256', 'source_questions_sha256'])),
         'source_model_mismatches' => [], 'failures' => []];
     $answerDigest = hash_init('sha256');
     foreach ($state['questions'] as $key => $ids) {

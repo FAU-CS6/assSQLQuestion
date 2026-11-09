@@ -1,3 +1,7 @@
+> **Historischer Syntaxvergleich (Commit b04c305):** Dieser Bericht dokumentiert
+> das inzwischen ersetzte strukturelle Verfahren. Er ist kein Abnahmenachweis
+> für die aktuelle Implementierung nach dem Graph-based-QSS-Paper.
+
 # QSS-Parallelvergleich: Abnahme vom 9. November 2026
 
 Plugin **0.2.0**, Branch `ilias-11-update-with-qss`, wurde mit allen **699 Fragen

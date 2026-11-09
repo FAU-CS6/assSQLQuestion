@@ -30,6 +30,23 @@ final class QssConfigurationTest extends TestCase
         self::assertNotSame($revision, JsBlock::getQssReferenceRevision($question));
     }
 
+    public function testPaperModelRevisionInvalidatesThePreviousSyntaxMetric(): void
+    {
+        $question = $this->question();
+        $oldRevision = hash('sha256', json_encode([
+            'version' => 1,
+            'sequence_a' => $question->getSequence('sequence_a'),
+            'sequence_b' => $question->getSequence('sequence_b'),
+            'sequence_c' => $question->getSequence('sequence_c'),
+            'metrics' => $question->getAllSolutionMetricsAsJSON(),
+        ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
+        self::assertNotSame($oldRevision, JsBlock::getQssReferenceRevision($question));
+        self::assertSame('graph-qss-sqlite-v2', JsBlock::QSS_ENGINE);
+        self::assertSame('2.0.1', JsBlock::QSS_ENGINE_VERSION);
+        self::assertSame('paper-linear-v1', JsBlock::QSS_RUBRIC);
+        self::assertSame(1, JsBlock::QSS_SCALE);
+    }
+
     public function testJSONAttributePreservesSQLAsDataWithoutCreatingHTMLNodes(): void
     {
         $data = ['referenceSql' => "SELECT '</div><img src=x onerror=alert(1)>&\"{QSS_LITERAL}';", 'points' => 5,

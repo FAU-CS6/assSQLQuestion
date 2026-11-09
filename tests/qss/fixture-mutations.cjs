@@ -36,6 +36,24 @@ function tokens(sql) {
 
 function replace(sql, token, value) { return sql.slice(0, token.start) + value + sql.slice(token.end); }
 
+/** Keep a valid implicit projection alias outside an arithmetic mutation.
+ * A final name alone is an expression, not an alias. Operators, qualifications,
+ * COLLATE and window syntax likewise cannot terminate the preceding expression.
+ */
+function implicitProjectionAlias(projection) {
+  if (projection.length < 2) return null;
+  const tail = projection[projection.length - 1], previous = projection[projection.length - 2];
+  if (!['word', 'quoted_identifier', 'string'].includes(tail.type)
+      || tail.type === 'word' && keywords.has(tail.upper)) return null;
+  if (previous.type === 'symbol') return previous.value === ')' ? tail : null;
+  if (['number', 'string', 'quoted_identifier'].includes(previous.type)) return tail;
+  if (previous.type === 'word') {
+    if (['END', 'NULL', 'TRUE', 'FALSE', 'CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP'].includes(previous.upper)) return tail;
+    if (!keywords.has(previous.upper) && !['COLLATE', 'OVER', 'FILTER', 'PARTITION', 'AT', 'TIME', 'ZONE'].includes(previous.upper)) return tail;
+  }
+  return null;
+}
+
 /** SQLite keyword case, surrounding whitespace, and an inert comment preserve SQL. */
 function equivalentFormatting(sql) {
   let answer = sql;
@@ -112,8 +130,12 @@ function errorCandidates(sql) {
       if (token.value === ')') depth--;
     }
     if (all[start] && end > all[start].start) {
+      if (alias == null) alias = implicitProjectionAlias(all.slice(start).filter(token => token.start < end))?.start ?? null;
       const expressionEnd = alias ?? end;
-      const expression = sql.slice(all[start].start, expressionEnd).trim();
+      let expression = sql.slice(all[start].start, expressionEnd).trim();
+      const lastExpressionToken = tokens(expression).at(-1);
+      // Trimming must not let a final line comment swallow the closing `)`.
+      if (lastExpressionToken?.type === 'comment' && lastExpressionToken.value.startsWith('--')) expression += '\n';
       const suffix = alias == null ? '' : sql.slice(alias, end);
       candidates.push({ kind: 'projection_expression', answer: sql.slice(0, all[start].start) + '(' + expression + ') + 1 ' + suffix + sql.slice(end),
         explanation: 'The first projected expression is incorrectly incremented; existing FROM/JOIN/filter predicates are preserved to avoid an exploding Cartesian result.' });
@@ -144,6 +166,7 @@ const semanticControls = [
   { name: 'and_reorder', a: setup, reference: 'SELECT id FROM item WHERE value > 10 AND id < 3;', answer: 'SELECT id FROM item WHERE id < 3 AND value > 10;', explanation: 'Two deterministic AND predicates are reordered, including nullable data.' },
   { name: 'comparison_mirror', a: setup, reference: 'SELECT id FROM item WHERE value > 10;', answer: 'SELECT id FROM item WHERE 10 < value;', explanation: 'The operands and direction of the same comparison are mirrored.' },
   { name: 'inner_join_to_where', a: setup, reference: 'SELECT i.id FROM item AS i INNER JOIN detail AS d ON i.id = d.item_id;', answer: 'SELECT i.id FROM item AS i, detail AS d WHERE i.id = d.item_id;', explanation: 'An inner join condition moves to WHERE; no outer join is involved.' },
+  { name: 'inner_join_star_to_where', a: setup, reference: 'SELECT * FROM item AS i INNER JOIN detail AS d ON i.id = d.item_id;', answer: 'SELECT * FROM item AS i, detail AS d WHERE i.id = d.item_id;', explanation: 'Identical FROM source order and no USING/NATURAL retain the full star column sequence.' },
   { name: 'not_equals', a: setup, reference: 'SELECT id FROM item WHERE value <> 10;', answer: 'SELECT id FROM item WHERE NOT (value = 10);', explanation: 'Not-equal and negated equality share SQLite three-valued semantics.' }
 ];
 

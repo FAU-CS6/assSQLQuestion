@@ -47,6 +47,10 @@ while ($row = $db->fetchAssoc($rows)) {
     }
     if ($evaluation !== null) ++$report['qss_saved'];
     if ($evaluation === null || ($evaluation['status'] ?? '') !== 'exact'
+        || ($evaluation['engine'] ?? '') !== JsBlock::QSS_ENGINE
+        || ($evaluation['version'] ?? '') !== JsBlock::QSS_ENGINE_VERSION
+        || ($evaluation['rubric'] ?? '') !== JsBlock::QSS_RUBRIC
+        || ($evaluation['scale'] ?? null) !== JsBlock::QSS_SCALE
         || !isset($evaluation['distance']) || (float) $evaluation['distance'] !== 0.0
         || ($evaluation['points'] ?? null) != $question->getMaximumPoints()) {
         $report['failures'][] = ['question' => $id, 'kind' => 'missing_or_incorrect_parallel_evaluation'];

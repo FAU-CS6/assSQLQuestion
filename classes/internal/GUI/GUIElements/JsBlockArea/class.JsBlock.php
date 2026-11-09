@@ -9,6 +9,11 @@ declare(strict_types=1);
  */
 class JsBlock extends GUIElement
 {
+    public const QSS_ENGINE = 'graph-qss-sqlite-v2';
+    public const QSS_ENGINE_VERSION = '2.0.1';
+    public const QSS_RUBRIC = 'paper-linear-v1';
+    public const QSS_SCALE = 1;
+
     /*
      * Functions used to get the html code for edit, question and solution output
      */
@@ -56,11 +61,15 @@ class JsBlock extends GUIElement
         $tpl->setVariable('INITIALIZE_HANDLER', $context === 'solution' ? 'false' : 'true');
         if ($context !== 'solution') {
             $config = [
-                'version' => 1,
+                'version' => 2,
                 'mode' => 'shadow',
+                'engine' => self::QSS_ENGINE,
+                'engineVersion' => self::QSS_ENGINE_VERSION,
+                'rubric' => self::QSS_RUBRIC,
+                'scale' => self::QSS_SCALE,
                 'context' => $context,
                 'enabled' => true,
-                // Client-side structural comparison necessarily exposes the
+                // Client-side graph QSS necessarily exposes the
                 // reference. These diagnostics never determine ILIAS grades.
                 'referenceSql' => $context === 'author' ? null : $this->object->getSequence('sequence_b'),
                 'maxPoints' => $this->object->getMaximumPoints(),
@@ -87,7 +96,11 @@ class JsBlock extends GUIElement
     public static function getQssReferenceRevision($question): string
     {
         return hash('sha256', json_encode([
-            'version' => 1,
+            'version' => 2,
+            'engine' => self::QSS_ENGINE,
+            'engineVersion' => self::QSS_ENGINE_VERSION,
+            'rubric' => self::QSS_RUBRIC,
+            'scale' => self::QSS_SCALE,
             'sequence_a' => $question->getSequence('sequence_a'),
             'sequence_b' => $question->getSequence('sequence_b'),
             'sequence_c' => $question->getSequence('sequence_c'),
