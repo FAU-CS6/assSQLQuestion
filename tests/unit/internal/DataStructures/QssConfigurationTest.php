@@ -42,7 +42,7 @@ final class QssConfigurationTest extends TestCase
         ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
         self::assertNotSame($oldRevision, JsBlock::getQssReferenceRevision($question));
         self::assertSame('graph-qss-sqlite-v2', JsBlock::QSS_ENGINE);
-        self::assertSame('2.1.0', JsBlock::QSS_ENGINE_VERSION);
+        self::assertSame('2.1.1', JsBlock::QSS_ENGINE_VERSION);
         self::assertSame('paper-linear-v2', JsBlock::QSS_RUBRIC);
         self::assertSame(1, JsBlock::QSS_SCALE);
     }

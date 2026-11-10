@@ -123,6 +123,18 @@ test('preserves all eight-column permutation outputs while checking each attribu
   console.log(`Eight columns retain ${JSON.parse(actual).length} permutation outputs with ${calls} distinct FD checks.`);
 });
 
+test('minimal evaluation handles nine columns without building determinant permutations', () => {
+  const columns = ['A','B','C','D','E','F','G','H','I'];
+  const result = new SQLResult({columns, values: [[1,1,1,1,1,1,1,1,1]]});
+  let checks = 0;
+  const check = result.checkFunctionalDependency;
+  result.checkFunctionalDependency = function (...args) {checks++; return check.apply(this,args);};
+  const dependencies = result.getAllMinimalFunctionalDependencies();
+  assert.equal(dependencies.length, columns.length * (columns.length - 1));
+  assert.ok(dependencies.every(fd => fd.getDeterminateAttributes().length === 1 && fd.getDependentAttributes().length === 1));
+  assert.equal(checks, columns.length * (2 ** (columns.length - 1) - 1));
+});
+
 test('handles 26000 rows and a late conflicting row with unchanged legacy results', () => {
   const result = new SQLResult({columns: ['id', 'value'], values: Array.from({length: 26000}, (_, i) => [i, 'v' + i])});
   let start = performance.now();

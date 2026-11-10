@@ -182,9 +182,28 @@ class SQLResult
    */
   getAllMinimalFunctionalDependencies()
   {
-    // Get all functional dependencies
-    var allDependencies = this.getAllFunctionalDependencies();
-    var allUniqueDependencies = this.removeDoubleFunctionalDependencies(allDependencies);
+    // A determinant is a set of column positions. Enumerating every permutation
+    // first creates factorially many duplicate objects (even for four rows).
+    // Increasing positions visit each set once, in the same first-seen order as
+    // the old enumeration. Keep the existing equality and minimization rules.
+    const allDependencies = [];
+    const visit = (selected, start) => {
+      for(let i = start; i < this.columns.length; i++)
+      {
+        const positions = selected.concat(i);
+        const determinate = positions.map(position => this.columns[position]);
+        for(let j = 0; j < this.columns.length; j++)
+        {
+          if(!positions.includes(j) && this.checkFunctionalDependency(determinate, [this.columns[j]]))
+          {
+            allDependencies.push(new SQLFunctionalDependency(determinate, [this.columns[j]]));
+          }
+        }
+        visit(positions, i + 1);
+      }
+    };
+    visit([], 0);
+    const allUniqueDependencies = this.removeDoubleFunctionalDependencies(allDependencies);
 
     return this.removeNonMinimalFunctionalDependencies(allUniqueDependencies);
   }

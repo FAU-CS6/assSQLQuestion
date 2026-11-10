@@ -173,6 +173,20 @@ test('custom free symbol creation disables the missing-symbol heuristic', async 
     assert.equal(result.search, 'exact-lazy-uniform-cost');
 });
 
+test('surplus literal needs a paid edge even when the target literal is already present elsewhere', async () => {
+    const reference=parseGraphSql("INSERT INTO sample(value) VALUES('yes'),('yes')").root;
+    const answer=parseGraphSql("INSERT INTO sample(value) VALUES('other'),('yes')").root;
+    const graph=createEditGraph(reference,answer);
+    const result=await shortestSqlEditPath(reference,answer,graph,context());
+    assert.equal(result.distance,1);
+    assert.equal(result.search,'exact-direct-bound-certificate');
+    assert.equal(result.edits.length,1);
+    assert.equal(stableKey(replayOperation(answer,result.edits[0].operation)),stableKey(reference));
+    const free=createEditGraph(reference,answer,{}, {changeLiteral:0});
+    const zero=await shortestSqlEditPath(reference,answer,free,context());
+    assert.equal(zero.distance,0,'A free symbol-changing override must disable the positive bound');
+});
+
 test('mathematical score cutoff has a lower-bound certificate and no invented exact trace', async () => {
     const edits = [edit('step', 1, [[0, 1], [1, 2], [2, 3]])];
     const result = await shortestSqlEditPath(node(3), node(0), {edits}, context(), {cutoff: 2});

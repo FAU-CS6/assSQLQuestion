@@ -1,6 +1,6 @@
 /* Read-only aggregate gate for completed, disjoint REAL Chrome student exams.
  * ILIAS_CORPUS_DIRECTORY=/private/original-corpus \
- * QSS_REPORT_DIRECTORY=test-results/qss-paper/native-final-coverage \
+ * QSS_REPORT_DIRECTORY=/private/tmp/asssql-private-artifacts/qss-paper/native-final-coverage \
  * node tests/qss/verify-native-ranges.cjs PART_A PART_B PART_C PART_D
  *
  * Each part supplies exam-state.json, browser-report.json,
@@ -16,7 +16,7 @@ const readline = require('node:readline');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const canonical = value => JSON.stringify(value);
 const normalizeSQL = value => value.replace(/\r\n?/g, '\n');
-const ENGINE = 'graph-qss-sqlite-v2', VERSION = '2.1.0';
+const ENGINE = 'graph-qss-sqlite-v2', VERSION = '2.1.1';
 const ROOT = path.resolve(__dirname, '../..');
 const files = ['exam-state.json', 'browser-report.json', 'browser-results.jsonl', 'database-report.json'];
 
@@ -331,14 +331,15 @@ async function selfTest() {
 
 async function main() {
   const parts = process.argv.slice(2);
-  const output = path.resolve(process.env.QSS_REPORT_DIRECTORY || 'test-results/qss-paper/native-final-coverage');
+  const privateRoot = path.join(require('node:os').tmpdir(), 'asssql-private-artifacts', 'qss-paper');
+  const output = path.resolve(process.env.QSS_REPORT_DIRECTORY || path.join(privateRoot, 'native-final-coverage'));
   assert.ok(!parts.map(value => path.resolve(value)).includes(output), 'Never overwrite an input part.');
   const filename = path.join(output, 'native-range-report.json');
   assert.equal(fs.existsSync(filename), false, 'Use a new aggregate output directory; do not overwrite previous evidence.');
   const report = await verifyNativeRanges({parts,
     corpusDirectory: path.resolve(process.env.ILIAS_CORPUS_DIRECTORY || '/tmp/asssql-paper-corpus'),
-    frozenProof: path.resolve(process.env.QSS_FROZEN_BUNDLES || 'test-results/qss-paper/frozen-final-bundles.json'),
-    teacherProof: path.resolve(process.env.QSS_TEACHER_PROOF || 'test-results/qss-paper/teacher-transfer/teacher-transfer-report.json'),
+    frozenProof: path.resolve(process.env.QSS_FROZEN_BUNDLES || path.join(privateRoot, 'frozen-final-bundles.json')),
+    teacherProof: path.resolve(process.env.QSS_TEACHER_PROOF || path.join(privateRoot, 'teacher-transfer', 'teacher-transfer-report.json')),
     expectedParts: 4, expectedTotal: 699, expectedPoolCounts: [23, 65, 504, 68, 39], smoke: false});
   fs.mkdirSync(output, {recursive: true, mode: 0o700});
   fs.writeFileSync(filename, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});

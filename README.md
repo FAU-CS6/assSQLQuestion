@@ -14,10 +14,12 @@ an experimental shadow/teaching pilot before any exam deployment. See
 [the model, workflow and limitations](docs/qss-shadow.md) and the
 [engine/edit catalogue](lib/qss/README.md).
 
-The [student-answer matrix report](docs/qss-studentenvarianten-2026-11-10.md)
-confirms model 2.1.0 on all 699 original questions with 6,812 native Chrome cases,
-saved official grades and all five import/export/reimport round trips. It also
-records gaps in variant coverage and calibration.
+The [answer-robustness report](docs/qss-robustheit-2026-11-10.md) confirms model
+2.1.1 on all 699 unchanged original questions with 6,812 fresh native Chrome
+cases, 132 additional anonymous semantic cases, saved official grades and all
+five import/export/reimport round trips. It records phase timings, remaining
+slow cases and gaps in variant coverage and calibration. The
+[earlier matrix report](docs/qss-studentenvarianten-2026-11-10.md) records model 2.1.0.
 The [9 November Graph-based QSS report](docs/qss-graph-abnahme-2026-11-09.md)
 records model 2.0.1 and does not establish acceptance of the current build. The
 [earlier QSS report](docs/qss-abnahme-2026-11-09.md) records the
@@ -74,7 +76,7 @@ Both QSS browser bundles are included. Node.js is needed only for development
 and rebuilding them; the ILIAS installation runs no Node service. See the
 [QSS build and test commands](lib/qss/README.md).
 
-The current experimental parallel QSS model is `2.1.0` (`paper-linear-v2`).
+The current experimental parallel QSS model is `2.1.1` (`paper-linear-v2`).
 It uses named SQL graph edits and a question-relative linear scale of
 `maxPoints / 5`; the official ILIAS scoring metrics remain authoritative.
 See the [parallel-assessment documentation](docs/qss-shadow.md) for its rules

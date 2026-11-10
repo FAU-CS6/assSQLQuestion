@@ -2,6 +2,18 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {parseGraphSql, stableKey, walkNodes} from '../../lib/qss/src/graph-model.mjs';
 import {createEditGraph, replayOperation} from '../../lib/qss/src/graph-edits.mjs';
+
+test('partial outer-JOIN predicate moves are replayable paid repairs in both directions', () => {
+    const on=ast("SELECT s.id,d.value FROM sample s LEFT JOIN detail d ON s.id=d.sample_id AND d.value='A'");
+    const where=ast("SELECT s.id,d.value FROM sample s LEFT JOIN detail d ON s.id=d.sample_id WHERE d.value='A'");
+    for(const [from,to]of [[on,where],[where,on]]){
+        const graph=createEditGraph(to,from),rule=graph.edits.find(e=>e.name==='relocateOuterJoinPredicate');
+        assert.equal(rule.cost,1);
+        const edge=[...rule.apply(from)].find(e=>stableKey(e.root)===stableKey(to));
+        assert.ok(edge);
+        assert.equal(stableKey(replayOperation(from,edge.operation)),stableKey(to));
+    }
+});
 import {predicateFacts} from '../../lib/qss/src/graph-search.mjs';
 
 const ast = sql => parseGraphSql(sql, {allowEmpty: true}).root;

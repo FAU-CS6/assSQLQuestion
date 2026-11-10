@@ -1,6 +1,6 @@
 /* Merge private REAL Chrome range observations without changing their raw parts.
  * ILIAS_CORPUS_DIRECTORY=/private/corpus QSS_MERGE_ALLOW_LIVE_PREFIX=1 \
- * QSS_MERGE_OUTPUT_DIRECTORY=test-results/qss-paper/merged \
+ * QSS_MERGE_OUTPUT_DIRECTORY=/private/tmp/asssql-private-artifacts/qss-paper/merged \
  * node tests/qss/merge-corpus.cjs ORIGINAL_PREFIX RANGE_301_500 RANGE_501_699
  *
  * Input order is the explicit preference for identical overlapping observations.
@@ -253,7 +253,7 @@ async function main() {
   assert.ok(parts.length > 0, 'Supply explicit private range-result directories in overlap-preference order.');
   assert.equal(new Set(parts).size, parts.length);
   const directory = path.resolve(process.env.ILIAS_CORPUS_DIRECTORY || '/corpus');
-  const output = path.resolve(process.env.QSS_MERGE_OUTPUT_DIRECTORY || 'test-results/qss-paper/merged');
+  const output = path.resolve(process.env.QSS_MERGE_OUTPUT_DIRECTORY || path.join(require('node:os').tmpdir(), 'asssql-private-artifacts', 'qss-paper', 'merged'));
   assert.ok(!parts.includes(output), 'Never overwrite a raw input part.');
   assert.equal(fs.existsSync(path.join(output, 'corpus-report.json')), false, 'Choose a new merge output directory; old merged proof remains intact.');
   assert.equal(fs.existsSync(path.join(output, 'corpus-results.jsonl')), false);

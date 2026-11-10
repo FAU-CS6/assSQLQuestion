@@ -37,6 +37,16 @@ async function login(page,account){
 async function ready(page){await page.waitForFunction(()=>window.editor_sequence_b&&window.EXECUTE_HANDLER&&!window.EXECUTE_HANDLER.running&&getComputedStyle(document.body).pointerEvents!=='none');}
 async function identity(page,sequence,row){
  await ready(page);
+ await page.evaluate(()=>{
+  const handler=EXECUTE_HANDLER;if(handler.__variantTiming)return;handler.__variantTiming=true;
+  const finished=handler.sqlFinished;handler.sqlFinished=function(...args){if(window.__variantTiming)window.__variantTiming.sql_end=performance.now();return finished.apply(this,args);};
+  const evaluate=handler.qss.evaluate;handler.qss.evaluate=async function(...args){const began=performance.now();try{return await evaluate.apply(this,args);}finally{if(window.__variantTiming)window.__variantTiming.qss_ms=performance.now()-began;}};
+  if(!SQLResult.prototype.__variantTiming){
+   Object.defineProperty(SQLResult.prototype,'__variantTiming',{value:true});
+   const dependencies=SQLResult.prototype.getAllMinimalFunctionalDependenciesAsJSON;
+   SQLResult.prototype.getAllMinimalFunctionalDependenciesAsJSON=function(...args){const began=performance.now();try{return dependencies.apply(this,args);}finally{if(window.__variantTiming)window.__variantTiming.official_metrics_ms+=performance.now()-began;}};
+  }
+ });
  const actual=await page.evaluate(()=>{
   const source=[...document.scripts].map(s=>s.textContent).join('\n'),match=source.match(/"autosaveUrl"\s*:\s*("(?:\\.|[^"\\])*")/);
   const autosave=match?new URL(JSON.parse(match[1]),location.href):null;
@@ -54,6 +64,7 @@ async function identity(page,sequence,row){
 async function runStudent(page,spec){
  await page.evaluate(sql=>{
   window.__variantProgress=[];const view=editor_sequence_b.codeMirrorView;view.dispatch({changes:{from:0,to:view.state.doc.length,insert:sql}});
+  window.__variantTiming={started:performance.now(),sql_end:null,qss_ms:0,official_metrics_ms:0};
  },spec.sql);
  assert.equal(await page.locator('#sequence_b').inputValue(),spec.sql);
  const began=Date.now();await page.locator('#qpisql-execute-button').click();
@@ -67,7 +78,10 @@ async function runStudent(page,spec){
    legacy_metrics:{result_lines:value('value_result_lines'),column_names:value('value_column_names'),functional_dependencies:value('value_functional_dependencies')},
    table_display:document.getElementById('qpisql-output-area-relation')?.style.display,
    next_disabled:document.querySelector('.ilTstNavigationBtn_Next button')?.disabled,
-   workers_disposed:EXECUTE_HANDLER.activeRun===null&&EXECUTE_HANDLER.qss.worker===null};
+   workers_disposed:EXECUTE_HANDLER.activeRun===null&&EXECUTE_HANDLER.qss.worker===null,
+   timings:{sql_pipeline_ms:window.__variantTiming.sql_end-window.__variantTiming.started,
+    qss_ms:window.__variantTiming.qss_ms,official_metrics_ms:window.__variantTiming.official_metrics_ms,
+    browser_total_ms:performance.now()-window.__variantTiming.started}};
  });
  result.wall_ms=Date.now()-began;
  return result;
@@ -76,7 +90,7 @@ function gradeFailures(q,spec,maximum,{checkBinding=true}={}){
  const failures=[];
  if(!q||!['exact','score-zero-certified'].includes(q.status))failures.push('QSS did not certify a grade');
  else{
-  if(q.version!=='2.1.0'||q.rubric!=='paper-linear-v2')failures.push('Stale QSS model');
+  if(q.version!=='2.1.1'||q.rubric!=='paper-linear-v2')failures.push('Stale QSS model');
   if(checkBinding&&q.answerDigest!==hash(spec.sql))failures.push('Answer binding mismatch');
   if(spec.category==='correct'&&(q.points!==maximum||q.distance!==0))failures.push('Correct answer lost credit');
   if(spec.category==='minor'&&!(q.points>0&&q.points<maximum))failures.push('Local error lacks partial deduction');
@@ -125,7 +139,7 @@ async function main(){
   qss_worker_sha256:hash(await worker.body()),runtime_sha256:hash(await runtime.body()),sql_worker_sha256:hash(await sqlWorker.body()),
   php_config_sha256:hash(fs.readFileSync(path.join(__dirname,'../../classes/internal/GUI/GUIElements/JsBlockArea/class.JsBlock.php'))),
   coverage,questions:0,cases:0,correct:0,minor:0,major:0,substantive_correct:0,
-  failures:[],shortfalls:[],correct_families:{},finished:false,page_errors:pageErrors};
+  failures:[],shortfalls:[],correct_families:{},finished:false,page_errors:pageErrors,timing_instrumentation:'per-run-browser-phases-v1'};
  const reportFile=path.join(out,prefix+'report.json'),recordsFile=path.join(out,prefix+'cases.jsonl');
  if(start){const prior=JSON.parse(fs.readFileSync(reportFile,'utf8'));assert.equal(prior.questions,start);for(const field of ['qss_worker_sha256','runtime_sha256','sql_worker_sha256','php_config_sha256'])assert.equal(prior[field],report[field]);Object.assign(report,prior);}
  const save=()=>fs.writeFileSync(reportFile,JSON.stringify(report,null,2)+'\n',{mode:0o600});

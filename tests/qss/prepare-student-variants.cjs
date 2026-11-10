@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),readline=require('node:rea
 const {candidates}=require('./student-variants.cjs');
 async function main(){
  const directory=path.resolve(process.env.ILIAS_CORPUS_DIRECTORY||'/corpus');
- const output=path.resolve(process.env.STUDENT_VARIANTS_DIRECTORY||'test-results/student-variants');
+ const output=path.resolve(process.env.STUDENT_VARIANTS_DIRECTORY||path.join(require('node:os').tmpdir(),'asssql-private-artifacts','student-variants'));
  fs.mkdirSync(output,{recursive:true,mode:0o700});
  const stream=fs.createReadStream(path.join(directory,'questions.jsonl')),digest=crypto.createHash('sha256');stream.on('data',d=>digest.update(d));
  const writer=fs.createWriteStream(path.join(output,'plans.jsonl'),{mode:0o600});

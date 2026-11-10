@@ -9,7 +9,7 @@ const editURL = process.env.ILIAS_EDIT_URL;
 const previewURL = process.env.ILIAS_PREVIEW_URL;
 const password = process.env.ILIAS_TEST_PASSWORD;
 const pluginPath = '/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion';
-const artifacts = process.env.ILIAS_TEST_ARTIFACTS || path.resolve('test-results');
+const artifacts = process.env.ILIAS_TEST_ARTIFACTS || path.join(require('node:os').tmpdir(), 'asssql-private-artifacts', 'chrome-smoke');
 
 async function main() {
   assert.ok(editURL && previewURL && password, 'Set ILIAS_EDIT_URL, ILIAS_PREVIEW_URL and ILIAS_TEST_PASSWORD for the disposable test instance.');

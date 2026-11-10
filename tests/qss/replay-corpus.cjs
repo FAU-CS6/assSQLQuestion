@@ -11,7 +11,7 @@ const readline = require('node:readline');
 const { equivalentFormatting, formattingTokenProof, errorCandidates } = require('./fixture-mutations.cjs');
 
 const directory = path.resolve(process.env.ILIAS_CORPUS_DIRECTORY || '/corpus');
-const originalDirectory = path.resolve(process.env.QSS_REPORT_DIRECTORY || 'test-results/qss-paper/final');
+const originalDirectory = path.resolve(process.env.QSS_REPORT_DIRECTORY || path.join(require('node:os').tmpdir(), 'asssql-private-artifacts', 'qss-paper', 'final'));
 // The renewed browser harness performs the narrow catalog/NULL probes in-line.
 // A separate focused browser rerun can still be supplied explicitly.
 const externalProof = Boolean(process.env.QSS_CATALOG_PROOF_DIRECTORY);

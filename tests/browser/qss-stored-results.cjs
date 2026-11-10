@@ -29,7 +29,7 @@ async function main() {
     assert.equal(proof.editableConfigs, 0); assert.equal(proof.stale, false);
     assert.equal(proof.outputTables, 2 * input.expected);
     assert.deepEqual(errors, []);
-    const directory = path.resolve(process.env.QSS_REPORT_DIRECTORY || 'test-results/qss/stored-results');
+    const directory = path.resolve(process.env.QSS_REPORT_DIRECTORY || path.join(require('node:os').tmpdir(), 'asssql-private-artifacts', 'qss', 'stored-results'));
     fs.mkdirSync(directory, {recursive: true, mode: 0o700});
     const first = page.locator('.qpisql-qss-shadow').first();
     const firstRow = page.locator('.il-table-presentation-row').filter({has: page.locator('.qpisql-qss-shadow')}).first();

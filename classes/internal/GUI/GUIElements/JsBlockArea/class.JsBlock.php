@@ -10,7 +10,7 @@ declare(strict_types=1);
 class JsBlock extends GUIElement
 {
     public const QSS_ENGINE = 'graph-qss-sqlite-v2';
-    public const QSS_ENGINE_VERSION = '2.1.0';
+    public const QSS_ENGINE_VERSION = '2.1.1';
     public const QSS_RUBRIC = 'paper-linear-v2';
     public const QSS_SCALE = 1;
     public const QSS_DEDUCTION_BUDGET = 5;

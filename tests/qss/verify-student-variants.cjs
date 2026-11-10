@@ -16,7 +16,7 @@ function checkCase(row,expected){
  assert.deepEqual(row.failures,[]);
  assert.equal(row.answer_sha256,typeof row.answer==='string'?hash(row.answer):expected.answer_sha256);
  const result=row.result,q=result?.qss;assert.ok(q,'Missing native QSS sidecar');
- assert.equal(q.engine,'graph-qss-sqlite-v2');assert.equal(q.version,'2.1.0');assert.equal(q.modelVersion,'2.1.0');
+ assert.equal(q.engine,'graph-qss-sqlite-v2');assert.equal(q.version,'2.1.1');assert.equal(q.modelVersion,'2.1.1');
  assert.equal(q.rubric,'paper-linear-v2');assert.equal(q.provisionalRubric,true);
  assert.equal(q.scale,expected.maximum>0?expected.maximum/5:1);assert.equal(q.maxPoints,expected.maximum);
  assert.equal(q.answerDigest,row.answer_sha256,'Answer binding');assert.match(q.referenceRevision,/^[a-f0-9]{64}$/);
@@ -26,6 +26,8 @@ function checkCase(row,expected){
  // The last native question has Finish Test instead of Next. Missing Next is
  // valid only there; the enclosing gate also requires the finalized attempt.
  assert.ok(result.next_disabled===false||expected.isFinalQuestion&&result.next_disabled===undefined,'Next must be enabled or absent on the final question');
+ if(expected.requirePhaseTimings)for(const field of ['sql_pipeline_ms','qss_ms','official_metrics_ms','browser_total_ms'])
+  assert.ok(Number.isFinite(result.timings?.[field])&&result.timings[field]>=0,'Missing browser phase measurement '+field);
  assert.ok(['exact','score-zero-certified'].includes(q.status),'Uncertified QSS grade');
  assert.equal(q.editsTruncated,false);
  if(q.status==='exact'){
@@ -42,7 +44,7 @@ async function verify({corpus,out,frozenFile,prefixes,teacherFile,semanticFile})
  assert.equal(prefixes.length,4);assert.equal(new Set(prefixes).size,4);
  const frozen=json(frozenFile),manifest=json(path.join(corpus,'manifest.json'));
  assert.equal(manifest.questions,699);assert.deepEqual(manifest.pools.map(p=>p.count),[23,65,504,68,39]);
- assert.equal(frozen.model_version,'2.1.0');
+ assert.equal(frozen.model_version,'2.1.1');
  for(const [file,digest]of Object.entries(frozen.files))assert.equal(hash(fs.readFileSync(path.join(ROOT,file))),digest,'Frozen source '+file);
  const sources=new Map(),keys=[],pools={};let maximum=0;
  const original=await stream(path.join(corpus,'questions.jsonl'),(row,i)=>{
@@ -61,6 +63,7 @@ async function verify({corpus,out,frozenFile,prefixes,teacherFile,semanticFile})
  });assert.equal(planInput.rows,699);assert.equal(planInput.sha256,frozen.plans_sha256);
  const seen=new Set(),nativeIds=new Set(),originalIds=new Set(),students=new Set(),teachers=new Set(),parts=[],shortfalls=[],families={},timings=[];
  const totals={questions:0,cases:0,correct:0,minor:0,major:0,substantive_correct:0};let end=0;
+ const phaseTimings=Object.fromEntries(['sql_pipeline_ms','qss_ms','official_metrics_ms','browser_total_ms'].map(key=>[key,[]]));
  for(const prefix of prefixes){
   assert.match(prefix,/^[a-zA-Z0-9_-]+$/);
   const state=json(path.join(corpus,prefix+'exam-state.json')),report=json(path.join(out,prefix+'report.json'));
@@ -73,13 +76,14 @@ async function verify({corpus,out,frozenFile,prefixes,teacherFile,semanticFile})
   assert.equal(report.headless,true);assert.match(report.user_agent,/HeadlessChrome\//);assert.equal(report.browser,frozen.browser);
   for(const field of ['qss_worker_sha256','runtime_sha256','sql_worker_sha256','php_config_sha256'])assert.equal(report[field],frozen[field],'Mixed native build '+field);
   assert.equal(report.finished,true);assert.equal(report.frozen_build_verified,true);assert.deepEqual(report.failures,[]);assert.deepEqual(report.page_errors,[]);
+  assert.equal(report.timing_instrumentation,'per-run-browser-phases-v1');
   assert.equal(report.questions,rangeKeys.length);assert.equal(report.coverage.completed,true);assert.equal(report.coverage.completed_questions,rangeKeys.length);
   const perQuestion=new Map();let rangeMaximum=0;
   for(const [i,key]of rangeKeys.entries()){
    assert.equal(seen.has(key),false);seen.add(key);const expected=sources.get(key),identity=state.questions[key];rangeMaximum+=expected.maximum;
    assert.equal(identity.original_source_ordinal,expected.ordinal);
    for(const [ids,id]of [[nativeIds,identity.question_id],[originalIds,identity.original_question_id]]){assert.ok(Number.isSafeInteger(id)&&id>0);assert.equal(ids.has(id),false);ids.add(id);}
-   perQuestion.set(key,{...expected,identity,sequence:i+1,isFinalQuestion:i===rangeKeys.length-1,counts:{correct:0,minor:0,major:0},answers:new Set(),reference:null});
+   perQuestion.set(key,{...expected,identity,sequence:i+1,isFinalQuestion:i===rangeKeys.length-1,requirePhaseTimings:true,counts:{correct:0,minor:0,major:0},answers:new Set(),reference:null});
   }
   const observed={questions:rangeKeys.length,cases:0,correct:0,minor:0,major:0,substantive_correct:0};
   const retainedDigest=crypto.createHash('sha256');
@@ -94,6 +98,7 @@ async function verify({corpus,out,frozenFile,prefixes,teacherFile,semanticFile})
    checkCase(row,expected);
    expected.referenceRevision??=row.result.qss.referenceRevision;assert.equal(row.result.qss.referenceRevision,expected.referenceRevision);
    expected.counts[row.category]++;observed.cases++;observed[row.category]++;timings.push(row.result.wall_ms);
+   for(const field of Object.keys(phaseTimings))phaseTimings[field].push(row.result.timings[field]);
    if(row.name==='model-answer'){assert.equal(row.answer_sha256,expected.answer_sha256);expected.reference=row.observed;}
    else assert.ok(expected.reference,'Model observation must precede alternatives');
    if(row.category==='correct'){
@@ -151,11 +156,14 @@ async function verify({corpus,out,frozenFile,prefixes,teacherFile,semanticFile})
  assert.equal(semantic.teacher_user_id,teacher.teacher_user_id);assert.equal(semantic.teacher_is_system_administrator,false);
  assert.equal(semantic.all_pool_and_question_owners_are_teacher,true);assert.equal(semantic.ownership_verified_questions,1398);assert.deepEqual(semantic.failures,[]);
  timings.sort((a,b)=>a-b);
- return{accepted:true,completed:true,observed_at:new Date().toISOString(),model_version:'2.1.0',...totals,parts,pool_counts:pools,
+ return{accepted:true,completed:true,observed_at:new Date().toISOString(),model_version:'2.1.1',...totals,parts,pool_counts:pools,
   source_questions_sha256:original.sha256,plans_sha256:planInput.sha256,frozen_proof_sha256:hash(fs.readFileSync(frozenFile)),
   teacher_transfer_sha256:hash(fs.readFileSync(teacherFile)),teacher_semantics_sha256:hash(fs.readFileSync(semanticFile)),
   qss_worker_sha256:frozen.qss_worker_sha256,runtime_sha256:frozen.runtime_sha256,shortfalls,correct_families:families,
   native_case_wall_ms:{median:timings[Math.floor(timings.length/2)],p95:timings[Math.floor(timings.length*.95)],maximum:timings.at(-1)},
+  native_phase_ms:Object.fromEntries(Object.entries(phaseTimings).map(([field,values])=>{
+   values.sort((a,b)=>a-b);return[field,{median:values[Math.floor(values.length/2)],p95:values[Math.ceil(values.length*.95)-1],maximum:values.at(-1)}];
+  })),
   legacy_points:maximum,maximum_points:maximum,official_case_scores_verified:totals.cases,finished_native_tests:4,
   teacher_imported:699,teacher_reimported:699,teacher_student_are_system_administrators:false,
   scope:'Native Chrome generated-answer matrix and saved official grades; no human calibration or complete SQL-equivalence proof',failures:[]};

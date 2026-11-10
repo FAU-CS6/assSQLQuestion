@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {DatabaseSync} from 'node:sqlite';
-import {parseGraphSql, stableKey, clone, walkNodes} from '../../lib/qss/src/graph-model.mjs';
+import {parseGraphSql, stableKey, graphKey, clone, walkNodes} from '../../lib/qss/src/graph-model.mjs';
 import {createEditGraph} from '../../lib/qss/src/graph-edits.mjs';
 
 const parse = sql => parseGraphSql(sql).root;
@@ -255,4 +255,16 @@ test('empty student state is supported and malformed lexical input is rejected',
     assert.throws(() => parse('SELECT (id FROM item'), error => error.code === 'unbalanced-parentheses');
     assert.throws(() => parse('SELECT 1abc'), error => error.code === 'graph-invalid-numeric-token');
     assert.throws(() => parse('SELECT 0x'), error => error.code === 'graph-invalid-numeric-token');
+});
+
+test('graph-scoped immutable keys preserve canonical equality and isolate mutable callers', () => {
+    const key = graphKey(), source = parse('SELECT id FROM item WHERE id>2');
+    const changed = {...source, slots: {...source.slots, statements: [parse('SELECT id FROM item WHERE id>3').slots.statements[0]]}};
+    assert.equal(key(source), stableKey(source));
+    assert.equal(key(changed), stableKey(changed));
+    assert.notEqual(key(source), key(changed));
+    assert.equal(key({kind:'Select',attrs:{distinct:false},slots:{from:[]}}), key({kind:'Select',attrs:{},slots:{}}));
+    const ordinary = {value:1};stableKey(ordinary);ordinary.value=2;
+    assert.equal(stableKey(ordinary), stableKey({value:2}));
+    assert.equal(graphKey()(ordinary), stableKey(ordinary));
 });

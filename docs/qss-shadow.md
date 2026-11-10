@@ -81,7 +81,7 @@ Vergleichspunkte = max(Maximalpunkte - Abstand * Skala, 0)
 Die Skala ist pro Frage fest auf `Maximalpunkte / 5` gesetzt (bei Maximum 0 auf 1).
 Ein lokaler Edit mit Kosten 1 zieht damit 20 Prozent der Maximalpunkte ab.
 Die API erlaubt weiterhin eine ausdrücklich gesetzte feste Skala. Die Rubrik
-heißt `paper-linear-v2`, die Modellversion `2.1.0`.
+heißt `paper-linear-v2`, die Modellversion `2.1.1`.
 Gewöhnliche atomare Änderungen und positive Shortcuts kosten zunächst 1,
 DISTINCT-Änderungen 2 und das Hinzufügen/Entfernen einer ganzen Skriptanweisung
 oder Datenquelle sowie das Ändern ihrer Relation 5. Neue atomare Komponenten
@@ -117,9 +117,14 @@ gespeicherte native Studentenabgaben und gezielt falsche Varianten. Er trennt
 diese technischen Nachweise von der noch ausstehenden menschlichen Kalibrierung
 der Editkosten und Punkteskala.
 Der [Bericht zu studentischen Antwortvarianten vom 10. November](qss-studentenvarianten-2026-11-10.md)
-bestätigt das aktuelle Modell 2.1.0 mit 6.812 nativen Chrome-Fällen auf allen
-699 Originalfragen, gespeicherten Noten und fünf Pool-Roundtrips. Variantenlücken,
-verbleibende langsame Fälle und Kalibrierungsgrenzen sind darin ausgewiesen.
+dokumentiert Modell 2.1.0. Der [aktuelle Robustheitsbericht](qss-robustheit-2026-11-10.md)
+bestätigt Modell 2.1.1 mit 6.812 frischen nativen Chrome-Fällen auf allen 699
+unveränderten Originalfragen, 132 zusätzlichen anonymen Fällen, gespeicherten
+Noten und fünf Pool-Roundtrips. Er enthält getrennte Laufzeitmessungen sowie
+verbleibende Varianten-, Laufzeit- und Kalibrierungsgrenzen.
+Die Anforderungen an [später konfigurierbare Editkosten](qss-kostenkonfiguration.md)
+gelten für die künftige Freischaltung einer Bewertungsalternative; eine solche
+Dozenteneinstellung ist aktuell noch nicht implementiert.
 Modell, Schnittstelle und reproduzierbare Builds stehen in
 [lib/qss/README.md](../lib/qss/README.md).
 

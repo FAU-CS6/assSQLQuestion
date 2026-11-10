@@ -5,7 +5,7 @@ const digest=crypto.createHash('sha256').update('SELECT 1').digest('hex');
 const expected={maximum:2,answer_sha256:digest};
 const fixture=()=>({answer:'SELECT 1',answer_sha256:digest,category:'correct',proof:'anonymous-gate-fixture',failures:[],result:{
  error:null,workers_disposed:true,next_disabled:false,progress:[{resultHidden:true,nextDisabled:true}],
- qss:{engine:'graph-qss-sqlite-v2',version:'2.1.0',modelVersion:'2.1.0',rubric:'paper-linear-v2',provisionalRubric:true,scale:.4,maxPoints:2,points:2,
+ qss:{engine:'graph-qss-sqlite-v2',version:'2.1.1',modelVersion:'2.1.1',rubric:'paper-linear-v2',provisionalRubric:true,scale:.4,maxPoints:2,points:2,
   answerDigest:digest,referenceRevision:'a'.repeat(64),formula:'max(maxPoints - distance * scale, 0)',scoreCertifiedWithinModel:true,status:'exact',
   exactWithinModel:true,distance:0,edits:[],editsTruncated:false}}});
 test('native matrix gate accepts its anonymous sidecar fixture and restored digest without SQL execution',()=>{
@@ -19,6 +19,13 @@ test('missing Next is rejected before the last native question',()=>{
 });
 test('a present but blocked Next is rejected even on the last native question',()=>{
  const record=fixture();record.result.next_disabled=true;assert.throws(()=>checkCase(record,{...expected,isFinalQuestion:true}));
+});
+test('phase measurements are mandatory for the new latency matrix',()=>{
+ assert.throws(()=>checkCase(fixture(),{...expected,requirePhaseTimings:true}));
+});
+test('finite independent phase measurements pass without changing the certified grade',()=>{
+ const record=fixture();record.result.timings={sql_pipeline_ms:200,qss_ms:30,official_metrics_ms:0,browser_total_ms:250};
+ checkCase(record,{...expected,requirePhaseTimings:true});
 });
 for(const [name,mutate]of[
  ['stale model',r=>{r.result.qss.version='2.0.1';}],

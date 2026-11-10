@@ -10,7 +10,7 @@ const { chromium } = require('playwright');
 const directory = path.resolve(process.env.ILIAS_CORPUS_DIR || '/tmp/asssql-pool-corpus');
 const accountFile = process.env.ILIAS_CHROME_ACCOUNTS || '/tmp/asssql-chrome-accounts.json';
 const storageFile = process.env.ILIAS_TEACHER_STORAGE || '/tmp/asssql-teacher-storage.json';
-const artifacts = path.resolve(process.env.ILIAS_TEST_ARTIFACTS || 'test-results/chrome-transfer');
+const artifacts = path.resolve(process.env.ILIAS_TEST_ARTIFACTS || path.join(require('node:os').tmpdir(), 'asssql-private-artifacts', 'chrome-transfer'));
 const phase = process.env.ILIAS_TRANSFER_PHASE || 'all';
 const reportFile = path.join(artifacts, 'teacher-transfer-report.json');
 const manifest = JSON.parse(fs.readFileSync(path.join(directory, 'manifest.json'), 'utf8'));
@@ -58,27 +58,48 @@ async function importQuestions(page, pool, archive, expectedCount) {
   assert.equal(await countQuestions(page), expectedCount, 'Every verified source question must be imported.');
 }
 
-async function exportQuestions(page, pool) {
-  await page.goto(`${base}/goto.php/qpl/${pool.pool_ref_id}`);
-  await page.getByRole('link', { name: 'Export', exact: true }).click();
-  // The native export action and download links are resolved from the displayed page below.
-  const create = page.getByRole('button', { name: /Create.*Export|Create Export File|Exportieren/i }).first();
-  if (await create.count()) await create.click();
-  else {
-    const xmlExport = page.getByRole('button', { name: /Export.*XML|XML.*Export/i }).first();
-    assert.ok(await xmlExport.count(), 'Expected native XML export action');
-    await xmlExport.click();
+function exportPackageInfo(filename) {
+  const code = "import sys,json,zipfile,xml.etree.ElementTree as E\nwith zipfile.ZipFile(sys.argv[1]) as z:\n n=sum(sum(1 for e in E.fromstring(z.read(p)).iter() if e.tag.rsplit('}',1)[-1].lower()=='item') for p in z.namelist() if '_qti_' in p.lower() and p.lower().endswith('.xml'))\n print(json.dumps({'questions':n,'manifest':any(p.lower().endswith('manifest.xml') for p in z.namelist())}))";
+  return JSON.parse(require('node:child_process').execFileSync('python3', ['-c', code, filename], { encoding: 'utf8' }));
+}
+
+async function exportQuestions(page, pool, expectedCount) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.goto(`${base}/goto.php/qpl/${pool.pool_ref_id}`);
+    assert.equal(await countQuestions(page), expectedCount);
+    await page.getByRole('link', { name: 'Export', exact: true }).click();
+    const names = () => page.locator('table tbody tr').evaluateAll(rows => rows.flatMap(row => row.innerText.match(/\d+__\d+__qpl_\d+\.zip/g) || []));
+    const previous = new Set(await names());
+    // The generic wrapper and the legacy QTI exporter derive their own dated
+    // paths. Start well inside a second, then verify the actual native package.
+    await new Promise(resolve => setTimeout(resolve, 1100 - Date.now() % 1000));
+    const create = page.getByRole('button', { name: /Create.*Export|Create Export File|Exportieren/i }).first();
+    if (await create.count()) await create.click();
+    else await page.getByRole('button', { name: /Export.*XML|XML.*Export/i }).first().click();
+    await page.getByRole('button', { name: 'Actions', exact: true }).first().waitFor({ timeout: 0 });
+    const fresh = (await names()).filter(name => !previous.has(name));
+    assert.ok(fresh.length, 'Native export must create a new package.');
+    for (const name of fresh) {
+      const row = page.locator('table tbody tr').filter({ hasText: name });
+      await row.getByRole('button', { name: 'Actions', exact: true }).click();
+      const [file] = await Promise.all([
+        page.waitForEvent('download', { timeout: 0 }),
+        page.getByRole('button', { name: 'Download', exact: true }).filter({visible:true}).first().click()
+      ]);
+      const filename = path.join(artifacts, file.suggestedFilename());
+      await file.saveAs(filename); fs.chmodSync(filename, 0o600);
+      const info = exportPackageInfo(filename);
+      if (info.questions === expectedCount && info.manifest) {
+        pool.export_package_info = info;
+        return filename;
+      }
+      // Preserve incomplete native output; never repair archives or weaken the
+      // expected question/metadata checks to make a roundtrip pass.
+      (pool.rejected_exports ||= []).push({file: filename, ...info, reason: 'Native package lacks complete QTI questions or pool manifest.'});
+      save();
+    }
   }
-  await page.getByRole('button', { name: 'Actions', exact: true }).first().waitFor({ timeout: 0 });
-  await page.getByRole('button', { name: 'Actions', exact: true }).first().click();
-  const download = page.getByRole('button', { name: 'Download', exact: true }).first();
-  await download.waitFor({ timeout: 0 });
-  const [file] = await Promise.all([page.waitForEvent('download', { timeout: 0 }), download.click()]);
-  const filename = path.join(artifacts, file.suggestedFilename());
-  await file.saveAs(filename);
-  fs.chmodSync(filename, 0o600);
-  assert.ok(fs.statSync(filename).size > 0);
-  return filename;
+  throw new Error('Native exporter did not produce a complete QTI plus metadata package.');
 }
 
 async function main() {
@@ -147,7 +168,7 @@ async function main() {
       for (const source of manifest.pools) {
         const pool = report.pools.find(item => item.key === source.key);
         if (!pool.export_file) {
-          pool.export_file = await exportQuestions(page, pool);
+          pool.export_file = await exportQuestions(page, pool, source.count);
           pool.export_chrome_mode = 'installed-google-chrome-headless';
           save();
         }

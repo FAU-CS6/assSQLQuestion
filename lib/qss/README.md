@@ -73,9 +73,17 @@ records that historical syntax experiment; it is not acceptance evidence for the
 current Graph-based QSS engine. The
 [graph acceptance report](../../docs/qss-graph-abnahme-2026-11-09.md) records
 model 2.0.1. The [student-answer matrix report](../../docs/qss-studentenvarianten-2026-11-10.md)
-confirms model 2.1.0 on all 699 original questions with 6,812 native Chrome cases,
-saved grades and five pool round trips. It records variant-coverage gaps and the
-limits of the provisional calibration.
+records model 2.1.0. The [answer-robustness report](../../docs/qss-robustheit-2026-11-10.md)
+confirms model 2.1.1 with 6,812 fresh native Chrome cases on all 699 unchanged
+questions, 132 additional anonymous semantic cases, saved grades and five pool
+round trips. It records phase timings, variant-coverage gaps and calibration limits.
+
+Model 2.1.1 caches immutable AST keys and structural metrics per graph job without
+changing state equality or AST limits. A binary surplus-symbol lower bound is
+enabled only when edit-effect declarations prove it admissible; free symbol-
+changing overrides or unknown effects disable that certificate. Witness paths
+still certify an optimum only by matching the global lower bound; otherwise
+the complete lazy search runs.
 
 ## Provisional costs and linear grading
 
@@ -100,6 +108,13 @@ NULL-preserving Boolean CASE, exact int64 constant expressions, COUNT(*)/COUNT(1
 and single-column foreign-key layouts while retaining foreign-key action order.
 Double-quoted names resolve against their SQLite scope, including ALTER ADD
 CHECK and compound ORDER BY; DEFAULT retains its independent DQS context.
+The paid `relocateOuterJoinPredicate` edit also moves one pure conjunct between
+ON and WHERE while retaining a joining predicate. Its default cost is 1; outer
+join predicate relocation does not become a free equivalence.
+
+The existing `costs` API is not a saved teacher setting. Planned per-question
+cost profiles, default values, round trips and explicit method constraints are
+documented in [the configuration requirement](../../docs/qss-kostenkonfiguration.md).
 
 `questionText` supplies explicit construct requirements. They restrict free edits
 only when the question states a method constraint. Explicitly unconstrained

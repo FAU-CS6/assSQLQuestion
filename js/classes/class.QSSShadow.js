@@ -28,7 +28,7 @@ class QSSShadow
   static isCurrentModel(result, config = {})
   {
     if (!result || result.engine !== (config.engine || 'graph-qss-sqlite-v2')
-      || String(result.version) !== (config.engineVersion || '2.1.0')) return false;
+      || String(result.version) !== (config.engineVersion || '2.1.1')) return false;
     if (result.status === 'exact' || result.status === 'score-zero-certified') {
       const relative = config.scaleMode === 'question-relative' || config.scale === undefined;
       const expected = relative ? (result.maxPoints > 0 ? result.maxPoints / (config.scaleBudget || 5) : 1) : config.scale;

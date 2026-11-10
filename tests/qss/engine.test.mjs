@@ -22,7 +22,7 @@ const round = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
 function scored(result, maximum = 5) {
     assert.ok(['exact', 'score-zero-certified'].includes(result.status), JSON.stringify(result));
     assert.equal(result.engine, 'graph-qss-sqlite-v2');
-    assert.equal(result.version, '2.1.0');
+    assert.equal(result.version, '2.1.1');
     assert.equal(result.rubric, 'paper-linear-v2');
     assert.equal(result.scoreCertifiedWithinModel, true);
     assert.ok(Number.isFinite(result.points) && result.points >= 0 && result.points <= maximum);

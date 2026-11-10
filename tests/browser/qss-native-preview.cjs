@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 const mutations = require('../qss/fixture-mutations.cjs');
 const base = process.env.ILIAS_TEST_URL || 'http://localhost:8080';
 const directory = process.env.ILIAS_CORPUS_DIRECTORY || '/tmp/asssql-pool-corpus';
-const out = path.resolve(process.env.QSS_REPORT_DIRECTORY || 'test-results/qss/native-preview');
+const out = path.resolve(process.env.QSS_REPORT_DIRECTORY || path.join(require('node:os').tmpdir(), 'asssql-private-artifacts', 'qss', 'native-preview'));
 const prefix = process.env.ILIAS_CORPUS_EXAM_PREFIX || '';
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 async function main() {

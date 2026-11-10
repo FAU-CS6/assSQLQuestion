@@ -12,7 +12,7 @@ const { chromium } = require('playwright');
 const mutations = require('../qss/fixture-mutations.cjs');
 
 const directory = path.resolve(process.env.ILIAS_CORPUS_DIRECTORY || '/corpus');
-const output = path.resolve(process.env.QSS_BENCHMARK_DIRECTORY || 'test-results/qss/benchmark');
+const output = path.resolve(process.env.QSS_BENCHMARK_DIRECTORY || path.join(require('node:os').tmpdir(), 'asssql-private-artifacts', 'qss', 'benchmark'));
 const base = process.env.ILIAS_TEST_URL || 'http://localhost:8080';
 const plugin = '/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion';
 const workerPath = plugin + '/lib/qss/worker.qss.js';

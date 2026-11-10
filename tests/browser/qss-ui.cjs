@@ -57,7 +57,7 @@ async function main() {
         unsupported: 'Unsupported', failed: 'Failed', cancelled: 'Cancelled', waiting: 'Evaluating',
         visited: 'States', lowerBound: 'Distance lower bound', points: 'Points', distance: 'Distance', details: 'Details', model: 'Model', cost: 'Cost', stale: 'Outdated model or answer' };
       document.getElementById('qpisql-qss-config').dataset.config = JSON.stringify({ version: 2, mode: 'shadow', context: 'participant', enabled: true,
-        engine: 'graph-qss-sqlite-v2', engineVersion: '2.1.0', rubric: 'paper-linear-v2', scale: 1, scaleMode:'fixed',
+        engine: 'graph-qss-sqlite-v2', engineVersion: '2.1.1', rubric: 'paper-linear-v2', scale: 1, scaleMode:'fixed',
         referenceSql: 'SELECT 1 AS value', referenceRevision: 'a'.repeat(64), referenceExecutionValid: true, referenceRows: 1, maxPoints: 3, labels });
       document.getElementById('qpisql-output-area').dataset.labels = JSON.stringify({ running: 'Running SQL', success: 'Executed',
         notExecuted: 'Not executed', cancelled: 'Cancelled', failed: 'Failed', unsaved: 'Unsaved', sequenceError: 'SQL failed' });
@@ -91,7 +91,7 @@ async function main() {
     });
     assert.equal(guard.userBlocked, true); assert.equal(guard.automaticBlocked, false); assert.match(guard.status, /42/);
     await page.evaluate(() => workers[1].onmessage({ data: { type: 'result', id: workers[1].message.id,
-      result: { status: 'exact', engine: 'graph-qss-sqlite-v2', version: '2.1.0', rubric: 'paper-linear-v2', scale: 1, distance: 0, points: 3, maxPoints: 3,
+      result: { status: 'exact', engine: 'graph-qss-sqlite-v2', version: '2.1.1', rubric: 'paper-linear-v2', scale: 1, distance: 0, points: 3, maxPoints: 3,
         exactWithinModel: true, limitations: ['<img src=x onerror=alert(1)>'],
         edits: [{ name: 'setLiteral', description: '<img src=x onerror=alert(1)>', cost: 1,
           operation: { root: { privateSql: 'never autosave a graph state' } } }] } } }));
@@ -157,7 +157,7 @@ async function main() {
       container.dataset.labels = JSON.stringify({ notExecuted: 'Not executed' });
       container.dataset.qssLabels = JSON.stringify(QSSShadow.configuration().labels);
       container.dataset.qssReferenceRevision = 'a'.repeat(64);
-      container.dataset.qssEvaluation = JSON.stringify({ status: 'exact', engine: 'graph-qss-sqlite-v2', version: '2.1.0', rubric: 'paper-linear-v2', scale: 0.6, points: 3, maxPoints: 3,
+      container.dataset.qssEvaluation = JSON.stringify({ status: 'exact', engine: 'graph-qss-sqlite-v2', version: '2.1.1', rubric: 'paper-linear-v2', scale: 0.6, points: 3, maxPoints: 3,
         distance: 0, referenceRevision: 'a'.repeat(64) });
       container.innerHTML = '<div class="qpisql-output-area-error"></div><div class="qpisql-output-area-relation"></div>';
       document.body.appendChild(container);
@@ -171,7 +171,7 @@ async function main() {
       old.engine = 'graph-qss-sqlite-v2'; old.version = '2.0.0';
       container.dataset.qssEvaluation = JSON.stringify(old); OutputAreaOutput.renderStored(container);
       const oldVersionPoints = !!container.querySelector('.qpisql-qss-score');
-      old.version = '2.1.0';
+      old.version = '2.1.1';
       container.dataset.qssEvaluation = JSON.stringify(old);
       container.dataset.qssReferenceRevision = 'b'.repeat(64); OutputAreaOutput.renderStored(container);
       return { cards, currentPoints, oldModelPoints, oldVersionPoints, stalePoints: !!container.querySelector('.qpisql-qss-score') };
@@ -203,7 +203,7 @@ async function main() {
       const requested = { engine: worker.message.engine, scale: worker.message.scale,
         answerExecutionValid: worker.message.answerExecutionValid, disabled: document.getElementById('next').disabled };
       worker.onmessage({ data: { type: 'result', id: worker.message.id, result: { status: 'exact',
-        engine: 'graph-qss-sqlite-v2', version: '2.1.0', rubric: 'paper-linear-v2', scale: 1,
+        engine: 'graph-qss-sqlite-v2', version: '2.1.1', rubric: 'paper-linear-v2', scale: 1,
         distance: 1, points: 2, maxPoints: 3, edits: [{ name: 'setColumnReference', cost: 1 }] } } });
       return requested;
     });
