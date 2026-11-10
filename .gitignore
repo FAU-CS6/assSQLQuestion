@@ -3,3 +3,15 @@ vendor/
 .phpunit.cache/
 node_modules/
 test-results/
+
+# Private question pools and temporary handovers belong outside this repository.
+/CODEX-HANDOVER-*.txt
+/CODEX-STARTPROMPT-*.txt
+/*.zip
+/archives/
+/asssql-paper-corpus/
+/private-corpus/
+/private-question-pools/
+/questions.jsonl
+/plans.jsonl
+/student-variants*/
