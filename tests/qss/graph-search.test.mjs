@@ -186,7 +186,7 @@ test('symbol heuristic uses presence only: copying does not introduce another fa
     assert.equal(symbolFacts(root).size, 1);
 });
 
-test('disjoint SQL work adds column and DISTINCT costs and respects every actual neighbour', () => {
+test('SQL work remains admissible when a projection shortcut overlaps symbol and component work', () => {
     const reference = parseGraphSql('SELECT DISTINCT age FROM students').root;
     const answer = parseGraphSql('SELECT id FROM students').root;
     const graph = createEditGraph(reference, answer);
@@ -196,7 +196,7 @@ test('disjoint SQL work adds column and DISTINCT costs and respects every actual
         const have = symbolFacts(root);
         return bound.measure(root, [...target].filter(value => !have.has(value)).length * unit);
     };
-    assert.equal(measure(answer), 3);
+    assert.equal(measure(answer), 2);
     assert.equal(measure(reference), 0);
     for (const edit of graph.edits) for (const next of edit.apply(answer)) {
         assert.ok(measure(answer) <= edit.cost + measure(next.root), edit.name);

@@ -16,7 +16,7 @@ const readline = require('node:readline');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const canonical = value => JSON.stringify(value);
 const normalizeSQL = value => value.replace(/\r\n?/g, '\n');
-const ENGINE = 'graph-qss-sqlite-v2', VERSION = '2.0.1';
+const ENGINE = 'graph-qss-sqlite-v2', VERSION = '2.1.0';
 const ROOT = path.resolve(__dirname, '../..');
 const files = ['exam-state.json', 'browser-report.json', 'browser-results.jsonl', 'database-report.json'];
 
@@ -88,7 +88,7 @@ async function sourceIndex(directory, options) {
 function validateSelfQss(qss, source) {
   assert.ok(qss && typeof qss === 'object', 'Missing QSS evaluation in a native answer.');
   assert.equal(qss.engine, ENGINE); assert.equal(qss.version, VERSION); assert.equal(qss.modelVersion, VERSION);
-  assert.equal(qss.rubric, 'paper-linear-v1'); assert.equal(qss.scale, 1);
+  assert.equal(qss.rubric, 'paper-linear-v2'); assert.equal(qss.scale, source.maximum > 0 ? source.maximum / 5 : 1);
   assert.equal(qss.formula, 'max(maxPoints - distance * scale, 0)');
   assert.equal(qss.status, 'exact'); assert.equal(qss.distance, 0);
   assert.equal(qss.maxPoints, source.maximum); assert.equal(qss.points, source.maximum);
@@ -289,7 +289,7 @@ async function selfTest() {
       baseline_result_sha256: hash(canonical(JSON.parse(row.metadata.OUTPUT_RELATION))), current_result_sha256: hash(canonical(JSON.parse(row.metadata.OUTPUT_RELATION))),
       baseline: {metrics: {result_lines: '1'}}, current: {metrics: {result_lines: '1'}},
       qss_progress: [{phase: 'parsing', resultHidden: true, nextDisabled: true}],
-      qss: {engine: ENGINE, version: VERSION, modelVersion: VERSION, rubric: 'paper-linear-v1', scale: 1,
+      qss: {engine: ENGINE, version: VERSION, modelVersion: VERSION, rubric: 'paper-linear-v2', scale: JSON.parse(row.metadata.SOLUTION_METRICS)[0].points / 5,
         formula: 'max(maxPoints - distance * scale, 0)', status: 'exact', distance: 0, lowerBound: 0,
         maxPoints: JSON.parse(row.metadata.SOLUTION_METRICS)[0].points, points: JSON.parse(row.metadata.SOLUTION_METRICS)[0].points,
         answerDigest: hash(normalizeSQL(row.metadata.SEQUENCE_B)), referenceRevision: 'c'.repeat(64),

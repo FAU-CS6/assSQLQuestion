@@ -54,7 +54,7 @@ for (const [name, reference, answer] of equivalent) test('SQLite-confirmed zero-
     assert.equal(result.distance, 0);
     assert.equal(result.points, 5);
     assert.equal(result.engine, 'graph-qss-sqlite-v2');
-    assert.equal(result.rubric, 'paper-linear-v1');
+    assert.equal(result.rubric, 'paper-linear-v2');
     const target = parseGraphSql(reference, {schema}).root;
     let replayed = parseGraphSql(answer, {schema}).root;
     if (stableKey(target) !== stableKey(replayed)) {

@@ -42,9 +42,27 @@ final class QssConfigurationTest extends TestCase
         ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
         self::assertNotSame($oldRevision, JsBlock::getQssReferenceRevision($question));
         self::assertSame('graph-qss-sqlite-v2', JsBlock::QSS_ENGINE);
-        self::assertSame('2.0.1', JsBlock::QSS_ENGINE_VERSION);
-        self::assertSame('paper-linear-v1', JsBlock::QSS_RUBRIC);
+        self::assertSame('2.1.0', JsBlock::QSS_ENGINE_VERSION);
+        self::assertSame('paper-linear-v2', JsBlock::QSS_RUBRIC);
         self::assertSame(1, JsBlock::QSS_SCALE);
+    }
+
+    public function testRelativeScaleAndQuestionRequirementsInvalidateTheRevision(): void
+    {
+        foreach ([1.0, 2.0, 5.0, 25.0] as $maximum) {
+            self::assertSame($maximum / 5, JsBlock::getQssScale($maximum));
+        }
+        self::assertSame(1.0, JsBlock::getQssScale(0));
+        $question = new class {
+            public string $text = '<p>Finden Sie eine Lösung ohne JOIN-Operation.</p>';
+            public function getQuestion(): string { return $this->text; }
+            public function getSequence(string $name): string { return 'SELECT 1'; }
+            public function getAllSolutionMetricsAsJSON(): string { return '[]'; }
+        };
+        self::assertSame('Finden Sie eine Lösung ohne JOIN-Operation.', JsBlock::getQssQuestionText($question));
+        $before = JsBlock::getQssReferenceRevision($question);
+        $question->text = '<p>Finden Sie eine Lösung.</p>';
+        self::assertNotSame($before, JsBlock::getQssReferenceRevision($question));
     }
 
     public function testJSONAttributePreservesSQLAsDataWithoutCreatingHTMLNodes(): void

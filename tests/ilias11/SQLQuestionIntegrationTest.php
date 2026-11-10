@@ -202,7 +202,9 @@ final class SQLQuestionIntegrationTest extends TestCase
         self::assertSame(JsBlock::QSS_ENGINE, $config['engine']);
         self::assertSame(JsBlock::QSS_ENGINE_VERSION, $config['engineVersion']);
         self::assertSame(JsBlock::QSS_RUBRIC, $config['rubric']);
-        self::assertSame(JsBlock::QSS_SCALE, $config['scale']);
+        self::assertSame(JsBlock::getQssScale(5), (float) $config['scale']);
+        self::assertSame('question-relative', $config['scaleMode']);
+        self::assertSame(5, $config['scaleBudget']);
         self::assertSame($sql, $config['referenceSql']);
         self::assertFalse($config['referenceExecutionValid']);
         self::assertSame(5, $config['maxPoints']);

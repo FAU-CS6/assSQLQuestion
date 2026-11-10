@@ -14,9 +14,12 @@ an experimental shadow/teaching pilot before any exam deployment. See
 [the model, workflow and limitations](docs/qss-shadow.md) and the
 [engine/edit catalogue](lib/qss/README.md).
 
-The [Graph-based QSS acceptance report](docs/qss-graph-abnahme-2026-11-09.md)
-covers all 699 original questions in actual headless Chrome, native student
-submissions, import/export and targeted grading comparisons. The
+The [student-answer matrix report](docs/qss-studentenvarianten-2026-11-10.md)
+confirms model 2.1.0 on all 699 original questions with 6,812 native Chrome cases,
+saved official grades and all five import/export/reimport round trips. It also
+records gaps in variant coverage and calibration.
+The [9 November Graph-based QSS report](docs/qss-graph-abnahme-2026-11-09.md)
+records model 2.0.1 and does not establish acceptance of the current build. The
 [earlier QSS report](docs/qss-abnahme-2026-11-09.md) records the
 historical syntax experiment and is not acceptance of this replacement.
 
@@ -28,7 +31,7 @@ In this project - called ***Q**uestion **P**lugin for **I**LIAS - **SQL** (**QPI
 
 ## Installation
 
-Version 0.2.1 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
+Version 0.2.2 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
 reproducible tests are documented in [the ILIAS 11 upgrade guide](docs/ilias-11.md).
 
 The [full Chrome acceptance report](docs/chrome-abnahme-2026-11-06.md) covers all
@@ -70,6 +73,12 @@ mixing two PHPUnit installations; instructions are in the [upgrade guide](docs/i
 Both QSS browser bundles are included. Node.js is needed only for development
 and rebuilding them; the ILIAS installation runs no Node service. See the
 [QSS build and test commands](lib/qss/README.md).
+
+The current experimental parallel QSS model is `2.1.0` (`paper-linear-v2`).
+It uses named SQL graph edits and a question-relative linear scale of
+`maxPoints / 5`; the official ILIAS scoring metrics remain authoritative.
+See the [parallel-assessment documentation](docs/qss-shadow.md) for its rules
+and trust boundary.
 
 Some of the artifacts are uploaded to the repository in built form, some need to be built during installation. For the PHP part of the plugin, we adhere to the suggestions of ILIAS, namely to `composer install --no-dev` all dependencies during installation and not check in dependency artifacts into git (c.f. https://github.com/ILIAS-eLearning/ILIAS/pull/1833 and specifically https://docu.ilias.de/go/wiki/wpage_6371_1357 for plugins).
 

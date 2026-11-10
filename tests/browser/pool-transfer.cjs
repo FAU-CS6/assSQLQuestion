@@ -46,7 +46,7 @@ async function importQuestions(page, pool, archive, expectedCount) {
   await page.locator('input[type=file]').setInputFiles(archive);
   // ILIAS queues uploads until the modal's submit action. Wait for its native verification page.
   await Promise.all([
-    page.waitForURL(url => url.searchParams.get('fallbackCmd') === 'uploadQuestionsImport', { timeout: 600000 }),
+    page.waitForURL(url => url.searchParams.get('fallbackCmd') === 'uploadQuestionsImport', { timeout: 0 }),
     page.getByRole('button', { name: 'Import', exact: true }).last().click()
   ]);
   const choices = page.locator('input[type=checkbox][name^="form/"]');
@@ -54,7 +54,7 @@ async function importQuestions(page, pool, archive, expectedCount) {
   pool.source_item_ids = await choices.evaluateAll(inputs => inputs.map(input => input.value));
   for (const choice of await choices.all()) if (!(await choice.isChecked())) await choice.check();
   await page.getByRole('button', { name: 'Import', exact: true }).click();
-  await page.getByRole('button', { name: 'Create Question', exact: true }).waitFor({ timeout: 600000 });
+  await page.getByRole('button', { name: 'Create Question', exact: true }).waitFor({ timeout: 0 });
   assert.equal(await countQuestions(page), expectedCount, 'Every verified source question must be imported.');
 }
 
@@ -69,11 +69,11 @@ async function exportQuestions(page, pool) {
     assert.ok(await xmlExport.count(), 'Expected native XML export action');
     await xmlExport.click();
   }
-  await page.getByRole('button', { name: 'Actions', exact: true }).first().waitFor({ timeout: 600000 });
+  await page.getByRole('button', { name: 'Actions', exact: true }).first().waitFor({ timeout: 0 });
   await page.getByRole('button', { name: 'Actions', exact: true }).first().click();
   const download = page.getByRole('button', { name: 'Download', exact: true }).first();
-  await download.waitFor({ timeout: 600000 });
-  const [file] = await Promise.all([page.waitForEvent('download', { timeout: 600000 }), download.click()]);
+  await download.waitFor({ timeout: 0 });
+  const [file] = await Promise.all([page.waitForEvent('download', { timeout: 0 }), download.click()]);
   const filename = path.join(artifacts, file.suggestedFilename());
   await file.saveAs(filename);
   fs.chmodSync(filename, 0o600);
@@ -85,9 +85,17 @@ async function main() {
   const browser = await chromium.connectOverCDP(process.env.ILIAS_CHROME_CDP || 'http://localhost:9223');
   const context = await browser.newContext({ acceptDownloads: true, ...(fs.existsSync(storageFile) ? { storageState: storageFile } : {}) });
   const page = await context.newPage();
-  page.setDefaultTimeout(600000);
-  page.setDefaultNavigationTimeout(600000);
+  page.setDefaultTimeout(0);
+  page.setDefaultNavigationTimeout(0);
+  let rejectNativeFailure;
+  const nativeFailure = new Promise((resolve, reject) => { rejectNativeFailure = reject; });
+  page.on('framenavigated', frame => {
+    if (frame === page.mainFrame() && new URL(frame.url()).pathname.endsWith('/error.php')) {
+      rejectNativeFailure(new Error('ILIAS displayed its native server-error page; this transfer is incomplete.'));
+    }
+  });
   try {
+    await Promise.race([(async () => {
     await page.goto(`${base}/goto.php/cat/${accounts.category_ref_id}`);
     if (await page.locator('input[type=password]').count()) {
       await page.locator('input[name^="login_form/"][type=text]').fill(accounts.teacher.login);
@@ -160,15 +168,16 @@ async function main() {
     save();
     assert.equal(report.qss_worker_unchanged, true, 'Import/export evidence must use one unchanged final plugin bundle.');
     await context.storageState({ path: storageFile }); fs.chmodSync(storageFile, 0o600);
+    })(), nativeFailure]);
   } catch (error) {
     console.error('Original Chrome transfer error:', error.stack || error);
     await page.screenshot({ path: path.join(artifacts, 'failure.png'), fullPage: true, timeout: 5000 }).catch(() => {});
-    console.error('Chrome transfer failed at', page.url());
+    console.error('Chrome transfer failed at', new URL(page.url()).pathname);
     console.error((await page.locator('body').innerText({ timeout: 5000 }).catch(() => '(No readable document body)')).slice(-1800));
     throw error;
   } finally {
     await context.close();
-    await browser.close();
   }
 }
-main().catch(error => { console.error(error); process.exitCode = 1; });
+// A CDP runner owns its context, not the externally launched Chrome process.
+main().then(() => process.exit(0)).catch(error => { console.error(error); process.exit(1); });

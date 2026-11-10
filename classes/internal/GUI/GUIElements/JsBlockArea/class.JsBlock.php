@@ -10,9 +10,30 @@ declare(strict_types=1);
 class JsBlock extends GUIElement
 {
     public const QSS_ENGINE = 'graph-qss-sqlite-v2';
-    public const QSS_ENGINE_VERSION = '2.0.1';
-    public const QSS_RUBRIC = 'paper-linear-v1';
+    public const QSS_ENGINE_VERSION = '2.1.0';
+    public const QSS_RUBRIC = 'paper-linear-v2';
     public const QSS_SCALE = 1;
+    public const QSS_DEDUCTION_BUDGET = 5;
+
+    public static function getQssScale(float $points): float
+    {
+        return $points > 0 ? $points / self::QSS_DEDUCTION_BUDGET : 1.0;
+    }
+
+    public static function getQssQuestionText($question): string
+    {
+        return method_exists($question, 'getQuestion')
+            ? html_entity_decode(strip_tags($question->getQuestion()), ENT_QUOTES | ENT_HTML5, 'UTF-8') : '';
+    }
+
+    public static function getQssReferenceRows($question): ?int
+    {
+        if (!method_exists($question, 'getOutputRelation')) {
+            return null;
+        }
+        $relation = json_decode($question->getOutputRelation(), true);
+        return is_array($relation['values'] ?? null) ? count($relation['values']) : null;
+    }
 
     /*
      * Functions used to get the html code for edit, question and solution output
@@ -66,7 +87,11 @@ class JsBlock extends GUIElement
                 'engine' => self::QSS_ENGINE,
                 'engineVersion' => self::QSS_ENGINE_VERSION,
                 'rubric' => self::QSS_RUBRIC,
-                'scale' => self::QSS_SCALE,
+                'scale' => self::getQssScale($this->object->getMaximumPoints()),
+                'scaleMode' => 'question-relative',
+                'scaleBudget' => self::QSS_DEDUCTION_BUDGET,
+                'questionText' => self::getQssQuestionText($this->object),
+                'referenceRows' => self::getQssReferenceRows($this->object),
                 'context' => $context,
                 'enabled' => true,
                 // Client-side graph QSS necessarily exposes the
@@ -100,7 +125,9 @@ class JsBlock extends GUIElement
             'engine' => self::QSS_ENGINE,
             'engineVersion' => self::QSS_ENGINE_VERSION,
             'rubric' => self::QSS_RUBRIC,
-            'scale' => self::QSS_SCALE,
+            'scaleBudget' => self::QSS_DEDUCTION_BUDGET,
+            'questionText' => self::getQssQuestionText($question),
+            'referenceRows' => self::getQssReferenceRows($question),
             'sequence_a' => $question->getSequence('sequence_a'),
             'sequence_b' => $question->getSequence('sequence_b'),
             'sequence_c' => $question->getSequence('sequence_c'),

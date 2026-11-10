@@ -31,15 +31,18 @@ $report = ['test_id' => $testId, 'student_id' => $studentId, 'active_id' => $act
     'student_is_system_admin' => $DIC->rbac()->review()->isAssigned($studentId, SYSTEM_ROLE_ID),
     'expected' => $expected, 'authorized_answers' => 0, 'qss_saved' => 0, 'qss_exact_self' => 0,
     'stored_grade_rows' => count($storedGrades), 'manual_overrides' => 0,
-    'legacy_points' => 0.0, 'maximum_points' => 0.0, 'failures' => []];
+    'legacy_points' => 0.0, 'maximum_points' => 0.0, 'question_ids' => [], 'saved_bindings' => [], 'failures' => []];
 $digest = hash_init('sha256');
 while ($row = $db->fetchAssoc($rows)) {
     $id = (int) $row['question_fi'];
+    $report['question_ids'][] = $id;
     ++$report['authorized_answers'];
     $answer = ParticipantInput::fromJSON((string) $row['value1']);
     $question = assQuestion::instantiateQuestion($id);
     if (!$question instanceof assSQLQuestion) throw new RuntimeException('Expected SQL questions only.');
     $evaluation = $answer->getQssEvaluation();
+    $report['saved_bindings'][] = ['question_id' => $id, 'answer_digest' => $evaluation['answerDigest'] ?? null,
+        'reference_revision' => $evaluation['referenceRevision'] ?? null];
     hash_update($digest, $id . ':' . strlen($row['value1']) . ':' . $row['value1']);
     $normal = static fn(string $sql): string => str_replace(["\r\n", "\r"], "\n", $sql);
     if ($normal($answer->getSequence()) !== $normal($question->getSequence('sequence_b'))) {
@@ -50,7 +53,7 @@ while ($row = $db->fetchAssoc($rows)) {
         || ($evaluation['engine'] ?? '') !== JsBlock::QSS_ENGINE
         || ($evaluation['version'] ?? '') !== JsBlock::QSS_ENGINE_VERSION
         || ($evaluation['rubric'] ?? '') !== JsBlock::QSS_RUBRIC
-        || ($evaluation['scale'] ?? null) !== JsBlock::QSS_SCALE
+        || (float) ($evaluation['scale'] ?? -1) !== JsBlock::getQssScale((float) $question->getMaximumPoints())
         || !isset($evaluation['distance']) || (float) $evaluation['distance'] !== 0.0
         || ($evaluation['points'] ?? null) != $question->getMaximumPoints()) {
         $report['failures'][] = ['question' => $id, 'kind' => 'missing_or_incorrect_parallel_evaluation'];

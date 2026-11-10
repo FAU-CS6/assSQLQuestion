@@ -28,10 +28,11 @@ class QSSShadow
   static isCurrentModel(result, config = {})
   {
     if (!result || result.engine !== (config.engine || 'graph-qss-sqlite-v2')
-      || String(result.version) !== (config.engineVersion || '2.0.1')) return false;
+      || String(result.version) !== (config.engineVersion || '2.1.0')) return false;
     if (result.status === 'exact' || result.status === 'score-zero-certified') {
-      return result.rubric === (config.rubric || 'paper-linear-v1')
-        && result.scale === (config.scale === undefined ? 1 : config.scale);
+      const relative = config.scaleMode === 'question-relative' || config.scale === undefined;
+      const expected = relative ? (result.maxPoints > 0 ? result.maxPoints / (config.scaleBudget || 5) : 1) : config.scale;
+      return result.rubric === (config.rubric || 'paper-linear-v2') && result.scale === expected;
     }
     return true;
   }
@@ -180,8 +181,12 @@ class QSSShadow
           finish({ status: 'error', engine: 'qss', version: '1', limitations: [String(event.message || this.label('failed'))] });
         };
         this.worker.postMessage({ type: 'evaluate', id, engine: this.config.engine || 'graph-qss-sqlite-v2',
-          scale: this.config.scale === undefined ? 1 : this.config.scale, reference: snapshot.reference,
+          scale: this.config.scaleMode === 'question-relative' || this.config.scale === undefined
+            ? (snapshot.maxPoints > 0 ? snapshot.maxPoints / (this.config.scaleBudget || 5) : 1) : this.config.scale,
+          questionText: this.config.questionText || '', reference: snapshot.reference,
           answer: snapshot.answer, schema: snapshot.schema, schemaSql: snapshot.schemaSql, maxPoints: snapshot.maxPoints,
+          referenceRows: this.config.context === 'author' ? snapshot.answerRows : this.config.referenceRows,
+          answerRows: snapshot.answerRows,
           referenceExecutionValid: snapshot.referenceExecutionValid,
           answerExecutionValid: snapshot.answerExecutionValid });
       } catch (error) {

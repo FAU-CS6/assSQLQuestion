@@ -22,7 +22,11 @@ async function main() {
   const teacherPool = transfer.pools.find(pool => pool.key === selected.pool);
   assert.ok(teacherPool);
   const editURL = new URL(exam.role_check_urls.edit_url, base);
-  editURL.searchParams.set('ref_id', String(teacherPool.pool_ref_id));
+  // Existing native fixtures may refer to an earlier teacher-owned import than
+  // the latest transfer report. Its role-check URL identifies the first pool.
+  const poolRef=selected.original_pool_ref_id
+    ||(selected.pool===runtime[0].pool?editURL.searchParams.get('ref_id'):teacherPool.pool_ref_id);
+  editURL.searchParams.set('ref_id', String(poolRef));
   editURL.searchParams.set('q_id', String(selected.original_question_id));
   const browser = await chromium.connectOverCDP(process.env.CHROME_CDP_URL || 'http://127.0.0.1:9235');
   const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });

@@ -239,9 +239,9 @@ async function executeStudent(page, row, verifyAutosave) {
   if (verifyQSS) {
     assert.equal(execution.qss?.status, 'exact', `${row.key}: parallel QSS must finish`);
     assert.equal(execution.qss.engine, 'graph-qss-sqlite-v2', `${row.key}: paper-style graph engine must be used`);
-    assert.equal(execution.qss.version, '2.0.1');
-    assert.equal(execution.qss.rubric, 'paper-linear-v1');
-    assert.equal(execution.qss.scale, 1);
+    assert.equal(execution.qss.version, '2.1.0');
+    assert.equal(execution.qss.rubric, 'paper-linear-v2');
+    assert.equal(execution.qss.scale, row.maximum_points / 5);
     assert.equal(execution.qss.points, row.maximum_points, `${row.key}: model answer must receive full parallel points`);
     assert.equal(execution.qss.distance, 0, `${row.key}: model answer has distance zero`);
     assert.ok(execution.qssProgress.length > 0, `${row.key}: actual worker progress must be shown before the table`);

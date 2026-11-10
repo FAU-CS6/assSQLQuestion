@@ -78,11 +78,17 @@ Die lineare Bewertung gemäß Abschnitt 4.7 lautet:
 Vergleichspunkte = max(Maximalpunkte - Abstand * Skala, 0)
 ```
 
-Die konstante Skala ist zunächst 1. Gewöhnliche atomare Änderungen und positive
-Shortcuts kosten zunächst 1, DISTINCT-Änderungen 2 und das Hinzufügen/Entfernen
-einer ganzen Skriptanweisung 5. Neue Komponenten werden als flache Konstruktoren
-mit Lücken aufgebaut; vollständige Musterteilbäume werden nicht zum Preis einer
-kleinen Änderung eingefügt. Semantisch abgesicherte Äquivalenz-Edits kosten 0.
+Die Skala ist pro Frage fest auf `Maximalpunkte / 5` gesetzt (bei Maximum 0 auf 1).
+Ein lokaler Edit mit Kosten 1 zieht damit 20 Prozent der Maximalpunkte ab.
+Die API erlaubt weiterhin eine ausdrücklich gesetzte feste Skala. Die Rubrik
+heißt `paper-linear-v2`, die Modellversion `2.1.0`.
+Gewöhnliche atomare Änderungen und positive Shortcuts kosten zunächst 1,
+DISTINCT-Änderungen 2 und das Hinzufügen/Entfernen einer ganzen Skriptanweisung
+oder Datenquelle sowie das Ändern ihrer Relation 5. Neue atomare Komponenten
+werden als flache Konstruktoren mit Lücken aufgebaut. Benannte logische
+Reparaturen ergänzen beispielsweise eine einzelne deklarierte Bedingung oder
+einen Ausgabenausdruck, aber keine vollständige Datenabfrage oder Unterabfrage
+für Kosten 1. Semantisch abgesicherte Äquivalenz-Edits kosten 0.
 Ein positiver Shortcut entfernt beispielsweise eine binäre Operation unter
 Beibehaltung eines Operanden für Kosten 1 (`removeExtraneousBinaryTerm`). Eine
 zusätzliche Rechnung `+ 1` kann damit als ein logischer Reparaturschritt entfernt
@@ -110,6 +116,10 @@ erneute vollständige Chrome-Prüfung aller 699 Originalfragen auf Modell 2.0.1,
 gespeicherte native Studentenabgaben und gezielt falsche Varianten. Er trennt
 diese technischen Nachweise von der noch ausstehenden menschlichen Kalibrierung
 der Editkosten und Punkteskala.
+Der [Bericht zu studentischen Antwortvarianten vom 10. November](qss-studentenvarianten-2026-11-10.md)
+bestätigt das aktuelle Modell 2.1.0 mit 6.812 nativen Chrome-Fällen auf allen
+699 Originalfragen, gespeicherten Noten und fünf Pool-Roundtrips. Variantenlücken,
+verbleibende langsame Fälle und Kalibrierungsgrenzen sind darin ausgewiesen.
 Modell, Schnittstelle und reproduzierbare Builds stehen in
 [lib/qss/README.md](../lib/qss/README.md).
 

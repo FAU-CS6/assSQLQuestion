@@ -32,12 +32,13 @@ edit catalogue. It does not use the former syntax-tree distance.
   search. These bounds affect scheduling, not the permitted neighbours. A
   completed path is replayed to the reference and its cost is checked.
 
-A witnessed direct SQL edit can certify the optimum before the full search:
-its path cost must equal the certified global lower bound at the initial AST.
-This is reported as `exact-direct-bound-certificate`. A costlier direct path is
-not accepted on this basis; the complete lazy search continues unchanged. The
-check includes all positions of the eligible named edit and does not restrict
-the graph to target-guided repairs.
+A witnessed direct or multi-edit path can certify the optimum before the full
+search when its cost equals the certified global lower bound at the initial AST.
+An actual all-zero path is also optimal under nonnegative costs. These return
+`exact-direct-bound-certificate`, `exact-witness-bound-certificate` or
+`exact-zero-path-certificate`. Structural guides only schedule attempts to find
+these witnesses; they never supply a distance, prune the graph or grade an answer.
+An unsuccessful witness attempt falls through to the complete lazy search.
 
 AST identity ignores representation-only empty fields (missing/null slots,
 empty lists and an unset DISTINCT flag). It does not merge semantically equivalent
@@ -70,15 +71,18 @@ The previous `sqlite-syntax-edit-graph-v1` and its Cap-5 score are no longer
 accepted assessment models. The [9 November report](../../docs/qss-abnahme-2026-11-09.md)
 records that historical syntax experiment; it is not acceptance evidence for the
 current Graph-based QSS engine. The
-[graph acceptance report](../../docs/qss-graph-abnahme-2026-11-09.md) records the
-renewed final-model Chrome and native tests for all 699 original questions,
-grading comparisons and the limits of the provisional calibration.
+[graph acceptance report](../../docs/qss-graph-abnahme-2026-11-09.md) records
+model 2.0.1. The [student-answer matrix report](../../docs/qss-studentenvarianten-2026-11-10.md)
+confirms model 2.1.0 on all 699 original questions with 6,812 native Chrome cases,
+saved grades and five pool round trips. It records variant-coverage gaps and the
+limits of the provisional calibration.
 
 ## Provisional costs and linear grading
 
 Default atomic/attribute and positive shortcut costs are 1. DISTINCT-related
-changes cost 2. Adding or removing a whole script statement costs 5, reflecting a
-major logical step; an added statement is still a shallow constructor. Supported
+changes cost 2. Adding/removing a whole script statement or a data source, and
+changing its relation name, cost 5, reflecting a major logical step; an added
+statement/source is still a shallow constructor. Supported
 semantic equivalence edits cost 0. Costs are configurable by edit name through
 `costs`, are fixed throughout a job, and must be nonnegative safe integers.
 
@@ -88,15 +92,33 @@ retaining either operand costs 1. Thus an added `+ 1` can be removed as one
 logical repair instead of paying for every syntax-tree node. This is a paid,
 directed repair, not a zero-cost equivalence or a target-position restriction.
 
+Other named local repairs restore one declared constraint, one non-query output
+expression or a declared column with its quoted CHECK bindings. These logical
+edits never insert a complete data query or subquery as one local repair.
+Additional guarded zero-cost laws cover De Morgan/complement comparisons,
+NULL-preserving Boolean CASE, exact int64 constant expressions, COUNT(*)/COUNT(1)
+and single-column foreign-key layouts while retaining foreign-key action order.
+Double-quoted names resolve against their SQLite scope, including ALTER ADD
+CHECK and compound ORDER BY; DEFAULT retains its independent DQS context.
+
+`questionText` supplies explicit construct requirements. They restrict free edits
+only when the question states a method constraint. Explicitly unconstrained
+Boolean group labels and a technical feedback tuple have question-relative
+edits; they are not universal SQL equivalences. Feedback-tuple edits require
+successful reference/answer runs and matching observed result-row counts.
+
 The grading formula from paper section 4.7 is:
 
 ```text
 points = max(maxPoints - distance * scale, 0)
 ```
 
-The default constant `scale` is 1, and points are rounded to four decimals.
-`pointsPerEdit` is an API alias for `scale`. No empty-answer normalization or
-Cap-5 factor is used. `provisionalRubric:true` and `rubric:'paper-linear-v1'`
+The default `scale` is `maxPoints / 5` for a positive maximum (otherwise 1), fixed
+throughout each question's comparison. A local cost of 1 deducts 20% of that
+question's maximum; cost 5 exhausts it. An explicit API `scale` overrides the
+default, and `pointsPerEdit` is its alias. Points are rounded to four decimals.
+No empty-answer or syntax/tree-distance normalization is used.
+`provisionalRubric:true` and `rubric:'paper-linear-v2'`
 identify this implementation's provisional cost calibration. Neither these
 particular costs nor the scale have been validated against independently
 human-graded student answers.
@@ -115,7 +137,9 @@ worker.postMessage({
     type: 'evaluate', id: 'request-1',
     engine: 'graph-qss-sqlite-v2',
     reference: 'SELECT id FROM items', answer: 'SELECT value FROM items',
-    maxPoints: 2, scale: 1,
+    maxPoints: 2, // default scale: 0.4; explicit scale remains supported
+    questionText: '', referenceExecutionValid: true, answerExecutionValid: true,
+    referenceRows: 3, answerRows: 3,
     schema: {tables: [{name: 'items', type: 'table', columns: [{name: 'id', type: 'INTEGER'}]}]}
 });
 ```
@@ -214,6 +238,22 @@ execution deadline.
 Both aggregate verifiers have anonymous `--self-test` modes that reject missing,
 duplicate, mixed-build and unfinished evidence. These check the acceptance gates;
 they are separate from the actual Chrome and grading tests.
+
+`student-variants.cjs` and `student-variant-oracle.cjs` additionally exercise up
+to four correct, three independently distinguished local errors and three gross
+errors per source in the regular student form. Candidate transformation proofs
+and an independent Chrome SQL worker select cases before QSS runs. Representation
+variants are separately labelled; atomic questions may have fewer local errors
+or substantively different correct strategies. The reports retain these gaps.
+Selection prefers different local error families before testing more candidates
+from a family already witnessed, and never depends on QSS points.
+
+`tests/ilias11/student-variants-report.php` checks every captured case with the
+unchanged official scorer, both with and without its QSS sidecar.
+`tests/qss/verify-student-variants.cjs` joins all four completed native matrices,
+original identities, immutable plans/build hashes, restored source outputs,
+database grades and final teacher import/export/reimport semantic evidence.
+Private observations are never included in this repository.
 
 ## Upstream and licenses
 

@@ -353,13 +353,34 @@ if ($mode === 'verify') {
 
 if ($mode === 'verify-teacher') {
     $transfer = corpusJSON(getenv('ILIAS_TEACHER_TRANSFER_REPORT') ?: $directory . '/teacher-transfer-report.json');
-    $report = ['questions' => 0, 'reimported' => 0, 'legacy_empty_editor_modes_defaulted' => $sourceEditorModeDefaults, 'pools' => [], 'failures' => []];
+    $teacherId = (int) ($transfer['teacher_user_id'] ?? 0);
+    if ($teacherId <= 0) throw new RuntimeException('Native transfer must identify its ordinary teacher account.');
+    $report = ['questions' => 0, 'reimported' => 0, 'teacher_user_id' => $teacherId,
+        'teacher_is_system_administrator' => $DIC->rbac()->review()->isAssigned($teacherId, SYSTEM_ROLE_ID),
+        'all_pool_and_question_owners_are_teacher' => true, 'ownership_verified_questions' => 0,
+        'source_questions_sha256' => hash_file('sha256', $directory . '/questions.jsonl'),
+        'legacy_empty_editor_modes_defaulted' => $sourceEditorModeDefaults, 'pools' => [], 'failures' => []];
+    if ($report['teacher_is_system_administrator']) $report['failures'][] = ['kind' => 'teacher_is_system_admin'];
     foreach ($transfer['pools'] as $teacherPool) {
         $key = $teacherPool['key'];
         $first = new ilObjQuestionPool((int) $teacherPool['pool_ref_id']);
         $second = new ilObjQuestionPool((int) $teacherPool['reimport_pool_ref_id']);
         $mappings = [];
-        foreach (['original' => $teacherPool['question_ids'], 'reimported' => $teacherPool['reimport_question_ids']] as $stage => $ids) {
+        foreach (['original' => $first, 'reimported' => $second] as $stage => $stagePool) {
+            if ((int) $stagePool->getOwner() !== $teacherId) {
+                $report['all_pool_and_question_owners_are_teacher'] = false;
+                $report['failures'][] = ['pool' => $key, 'stage' => $stage, 'kind' => 'unexpected_pool_owner'];
+            }
+            $ids = [];
+            $rows = $DIC->database()->queryF('SELECT question_id, owner FROM qpl_questions WHERE obj_fi = %s ORDER BY question_id', ['integer'], [$stagePool->getId()]);
+            while ($row = $DIC->database()->fetchAssoc($rows)) {
+                $ids[] = (int) $row['question_id'];
+                if ((int) $row['owner'] === $teacherId) ++$report['ownership_verified_questions'];
+                else {
+                    $report['all_pool_and_question_owners_are_teacher'] = false;
+                    $report['failures'][] = ['pool' => $key, 'stage' => $stage, 'kind' => 'unexpected_question_owner'];
+                }
+            }
             $candidates = [];
             foreach ($ids as $id) {
                 $snapshot = corpusSnapshot(assQuestion::instantiateQuestion((int) $id));

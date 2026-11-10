@@ -13,15 +13,17 @@ const schema = {tables: [
     {name: 'items', columns: [{name: 'id', type: 'INTEGER'}, {name: 'amount', type: 'REAL'}, {name: 'name', type: 'TEXT'}]},
     {name: 'details', columns: [{name: 'item_id', type: 'INTEGER'}, {name: 'active', type: 'INTEGER'}]}
 ]};
-const evaluate = (reference, answer, extra = {}) => QSS.evaluate({reference, answer, schema, maxPoints: 5, ...extra});
+// Fixed-scale graph tests retain an explicit scale; relative defaults have a
+// separate contract suite with several different question maxima.
+const evaluate = (reference, answer, extra = {}) => QSS.evaluate({reference, answer, schema, maxPoints: 5, scale:1, ...extra});
 const plain = value => JSON.parse(JSON.stringify(value));
 const editCost = result => result.edits.reduce((sum, edit) => sum + edit.cost, 0);
 const round = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
 function scored(result, maximum = 5) {
     assert.ok(['exact', 'score-zero-certified'].includes(result.status), JSON.stringify(result));
     assert.equal(result.engine, 'graph-qss-sqlite-v2');
-    assert.equal(result.version, '2.0.1');
-    assert.equal(result.rubric, 'paper-linear-v1');
+    assert.equal(result.version, '2.1.0');
+    assert.equal(result.rubric, 'paper-linear-v2');
     assert.equal(result.scoreCertifiedWithinModel, true);
     assert.ok(Number.isFinite(result.points) && result.points >= 0 && result.points <= maximum);
     if (result.status === 'exact') {

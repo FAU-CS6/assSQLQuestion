@@ -142,6 +142,7 @@ class ExecutionHandler
       else if (error && output.onSQLError) output.onSQLError(error);
     }
     this.snapshot.answerExecutionValid = !error;
+    this.snapshot.answerRows = result ? result.getNumberOfRows() : null;
     this.snapshot.referenceExecutionValid = this.qss.config.context === 'author' ? !error
       : this.qss.config.referenceExecutionValid === true;
     // The visible result table waits for a terminal shadow assessment state.
