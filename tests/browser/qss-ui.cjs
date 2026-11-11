@@ -55,7 +55,11 @@ async function main() {
       const labels = { title: 'QSS', shadow: 'This question uses QSS grading', sqlRunning: 'Running SQL',
         parsing: 'Parsing SQL', comparing: 'Comparing queries', completed: 'Completed', notEvaluated: 'Not evaluated',
         unsupported: 'Unsupported', failed: 'Failed', cancelled: 'Cancelled', waiting: 'Evaluating',
-        visited: 'States', lowerBound: 'Distance lower bound', points: 'Points', distance: 'Distance', details: 'Details', model: 'Model', cost: 'Cost', stale: 'Outdated model or answer' };
+        visited: 'States', lowerBound: 'Distance lower bound', points: 'Points', distance: 'Distance', details: 'Details', model: 'Model', cost: 'Cost', stale: 'Outdated model or answer',
+        participantTitle: 'Assessment', participantRunning: 'Your answer is being assessed. Please wait.',
+        participantCompleted: 'Assessment complete. Results will be available after release.',
+        participantPending: 'Please execute your answer.', participantCancelled: 'Assessment cancelled. Please execute again.',
+        participantFailed: 'Assessment could not be completed. Please execute again.' };
       document.getElementById('qpisql-qss-config').dataset.config = JSON.stringify({ version: 2, mode: 'assessment', assessmentMode: 'qss', context: 'participant', enabled: true,
         engine: 'graph-qss-sqlite-v2', engineVersion: '2.1.1', rubric: 'paper-linear-v2', scale: 1, scaleMode:'fixed',
         referenceSql: 'SELECT 1 AS value', referenceRevision: 'a'.repeat(64), referenceExecutionValid: true, referenceRows: 1, maxPoints: 3, labels });
@@ -86,10 +90,15 @@ async function main() {
       const user = new SubmitEvent('submit', { cancelable: true, submitter: document.getElementById('next') });
       const automatic = new SubmitEvent('submit', { cancelable: true });
       form.dispatchEvent(user); form.dispatchEvent(automatic);
-      workers[1].onmessage({ data: { type: 'progress', id: workers[1].message.id, phase: 'comparing', visited: 42, lowerBound: 1 } });
-      return { userBlocked: user.defaultPrevented, automaticBlocked: automatic.defaultPrevented, status: document.querySelector('.qpisql-qss-status').textContent };
+      workers[1].onmessage({ data: { type: 'progress', id: workers[1].message.id, phase: 'comparing', visited: 42, lowerBound: 1,
+        completed: 8, total: 10 } });
+      const card = document.getElementById('qpisql-qss-shadow');
+      return { userBlocked: user.defaultPrevented, automaticBlocked: automatic.defaultPrevented, status: card.textContent,
+        label: card.getAttribute('aria-label'), progressLabel: card.querySelector('progress').getAttribute('aria-label'),
+        determinate: card.querySelector('progress').hasAttribute('value') };
     });
-    assert.equal(guard.userBlocked, true); assert.equal(guard.automaticBlocked, false); assert.match(guard.status, /42/);
+    assert.deepEqual(guard, { userBlocked: true, automaticBlocked: false, status: 'Your answer is being assessed. Please wait.',
+      label: 'Assessment', progressLabel: 'Your answer is being assessed. Please wait.', determinate: false });
     await page.evaluate(() => workers[1].onmessage({ data: { type: 'result', id: workers[1].message.id,
       result: { status: 'exact', engine: 'graph-qss-sqlite-v2', version: '2.1.1', rubric: 'paper-linear-v2', scale: 1, distance: 0, points: 3, maxPoints: 3,
         exactWithinModel: true, limitations: ['<img src=x onerror=alert(1)>'],
@@ -101,15 +110,44 @@ async function main() {
       rows: document.querySelectorAll('#qpisql-output-area-relation tbody tr').length,
       points: JSON.parse(document.getElementById('qpisql-qss-evaluation').value).points,
       savedEdit: JSON.parse(document.getElementById('qpisql-qss-evaluation').value).edits[0],
-      editFeedback: document.querySelector('#qpisql-qss-shadow li')?.textContent,
+      feedback: document.getElementById('qpisql-qss-shadow').textContent,
+      details: document.querySelectorAll('#qpisql-qss-shadow .qpisql-qss-score, #qpisql-qss-shadow details, #qpisql-qss-shadow progress').length,
       digest: JSON.parse(document.getElementById('qpisql-qss-evaluation').value).answerDigest,
       terminated: workers.every(worker => worker.terminated), injected: document.querySelectorAll('#qpisql-qss-shadow img').length }));
     assert.equal(completed.visible, 'block'); assert.equal(completed.executed, 'true'); assert.equal(completed.nextDisabled, false);
     assert.equal(completed.rows, 1); assert.equal(completed.points, 3); assert.match(completed.digest, /^[a-f0-9]{64}$/);
     assert.equal(completed.terminated, true); assert.equal(completed.injected, 0);
     assert.deepEqual(completed.savedEdit, { name: 'setLiteral', description: '<img src=x onerror=alert(1)>', cost: 1 });
-    assert.match(completed.editFeedback, /Cost: 1/);
-    console.log('PASS: SQL result stays hidden, navigation stays disabled, progress updates, and result publication waits for QSS');
+    assert.equal(completed.feedback, 'Assessment complete. Results will be available after release.');
+    assert.equal(completed.details, 0);
+    const feedbackPolicy = await page.evaluate(() => {
+      const config = QSSShadow.configuration(), saved = JSON.parse(document.getElementById('qpisql-qss-evaluation').value);
+      const feedback = [];
+      for (const result of [saved, {...saved, points: 0, distance: 100}, {...saved, status: 'score-zero-certified', points: 0}]) {
+        handler.qss.render(result);
+        feedback.push(document.getElementById('qpisql-qss-shadow').textContent);
+      }
+      const author = new QSSShadow({...config, context: 'author'});
+      author.card = document.createElement('section'); author.mount = () => author.card;
+      author.progress({phase: 'comparing', visited: 42, lowerBound: 1});
+      const authorProgress = author.card.textContent;
+      author.render(saved);
+      const authorDetails = {score: author.card.querySelector('.qpisql-qss-score').textContent,
+        edit: author.card.querySelector('li').textContent, images: author.card.querySelectorAll('img').length};
+      for (const status of ['unsupported', 'error']) {
+        handler.qss.render({status, message: 'private diagnostic', limitations: ['private diagnostic']});
+        feedback.push(document.getElementById('qpisql-qss-shadow').textContent);
+      }
+      handler.qss.render(saved);
+      return {feedback, authorProgress, authorDetails};
+    });
+    assert.deepEqual(feedbackPolicy.feedback, [completed.feedback, completed.feedback, completed.feedback,
+      'Assessment could not be completed. Please execute again.', 'Assessment could not be completed. Please execute again.']);
+    assert.match(feedbackPolicy.authorProgress, /States: 42.*Distance lower bound: 1/);
+    assert.match(feedbackPolicy.authorDetails.score, /Points: 3 \/ 3/);
+    assert.match(feedbackPolicy.authorDetails.edit, /Cost: 1/);
+    assert.equal(feedbackPolicy.authorDetails.images, 0);
+    console.log('PASS: participant progress and completion disclose no assessment quality; author details and hidden grading evidence remain intact');
 
     await page.evaluate(() => { handler.execute(); workers[2].onmessage({ data: { results: [{ columns: ['value'], values: [[1]] }] } }); });
     await page.waitForFunction(() => workers.length === 4);
@@ -135,7 +173,7 @@ async function main() {
       return { busy: document.getElementById('qpisql-qss-shadow').getAttribute('aria-busy'),
         running: handler.running, terminated: workers[4].terminated, status: document.querySelector('.qpisql-qss-status').textContent };
     });
-    assert.deepEqual(sqlCancellation, { busy: 'false', running: false, terminated: true, status: 'Cancelled' });
+    assert.deepEqual(sqlCancellation, { busy: 'false', running: false, terminated: true, status: 'Assessment cancelled. Please execute again.' });
     await page.evaluate(() => { handler.execute(); workers[5].onmessage({ data: { results: [{ columns: ['value'], values: [[1]] }] } }); });
     await page.waitForFunction(() => workers.length === 7);
     const replaced = await page.evaluate(() => {
@@ -188,7 +226,7 @@ async function main() {
         score: !!document.querySelector('#qpisql-qss-shadow .qpisql-qss-score'),
         message: document.querySelector('#qpisql-qss-shadow .qpisql-qss-status').textContent };
     });
-    assert.deepEqual(staleEditor, { sidecar: '', score: false, message: 'Outdated model or answer' });
+    assert.deepEqual(staleEditor, { sidecar: '', score: false, message: 'Please execute your answer.' });
 
     await page.evaluate(() => {
       for (const [name, value] of Object.entries({ sequence_a: '', sequence_c: '', integrity_check: false })) handler.registerInput({ getName: () => name, getValue: () => value });
@@ -243,8 +281,24 @@ async function main() {
       return {value:document.getElementById('qpisql-scoring-metric-value-result_lines').value,terminated:worker.terminated,running:handler.running};
     });
     assert.deepEqual(legacyStale,{value:'new-question',terminated:true,running:false});
+    await page.evaluate(async () => {
+      const element = document.getElementById('qpisql-qss-config'), config = JSON.parse(element.dataset.config);
+      element.dataset.config = JSON.stringify({...config, enabled: true, assessmentMode: 'qss', referenceSql: 'SELECT 1 AS value'});
+      document.querySelectorAll('#qpisql-qss-shadow').forEach(card => card.remove());
+      document.getElementById('qpisql-qss-evaluation').value = JSON.stringify({status: 'exact',
+        engine: 'graph-qss-sqlite-v2', version: '2.1.1', rubric: 'paper-linear-v2', scale: 1,
+        points: 2, maxPoints: 3, distance: 1, referenceRevision: config.referenceRevision,
+        answerDigest: await QSSShadow.digest(document.getElementById('sequence_b').value),
+        edits: [{name: 'setColumnReference', cost: 1}]});
+      window.handler = window.EXECUTE_HANDLER = new ExecutionHandler();
+    });
+    await page.waitForFunction(() => handler.qss.result !== null);
+    assert.equal(await page.locator('#qpisql-qss-shadow').textContent(), completed.feedback);
+    assert.equal(await page.locator('#qpisql-qss-shadow details, #qpisql-qss-shadow .qpisql-qss-score').count(), 0);
+    assert.equal(JSON.parse(await page.locator('#qpisql-qss-evaluation').inputValue()).points, 2);
     assert.deepEqual(errors, []);
     console.log('PASS: result mode starts only SQL and result metrics; QSS mode skips inactive result getters');
+    console.log('PASS: a valid restored participant assessment retains submission evidence without disclosing points or edits');
   } finally {
     await context.close();
     if (!process.env.CHROME_CDP_URL) await browser.close();

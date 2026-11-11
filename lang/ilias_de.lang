@@ -258,6 +258,12 @@ qss_editinsert#:#Einfügen
 qss_editdelete#:#Entfernen
 qss_editreplace#:#Ersetzen
 qss_cost#:#Kosten
+qss_participanttitle#:#Bewertung
+qss_participantrunning#:#Ihre Antwort wird bewertet. Bitte warten Sie, bis die Bewertung abgeschlossen ist.
+qss_participantcompleted#:#Bewertung abgeschlossen. Das Ergebnis sehen Sie erst in der freigegebenen Auswertung.
+qss_participantpending#:#Bitte führen Sie Ihre Antwort aus, um sie bewerten zu lassen.
+qss_participantcancelled#:#Bewertung abgebrochen. Bitte führen Sie Ihre Antwort erneut aus.
+qss_participantfailed#:#Die Bewertung konnte nicht abgeschlossen werden. Bitte führen Sie Ihre Antwort erneut aus.
 
 assessment_mode#:#Bewertungsverfahren
 assessment_result#:#Ergebnisbasierte Bewertung

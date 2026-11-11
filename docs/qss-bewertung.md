@@ -24,6 +24,14 @@ Musterlösung mit den aktuellen Einstellungen ausgeführt werden. Unveränderte
 Referenzen und Kosten erfordern bei reinen Metadatenänderungen keine neue
 Ausführung. Die normale Vorschau ermöglicht das Testen studentischer Varianten.
 
+Beim Beantworten zeigt der QSS-Bereich ausschließlich eine neutrale Warteanzeige
+mit unbestimmtem Fortschrittsbalken. Suchzustände, Untergrenzen, Punkte, Editkosten
+und Bewertungsdetails werden dort nicht angezeigt, auch nicht nach Abschluss oder
+erneutem Laden einer gespeicherten Antwort. Die Abschlussmeldung verweist auf die
+freigegebene Auswertung; deren Zugang steuert weiterhin ILIAS. In der
+Aufgabenerstellung und der zugänglichen Lösungsansicht bleiben die Details
+verfügbar. Die vorhandene SQL-Ausgabe bleibt davon unabhängig.
+
 ## Bewertung und Speicherung
 
 SQL-Ausführen mit Vorbereitung A, Antwort B und gegebenenfalls Kontrolle C bleibt
@@ -118,9 +126,20 @@ privat erhalten und werden nicht als bestandene Läufe zusammengezählt.
 | Ausgelieferte JavaScript-Laufzeit | `6958cf9e60b4e8d180ae48e567b6503e8e955d586d24ccb143b2acc6af580e7e` |
 | Zusammengesetzte Gesamtabnahme | `5d94d78b11f9ca6967f14fae30e52e70badb3ed454a75b9e41995547cadda942` |
 
-Der private Gesamtabnahmebeleg bindet 96 Produktionsdateien sowie die einzelnen
-Browser-, Upgrade-, Noten-, Export- und Testberichte. Er enthält keine Umdeutung
+Der private Gesamtabnahmebeleg des Aktivierungsstands `7fb13a3` bindet 96
+Produktionsdateien sowie die einzelnen Browser-, Upgrade-, Noten-, Export- und
+Testberichte. Er enthält keine Umdeutung
 fehlgeschlagener Vorläufe und keine vollständige SQL-Äquivalenzgarantie.
+
+Die anschließende Änderung der Studentenanzeige wurde mit sieben Chrome-
+Regressionsgruppen, 44 PHP-Tests mit 177 Assertions unter PHP 8.3 und 8.4 sowie
+19 ILIAS-Integrationstests mit 141 Assertions geprüft. Ein nativer anonymer
+Studententest bestätigt neutrale Anzeigen während der Bewertung, nach Abschluss
+und beim Wiederaufrufen der gespeicherten Antwort. Nach Abgabe erscheinen die
+offiziellen 3/5 Punkte und QSS-Details auf der freigegebenen Auswertungsseite.
+Bei vorübergehend gesperrter Ergebnisfreigabe verweigert auch deren direkte URL
+den Zugriff; die ursprüngliche Freigabe wurde danach wiederhergestellt. Die
+SQL-/QSS-Berechnung und die Standardkosten wurden dabei nicht geändert.
 
 ## Grenzen
 

@@ -146,7 +146,8 @@ class JsBlock extends GUIElement
         foreach (['title', 'shadow', 'sqlRunning', 'parsing', 'normalizing', 'comparing',
             'completed', 'unsupported', 'failed', 'cancelled', 'notEvaluated', 'distance',
             'points', 'edits', 'model', 'visited', 'lowerBound', 'waiting', 'stale', 'details',
-            'editInsert', 'editDelete', 'editReplace', 'cost'] as $key) {
+            'editInsert', 'editDelete', 'editReplace', 'cost', 'participantTitle', 'participantRunning',
+            'participantCompleted', 'participantPending', 'participantCancelled', 'participantFailed'] as $key) {
             $labels[$key] = strip_tags($plugin->txt('qss_' . strtolower($key)));
         }
         return $labels;

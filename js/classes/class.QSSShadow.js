@@ -69,6 +69,11 @@ class QSSShadow
     return this.labels[key] || key;
   }
 
+  showsAssessmentDetails()
+  {
+    return ['author', 'solution'].includes(this.config.context);
+  }
+
   mount()
   {
     const area = document.getElementById('qpisql-output-area');
@@ -78,7 +83,7 @@ class QSSShadow
       this.card = document.createElement('section');
       this.card.className = 'qpisql-qss-shadow';
       this.card.id = 'qpisql-qss-shadow';
-      this.card.setAttribute('aria-label', this.label('title'));
+      this.card.setAttribute('aria-label', this.label(this.showsAssessmentDetails() ? 'title' : 'participantTitle'));
       area.insertBefore(this.card, document.getElementById('qpisql-output-area-relation'));
     }
     return this.card;
@@ -105,11 +110,19 @@ class QSSShadow
     status.setAttribute('role', 'status');
     status.setAttribute('aria-live', 'polite');
     status.textContent = text;
-    card.append(title, note, status);
+    if (this.showsAssessmentDetails()) card.append(title, note);
+    else {
+      // The answering page must not disclose the grade, even through live regions.
+      const key = busy ? 'participantRunning' : text === this.label('completed') ? 'participantCompleted'
+        : text === this.label('cancelled') ? 'participantCancelled'
+        : [this.label('failed'), this.label('unsupported')].includes(text) ? 'participantFailed' : 'participantPending';
+      status.textContent = this.label(key);
+    }
+    card.appendChild(status);
     card.setAttribute('aria-busy', busy ? 'true' : 'false');
     if (busy) {
       const progress = document.createElement('progress');
-      progress.setAttribute('aria-label', this.label('waiting'));
+      progress.setAttribute('aria-label', this.label(this.showsAssessmentDetails() ? 'waiting' : 'participantRunning'));
       card.appendChild(progress);
     }
   }
@@ -124,6 +137,10 @@ class QSSShadow
 
   progress(data)
   {
+    if (!this.showsAssessmentDetails()) {
+      this.message('', true);
+      return;
+    }
     const phase = this.labels[data.phase] ? data.phase : 'comparing';
     const parts = [this.label(phase)];
     if (Number.isFinite(data.visited)) parts.push(this.label('visited') + ': ' + data.visited.toLocaleString());
@@ -234,7 +251,7 @@ class QSSShadow
     }
     this.message(this.label(success ? 'completed' : result.status === 'unsupported' ? 'unsupported'
       : result.status === 'cancelled' ? 'cancelled' : 'failed'), false);
-    if (!this.card) return;
+    if (!this.card || !this.showsAssessmentDetails()) return;
     if (success) {
       const summary = document.createElement('p');
       summary.className = 'qpisql-qss-score';
@@ -278,7 +295,8 @@ class QSSShadow
     for (const card of container.querySelectorAll(':scope > .qpisql-qss-shadow')) card.remove();
     if (!container.dataset.qssEvaluation) return;
     try {
-      const qss = new QSSShadow({ labels: JSON.parse(container.dataset.qssLabels || '{}') });
+      // Only the server-rendered solution output calls this after ILIAS grants access.
+      const qss = new QSSShadow({ context: 'solution', labels: JSON.parse(container.dataset.qssLabels || '{}') });
       qss.card = document.createElement('section');
       qss.card.className = 'qpisql-qss-shadow';
       container.appendChild(qss.card);

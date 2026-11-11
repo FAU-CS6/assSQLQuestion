@@ -81,10 +81,12 @@ final class QssConfigurationTest extends TestCase
         $labels = JsBlock::getQssLabels(new class {
             public function txt(string $key): string { return '<b>' . $key . '</b>'; }
         });
-        self::assertCount(24, $labels);
+        self::assertCount(30, $labels);
         self::assertSame('qss_sqlrunning', $labels['sqlRunning']);
         self::assertSame('qss_notevaluated', $labels['notEvaluated']);
         self::assertSame('qss_lowerbound', $labels['lowerBound']);
         self::assertSame('qss_editreplace', $labels['editReplace']);
+        self::assertSame('qss_participantrunning', $labels['participantRunning']);
+        self::assertSame('qss_participantcompleted', $labels['participantCompleted']);
     }
 }

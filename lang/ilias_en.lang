@@ -259,6 +259,12 @@ qss_editinsert#:#Insert
 qss_editdelete#:#Delete
 qss_editreplace#:#Replace
 qss_cost#:#Cost
+qss_participanttitle#:#Assessment
+qss_participantrunning#:#Your answer is being assessed. Please wait until the assessment is complete.
+qss_participantcompleted#:#Assessment complete. Your result will only be available once the results page is released.
+qss_participantpending#:#Please execute your answer to have it assessed.
+qss_participantcancelled#:#Assessment cancelled. Please execute your answer again.
+qss_participantfailed#:#The assessment could not be completed. Please execute your answer again.
 
 assessment_mode#:#Assessment method
 assessment_result#:#Result-based assessment
