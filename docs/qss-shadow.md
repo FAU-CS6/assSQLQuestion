@@ -1,5 +1,10 @@
 # QSS als experimentelle Parallelbewertung
 
+**Historischer Stand bis 10. November 2026.** Seit Plugin 0.3.0 wird pro Frage
+zwischen Ergebnisbewertung und echter QSS-Bewertung gewählt. Die aktuelle
+Bedienung, Kompatibilität und Abnahme stehen in [QSS-Bewertung](qss-bewertung.md).
+Die folgende Beschreibung dokumentiert den vorherigen Parallelbetrieb.
+
 Der Branch `ilias-11-update-with-qss` ergänzt Graph-based QSS als
 separate Diagnose nach dem Vorgehen der verlinkten Arbeit. Die vorhandenen Bewertungsmetriken und die reguläre
 ILIAS-Punkteberechnung verwenden keine QSS-Werte. QSS ist keine weitere

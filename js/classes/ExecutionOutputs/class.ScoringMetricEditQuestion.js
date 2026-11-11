@@ -22,6 +22,7 @@
      super();
 
      this.type = type;
+     this.isResultMetric = true;
      this.getter = getter;
      this.beautifier = beautifier;
 

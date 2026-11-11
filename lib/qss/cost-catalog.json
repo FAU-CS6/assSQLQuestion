@@ -1,0 +1,356 @@
+{
+  "version": 1,
+  "modelVersion": "2.1.1",
+  "steps": [
+    {
+      "id": "baseAddComponent",
+      "defaultCost": 1,
+      "group": "basic",
+      "de": "Hinzufügen einer SQL-Komponente",
+      "en": "Add a SQL component"
+    },
+    {
+      "id": "baseAddStructural",
+      "defaultCost": 5,
+      "group": "basic",
+      "de": "Hinzufügen einer Anweisung oder Datenquelle",
+      "en": "Add a statement or data source"
+    },
+    {
+      "id": "baseAddDistinct",
+      "defaultCost": 2,
+      "group": "basic",
+      "de": "Hinzufügen von DISTINCT",
+      "en": "Add DISTINCT"
+    },
+    {
+      "id": "baseRemoveComponent",
+      "defaultCost": 1,
+      "group": "basic",
+      "de": "Entfernen einer SQL-Komponente",
+      "en": "Remove a SQL component"
+    },
+    {
+      "id": "baseRemoveStructural",
+      "defaultCost": 5,
+      "group": "basic",
+      "de": "Entfernen einer Anweisung oder Datenquelle",
+      "en": "Remove a statement or data source"
+    },
+    {
+      "id": "baseRemoveDistinct",
+      "defaultCost": 2,
+      "group": "basic",
+      "de": "Entfernen von DISTINCT",
+      "en": "Remove DISTINCT"
+    },
+    {
+      "id": "baseSetComponent",
+      "defaultCost": 1,
+      "group": "basic",
+      "de": "Setzen einer SQL-Komponente",
+      "en": "Set a SQL component"
+    },
+    {
+      "id": "baseSetStructural",
+      "defaultCost": 5,
+      "group": "basic",
+      "de": "Setzen einer Anweisung oder Datenquelle",
+      "en": "Set a statement or data source"
+    },
+    {
+      "id": "baseSetDistinct",
+      "defaultCost": 2,
+      "group": "basic",
+      "de": "Setzen von DISTINCT",
+      "en": "Set DISTINCT"
+    },
+    {
+      "id": "baseChangeComponent",
+      "defaultCost": 1,
+      "group": "basic",
+      "de": "Ändern einer SQL-Komponente",
+      "en": "Change a SQL component"
+    },
+    {
+      "id": "baseChangeStructural",
+      "defaultCost": 5,
+      "group": "basic",
+      "de": "Ändern einer Anweisung oder Datenquelle",
+      "en": "Change a statement or data source"
+    },
+    {
+      "id": "baseChangeDistinct",
+      "defaultCost": 2,
+      "group": "basic",
+      "de": "Ändern von DISTINCT",
+      "en": "Change DISTINCT"
+    },
+    {
+      "id": "baseUnsetComponent",
+      "defaultCost": 1,
+      "group": "basic",
+      "de": "Entfernen eines Attributs einer SQL-Komponente",
+      "en": "Unset a SQL component"
+    },
+    {
+      "id": "baseUnsetStructural",
+      "defaultCost": 5,
+      "group": "basic",
+      "de": "Entfernen eines Attributs einer Anweisung oder Datenquelle",
+      "en": "Unset a statement or data source"
+    },
+    {
+      "id": "baseUnsetDistinct",
+      "defaultCost": 2,
+      "group": "basic",
+      "de": "Entfernen eines Attributs von DISTINCT",
+      "en": "Unset DISTINCT"
+    },
+    {
+      "id": "relabelUnconstrainedBooleanGroups",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Choose distinct Boolean-group labels explicitly left free by the question",
+      "de": "Ausdrücklich freie Gruppenbeschriftungen umbenennen"
+    },
+    {
+      "id": "chooseUnconstrainedDiagnosticTuple",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Choose the question-permitted constant feedback tuple after a verified result-row count",
+      "de": "Ausdrücklich freies technisches Rückmeldetupel wählen"
+    },
+    {
+      "id": "repairDeclaredColumnBinding",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Repair a column declaration and bind matching SQLite quoted CHECK names",
+      "de": "Spaltendeklaration und gebundene CHECK-Namen reparieren"
+    },
+    {
+      "id": "insertProjectedExpression",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Insert one non-query projected SQL expression",
+      "de": "Einen Ausgabenausdruck ergänzen"
+    },
+    {
+      "id": "restoreTableConstraint",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Restore one declared table constraint",
+      "de": "Eine deklarierte Tabellenbedingung wiederherstellen"
+    },
+    {
+      "id": "relocateSingleColumnForeignKey",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Move an unnamed single-column foreign key between column and table syntax",
+      "de": "Einspaltigen Fremdschlüssel zwischen Spalten- und Tabellenschreibweise verschieben"
+    },
+    {
+      "id": "rewriteExactIntegerConstant",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Rewrite an exactly equal int64 constant expression",
+      "de": "Exakt gleichen int64-Konstantenausdruck umformen"
+    },
+    {
+      "id": "negateComplementaryComparison",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Express a comparison by negating its complement",
+      "de": "Vergleich durch negiertes Gegenstück ausdrücken"
+    },
+    {
+      "id": "deMorganBoolean",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Apply three-valued De Morgan laws to Boolean predicates",
+      "de": "De-Morgan-Regeln auf dreiwertige Prädikate anwenden"
+    },
+    {
+      "id": "booleanCaseEncoding",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Encode a Boolean value as a NULL-preserving CASE expression",
+      "de": "Booleschen Wert mit NULL-erhaltendem CASE ausdrücken"
+    },
+    {
+      "id": "countStarOne",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Count rows using either star or the non-NULL integer one",
+      "de": "COUNT(*) und COUNT(1) ineinander umformen"
+    },
+    {
+      "id": "changeLiteral",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Change a SQL literal, retaining its intrinsic SQLite storage class",
+      "de": "Einen Literalwert ändern"
+    },
+    {
+      "id": "changeColumnReference",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Change the column and its table qualifier together",
+      "de": "Spaltenreferenz mit Tabellenqualifizierer ändern"
+    },
+    {
+      "id": "changeAggregateType",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Change a SQL aggregate function while retaining its argument",
+      "de": "Aggregatfunktion ändern"
+    },
+    {
+      "id": "commuteBooleanOperands",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Swap pure AND/OR operands",
+      "de": "Reine AND-/OR-Operanden vertauschen"
+    },
+    {
+      "id": "associateBooleanOperands",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Reassociate pure AND/OR operands",
+      "de": "Reine AND-/OR-Ausdrücke umklammern"
+    },
+    {
+      "id": "duplicateBooleanPredicate",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Duplicate a pure Boolean predicate (reverse idempotence)",
+      "de": "Reines Prädikat duplizieren (umgekehrte Idempotenz)"
+    },
+    {
+      "id": "collapseDuplicateBooleanPredicate",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Collapse repeated pure Boolean predicate",
+      "de": "Doppeltes reines Prädikat zusammenfassen"
+    },
+    {
+      "id": "rewriteNotEqual",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Rewrite != or <> as negated equality, and conversely",
+      "de": "Ungleichheit und negierte Gleichheit umformen"
+    },
+    {
+      "id": "mirrorColumnLiteralComparison",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Mirror a plain SQLite column/literal comparison",
+      "de": "Einfachen Spalten-/Literalvergleich spiegeln"
+    },
+    {
+      "id": "mirrorComparisonOperands",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Reverse a SQL comparison, charging for possible collation or affinity changes",
+      "de": "Vergleich mit möglichen Kollations-/Affinitätsänderungen spiegeln"
+    },
+    {
+      "id": "swapBinaryOperands",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Swap the operands of a binary SQL operation",
+      "de": "Operanden einer binären Operation vertauschen"
+    },
+    {
+      "id": "reassociateBinaryOperands",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Change grouping of two binary SQL operations, charging for changed semantics",
+      "de": "Binäre Operationen mit möglicher Bedeutungsänderung umklammern"
+    },
+    {
+      "id": "wrapUnaryExpression",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Wrap an expression in a unary SQL operator",
+      "de": "Unären Operator um einen Ausdruck ergänzen"
+    },
+    {
+      "id": "unwrapUnaryExpression",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Remove a unary SQL operator",
+      "de": "Unären Operator entfernen"
+    },
+    {
+      "id": "wrapBinaryExpression",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Add a binary SQL expression around an existing operand",
+      "de": "Binäre Operation um einen Operanden ergänzen"
+    },
+    {
+      "id": "unwrapIncompleteBinaryExpression",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Remove a binary operator with a missing operand",
+      "de": "Unvollständigen binären Operator entfernen"
+    },
+    {
+      "id": "removeExtraneousBinaryTerm",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Remove an extraneous binary SQL operation and retain one operand",
+      "de": "Überflüssige binäre Operation entfernen und einen Operanden behalten"
+    },
+    {
+      "id": "wrapAggregateExpression",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Add a SQL aggregate around an expression",
+      "de": "Aggregatfunktion um einen Ausdruck ergänzen"
+    },
+    {
+      "id": "unwrapAggregateExpression",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Remove a SQL aggregate while retaining its argument",
+      "de": "Aggregatfunktion entfernen und Argument behalten"
+    },
+    {
+      "id": "renameBoundTableAlias",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Rename a table alias and its bound references without capture",
+      "de": "Tabellenalias samt gebundenen Referenzen umbenennen"
+    },
+    {
+      "id": "relocateInnerJoinPredicate",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Relocate a pure INNER JOIN predicate to/from WHERE",
+      "de": "Reines INNER-JOIN-Prädikat zwischen ON und WHERE verschieben"
+    },
+    {
+      "id": "relocateOuterJoinPredicate",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Move a predicate between WHERE and an outer JOIN, charging for changed unmatched rows",
+      "de": "Prädikat zwischen äußerem JOIN und WHERE verschieben"
+    },
+    {
+      "id": "repairColumnReference_definition",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Repair one column reference definition",
+      "de": "Eine Fremdschlüsselbedingung der Spalte reparieren"
+    },
+    {
+      "id": "repairColumnNullable",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Repair one column nullable",
+      "de": "Eine NULL-/NOT-NULL-Bedingung der Spalte reparieren"
+    }
+  ]
+}

@@ -83,7 +83,9 @@ class JsBlock extends GUIElement
         if ($context !== 'solution') {
             $config = [
                 'version' => 2,
-                'mode' => 'shadow',
+                'mode' => 'assessment',
+                'assessmentMode' => $this->object->getAssessmentMode(),
+                'costs' => $this->object->getQssCosts(),
                 'engine' => self::QSS_ENGINE,
                 'engineVersion' => self::QSS_ENGINE_VERSION,
                 'rubric' => self::QSS_RUBRIC,
@@ -93,19 +95,19 @@ class JsBlock extends GUIElement
                 'questionText' => self::getQssQuestionText($this->object),
                 'referenceRows' => self::getQssReferenceRows($this->object),
                 'context' => $context,
-                'enabled' => true,
-                // Client-side graph QSS necessarily exposes the
-                // reference. These diagnostics never determine ILIAS grades.
-                'referenceSql' => $context === 'author' ? null : $this->object->getSequence('sequence_b'),
+                'enabled' => $this->object->getAssessmentMode() === QssAssessment::QSS,
+                // A QSS question necessarily exposes the reference in the client.
+                'referenceSql' => $context === 'author' || $this->object->getAssessmentMode() !== QssAssessment::QSS ? null : $this->object->getSequence('sequence_b'),
                 'maxPoints' => $this->object->getMaximumPoints(),
                 'referenceRevision' => self::getQssReferenceRevision($this->object),
                 'labels' => self::getQssLabels($this->plugin),
             ];
+            $config['labels']['shadow'] = strip_tags($this->plugin->txt('assessment_qss_active'));
             if ($context === 'participant') {
                 $config['referenceExecutionValid'] = $this->object->getExecutedBool() && !$this->object->getErrorBool();
             }
-            $evaluation = $participant_input?->getQssEvaluation();
-            if (isset($_POST['qss_evaluation']) && is_string($_POST['qss_evaluation'])) {
+            $evaluation = $this->object->getAssessmentMode() === QssAssessment::QSS ? $participant_input?->getQssEvaluation() : null;
+            if ($this->object->getAssessmentMode() === QssAssessment::QSS && isset($_POST['qss_evaluation']) && is_string($_POST['qss_evaluation'])) {
                 $posted = new ParticipantInput();
                 $posted->setQssEvaluationFromJSON($_POST['qss_evaluation']);
                 $evaluation = $posted->getQssEvaluation();
@@ -132,6 +134,9 @@ class JsBlock extends GUIElement
             'sequence_b' => $question->getSequence('sequence_b'),
             'sequence_c' => $question->getSequence('sequence_c'),
             'metrics' => $question->getAllSolutionMetricsAsJSON(),
+            'assessmentMode' => method_exists($question, 'getAssessmentMode') ? $question->getAssessmentMode() : QssAssessment::RESULT,
+            'maximumPoints' => method_exists($question, 'getMaximumPoints') ? $question->getMaximumPoints() : null,
+            'costProfile' => method_exists($question, 'getQssCosts') ? QssAssessment::profile($question->getQssCosts()) : QssAssessment::profile(),
         ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
     }
 
@@ -179,7 +184,7 @@ class JsBlock extends GUIElement
      */
     public function writeParticipantInput($participant_input)
     {
-        if (isset($_POST['qss_evaluation']) && is_string($_POST['qss_evaluation'])) {
+        if ($this->object->getAssessmentMode() === QssAssessment::QSS && isset($_POST['qss_evaluation']) && is_string($_POST['qss_evaluation'])) {
             $participant_input->setQssEvaluationFromJSON($_POST['qss_evaluation']);
         }
     }

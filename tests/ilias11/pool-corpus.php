@@ -76,6 +76,9 @@ function corpusSnapshot(assSQLQuestion $question): array
         'error_bool' => $question->getErrorBool(), 'error' => $question->getError(),
         'executed_bool' => $question->getExecutedBool(), 'output_relation' => $question->getOutputRelation(),
         'metrics' => corpusMetrics($question->getAllSolutionMetricsAsJSON()),
+        'assessment_mode' => $question->getAssessmentMode(),
+        'qss_maximum_points' => $question->getQssMaximumPoints(),
+        'qss_costs' => $question->getQssCostsAsJSON(),
         'maximum_points' => $question->getMaximumPoints(),
         'feedback_correct' => $question->feedbackOBJ->getGenericFeedbackContent($question->getId(), true),
         'feedback_incorrect' => $question->feedbackOBJ->getGenericFeedbackContent($question->getId(), false)
@@ -112,7 +115,12 @@ function corpusExpected(array $source): array
         'editor_assistance' => (bool) ($m['EDITOR_ASSISTANCE'] ?? false),
         'error_bool' => (bool) $m['ERROR_BOOL'], 'error' => $m['ERROR'],
         'executed_bool' => (bool) $m['EXECUTED_BOOL'], 'output_relation' => $m['OUTPUT_RELATION'],
-        'metrics' => $metrics, 'maximum_points' => (float) array_sum(array_column($metrics, 'points')),
+        'metrics' => $metrics,
+        'assessment_mode' => $m['ASSESSMENT_MODE'] ?? QssAssessment::RESULT,
+        'qss_maximum_points' => (float) ($m['QSS_MAXIMUM_POINTS'] ?? 5),
+        'qss_costs' => json_encode(QssAssessment::profile(QssAssessment::costsFromJSON($m['QSS_COSTS'] ?? '')), JSON_THROW_ON_ERROR),
+        'maximum_points' => ($m['ASSESSMENT_MODE'] ?? QssAssessment::RESULT) === QssAssessment::QSS
+            ? (float) $m['QSS_MAXIMUM_POINTS'] : (float) array_sum(array_column($metrics, 'points')),
         'feedback_correct' => $source['feedback']['response_allcorrect'] ?? '',
         'feedback_incorrect' => $source['feedback']['response_onenotcorrect'] ?? ''
     ];

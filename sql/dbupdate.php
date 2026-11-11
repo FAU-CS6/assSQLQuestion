@@ -191,3 +191,21 @@ if (!$ilDB->tableColumnExists('il_qpl_qst_qpisql_qd', 'editor_assistance')) {
     ]);
 }
 ?>
+
+<#7>
+<?php
+// Existing questions retain their established result-based scoring and grades.
+if (!$ilDB->tableColumnExists('il_qpl_qst_qpisql_qd', 'assessment_mode')) {
+    $ilDB->addTableColumn('il_qpl_qst_qpisql_qd', 'assessment_mode', [
+        'type' => 'text', 'length' => 16, 'notnull' => true, 'default' => 'result'
+    ]);
+}
+if (!$ilDB->tableColumnExists('il_qpl_qst_qpisql_qd', 'qss_maximum_points')) {
+    $ilDB->addTableColumn('il_qpl_qst_qpisql_qd', 'qss_maximum_points', [
+        'type' => 'float', 'notnull' => true, 'default' => 5
+    ]);
+}
+if (!$ilDB->tableColumnExists('il_qpl_qst_qpisql_qd', 'qss_costs')) {
+    $ilDB->addTableColumn('il_qpl_qst_qpisql_qd', 'qss_costs', ['type' => 'clob']);
+}
+?>

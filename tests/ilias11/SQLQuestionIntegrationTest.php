@@ -70,6 +70,128 @@ final class SQLQuestionIntegrationTest extends TestCase
         self::assertSame(3, $loaded->getNrOfTries());
         self::assertSame('sql-integration-test', $loaded->getExternalId());
         self::assertNull($loaded->getOriginalId());
+        self::assertSame('result', $loaded->getAssessmentMode());
+    }
+
+    public function testQssQuestionConfigurationSurvivesSaveCopyDuplicateAndQti(): void
+    {
+        $question = $this->question();
+        $question->setAssessmentMode('qss');
+        $question->setQssMaximumPoints(12.5);
+        $question->setQssCosts(['countStarOne' => 3, 'changeLiteral' => 0]);
+        $question->saveToDb();
+        $copy = $question->copyObject($this->pool->getId(), 'QSS copy');
+        $duplicate = $question->duplicate(true, '', '', -1, $this->pool->getId());
+        $parser = new ilQTIParser(sys_get_temp_dir(), null, ilQTIParser::IL_MO_PARSE_QTI, $this->pool->getId());
+        $parser->setXMLContent($question->toXML());
+        $parser->startParsing();
+        $import = current($parser->import_mapping)['pool'];
+        foreach ([$question->getId(), $copy, $duplicate, $import] as $id) {
+            $this->question_ids[] = $id;
+            $loaded = assQuestion::instantiateQuestion($id);
+            self::assertSame('qss', $loaded->getAssessmentMode());
+            self::assertSame(12.5, $loaded->getMaximumPoints());
+            self::assertSame(12.5, $loaded->getPoints());
+            self::assertSame($question->getQssCostsAsJSON(), $loaded->getQssCostsAsJSON());
+            self::assertSame($question->getAllSolutionMetricsAsJSON(), $loaded->getAllSolutionMetricsAsJSON());
+        }
+        $question->setAssessmentMode('result');
+        self::assertSame(5.0, $question->getMaximumPoints(), 'Switching restores the retained result-based settings.');
+    }
+
+    public function testPreUpdateQtiWithoutAssessmentFieldsRetainsResultScoring(): void
+    {
+        $question = $this->question();
+        $dom = new DOMDocument(); $dom->loadXML($question->toXML());
+        $xpath = new DOMXPath($dom);
+        foreach (['ASSESSMENT_MODE', 'QSS_MAXIMUM_POINTS', 'QSS_COSTS'] as $field) {
+            foreach ($xpath->query('//qtimetadatafield[fieldlabel="' . $field . '"]') as $node) {
+                $node->parentNode->removeChild($node);
+            }
+        }
+        $parser = new ilQTIParser(sys_get_temp_dir(), null, ilQTIParser::IL_MO_PARSE_QTI, $this->pool->getId());
+        $parser->setXMLContent($dom->saveXML()); $parser->startParsing();
+        $id = current($parser->import_mapping)['pool']; $this->question_ids[] = $id;
+        $loaded = assQuestion::instantiateQuestion($id);
+        self::assertSame('result', $loaded->getAssessmentMode());
+        self::assertSame(5.0, $loaded->getMaximumPoints());
+        self::assertSame($question->getAllSolutionMetricsAsJSON(), $loaded->getAllSolutionMetricsAsJSON());
+        self::assertSame($question->getSequence('sequence_b'), $loaded->getSequence('sequence_b'));
+    }
+
+    public function testQssGradesUseCertifiedBoundAnswersAndRecomputePointsInsteadOfPostedPoints(): void
+    {
+        $question = $this->question(); $question->setAssessmentMode('qss'); $question->setQssMaximumPoints(10);
+        $input = new ParticipantInput(); $input->setSequence('SELECT id FROM people');
+        // SQL-error states still admit a static edit path and partial QSS credit.
+        $input->setExecutedBool(false); $input->setErrorBool(true);
+        $evidence = ['status' => 'exact', 'engine' => JsBlock::QSS_ENGINE, 'version' => JsBlock::QSS_ENGINE_VERSION,
+            'modelVersion' => JsBlock::QSS_ENGINE_VERSION, 'rubric' => JsBlock::QSS_RUBRIC,
+            'scoreCertifiedWithinModel' => true, 'exactWithinModel' => true, 'distance' => 2, 'points' => 999,
+            'maxPoints' => 10, 'scale' => 2, 'formula' => 'max(maxPoints - distance * scale, 0)',
+            'answerDigest' => hash('sha256', $input->getSequence()), 'referenceRevision' => JsBlock::getQssReferenceRevision($question)];
+        $score = new ReflectionMethod(assSQLQuestion::class, 'calculateReachedPointsForSolution');
+        $input->setQssEvaluation($evidence);
+        self::assertSame(6.0, $score->invoke($question, ['value1' => $input->toJSON()]));
+        foreach (['answerDigest' => hash('sha256', 'changed'), 'version' => 'old', 'scale' => 3,
+            'status' => 'cancelled', 'scoreCertifiedWithinModel' => false] as $key => $invalid) {
+            $input->setQssEvaluation(array_replace($evidence, [$key => $invalid]));
+            self::assertSame(0.0, $score->invoke($question, ['value1' => $input->toJSON()]));
+        }
+        $input->setQssEvaluation($evidence);
+        $question->setQssCosts(['changeLiteral' => 4]);
+        self::assertSame(0.0, $score->invoke($question, ['value1' => $input->toJSON()]), 'Changed costs invalidate a previous result.');
+        $question->setAssessmentMode('result');
+        self::assertSame(0.0, $score->invoke($question, ['value1' => $input->toJSON()]), 'No fallback to QSS in result mode.');
+    }
+
+    public function testUnchangedQssSettingsCanBeSavedButChangedReferencesRequireExecution(): void
+    {
+        global $DIC;
+        $question = $this->question(); $question->setAssessmentMode('qss');
+        $original = $_POST;
+        try {
+            $fields = ['assessment_mode'=>'qss','qss_maximum_points'=>'5','question'=>$question->getQuestion()];
+            foreach (['sequence_a','sequence_b','sequence_c'] as $name) { $fields[$name]=$question->getSequence($name); }
+            foreach ($question->getQssCosts() as $id=>$cost) { $fields['qss_cost_'.$id]=(string)$cost; }
+            $_POST = new ILIAS\HTTP\Wrapper\SuperGlobalDropInReplacement($DIC->refinery(), $fields);
+            self::assertTrue((new ScoringArea($question->getPlugin(),$question))->checkInput());
+            foreach (['qss_cost_changeLiteral'=>'3','sequence_b'=>'SELECT id FROM people','question'=>'<p>Use a different method.</p>'] as $key=>$value) {
+                $_POST = new ILIAS\HTTP\Wrapper\SuperGlobalDropInReplacement($DIC->refinery(), array_replace($fields,[$key=>$value]));
+                self::assertFalse((new ScoringArea($question->getPlugin(),$question))->checkInput());
+            }
+        } finally { $_POST=$original; }
+    }
+
+    public function testQssSubmissionScoreAndRevisionAreServerCreatedAndHistoricalGradesStayStable(): void
+    {
+        global $DIC;
+        $q=$this->question();$q->setAssessmentMode('qss');$q->setQssMaximumPoints(10);
+        $q->setProcessLocker(new ilAssQuestionProcessLockerDb($DIC->database()));
+        $test=new ilObjTest();$test->setTitle('QSS saved revision test');$test->create();$test->saveToDb();
+        $session=new ilTestSession($DIC->database(),$DIC->user());$session->setTestId($test->getTestId());$session->setUserId($DIC->user()->getId());$session->saveToDb();
+        $active=$session->getActiveId();$original=$_POST;
+        try {
+            $answer='SELECT id FROM people';
+            $e=['status'=>'exact','engine'=>JsBlock::QSS_ENGINE,'version'=>JsBlock::QSS_ENGINE_VERSION,'modelVersion'=>JsBlock::QSS_ENGINE_VERSION,
+                'rubric'=>JsBlock::QSS_RUBRIC,'scoreCertifiedWithinModel'=>true,'exactWithinModel'=>true,'distance'=>2,'points'=>999,
+                'maxPoints'=>10,'scale'=>2,'formula'=>'max(maxPoints - distance * scale, 0)',
+                'answerDigest'=>hash('sha256',$answer),'referenceRevision'=>JsBlock::getQssReferenceRevision($q)];
+            $fields=['sequence_b'=>$answer,'error_bool'=>'false','error'=>'','executed_bool'=>'true','output_relation'=>'',
+                'qss_evaluation'=>json_encode($e),'value2'=>'999','qss_grading_context'=>'forged'];
+            $_POST=new ILIAS\HTTP\Wrapper\SuperGlobalDropInReplacement($DIC->refinery(),$fields);
+            $q->saveWorkingData($active,0,true);$saved=$q->getSolutionStored($active,0,true);
+            self::assertNull($saved['value2'],'The established single-JSON answer transport stays unchanged.');
+            $input=ParticipantInput::fromJSON($saved['value1']);
+            self::assertSame(6.0,$input->getQssGradingContext()['points']);
+            self::assertSame(QssAssessment::profile(),$input->getQssGradingContext()['costProfile']);
+            $q->setQssCosts(['changeLiteral'=>9]);$q->setAssessmentMode('result');
+            self::assertSame(6.0,$q->calculateReachedPoints($active,0,true),'Historical official points retain the submitted grading revision.');
+            $q->setAssessmentMode('qss');$e['referenceRevision']=JsBlock::getQssReferenceRevision($q);$e['distance']=7;$fields['qss_evaluation']=json_encode($e);
+            $_POST=new ILIAS\HTTP\Wrapper\SuperGlobalDropInReplacement($DIC->refinery(),$fields);$q->saveWorkingData($active,0,true);
+            self::assertSame(0.0,ParticipantInput::fromJSON($q->getSolutionStored($active,0,true)['value1'])->getQssGradingContext()['points'],'A saved zero must remain zero.');
+            $q->setAssessmentMode('result');self::assertSame(0.0,$q->calculateReachedPoints($active,0,true));
+        } finally { $_POST=$original;$test->delete(); }
     }
 
     public function testCopyDuplicateAndSynchronizationPreserveSQLData(): void
@@ -185,6 +307,7 @@ final class SQLQuestionIntegrationTest extends TestCase
     public function testQssConfigurationAndStoredMetadataRemainHTMLData(): void
     {
         $question = $this->question();
+        $question->setAssessmentMode('qss');
         $sql = "SELECT '</div><img src=x onerror=alert(1)>&{QSS_LITERAL}' AS sample;";
         $question->setSequence('sequence_b', $sql);
         $question->setExecutedBool(false);
@@ -227,7 +350,7 @@ final class SQLQuestionIntegrationTest extends TestCase
         self::assertSame(0, $dom->getElementsByTagName('img')->length);
     }
 
-    public function testPostedQssSidecarIsPreservedWithoutAffectingLegacyPoints(): void
+    public function testResultModeIgnoresPostedQssWithoutAffectingLegacyPoints(): void
     {
         global $DIC;
         $question = $this->question();
@@ -245,7 +368,7 @@ final class SQLQuestionIntegrationTest extends TestCase
                 'qss_evaluation' => json_encode($report, JSON_THROW_ON_ERROR)];
             $_POST = new ILIAS\HTTP\Wrapper\SuperGlobalDropInReplacement($DIC->refinery(), $fields);
             $submit = (new ReflectionMethod(assSQLQuestion::class, 'getSolutionSubmit'))->invoke($question);
-            self::assertSame($report, ParticipantInput::fromJSON($submit['value1'])->getQssEvaluation());
+            self::assertNull(ParticipantInput::fromJSON($submit['value1'])->getQssEvaluation());
             self::assertSame(5.0, (new ReflectionMethod(assSQLQuestion::class, 'calculateReachedPointsForSolution'))->invoke($question, $submit));
 
             $fields['qss_evaluation'] = '{malformed optional diagnostics';
@@ -270,7 +393,7 @@ final class SQLQuestionIntegrationTest extends TestCase
             $_POST = new ILIAS\HTTP\Wrapper\SuperGlobalDropInReplacement($DIC->refinery(), $fields);
             $submit = (new ReflectionMethod(assSQLQuestion::class, 'getSolutionSubmit'))->invoke($question);
             $answer = ParticipantInput::fromJSON($submit['value1']);
-            self::assertSame($report, $answer->getQssEvaluation());
+            self::assertNull($answer->getQssEvaluation());
             self::assertSame($fields['sequence_b'], $answer->getSequence());
         } finally {
             $_POST = $original;
@@ -350,6 +473,7 @@ final class SQLQuestionIntegrationTest extends TestCase
         self::assertSame($question->getSequence('sequence_b'), $question->getCorrectSolutionForTextOutput(0, 0));
         $additional_info = $this->createStub(AdditionalInformationGenerator::class);
         self::assertSame(5.0, $question->toLog($additional_info)[AdditionalInformationGenerator::KEY_QUESTION_REACHABLE_POINTS]);
+        self::assertSame($question->getAllSolutionMetricsAsJSON(),$question->toLog($additional_info)['Scoring metrics']);
     }
 
     private function taxonomyPreflightArchive(): string

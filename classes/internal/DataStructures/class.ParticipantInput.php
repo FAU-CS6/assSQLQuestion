@@ -39,8 +39,10 @@ class ParticipantInput
      */
     public array $participant_metrics = array();
 
-    /** Optional, untrusted browser-side diagnostics; never a grading metric. */
+    /** Browser-side QSS evidence; used only by an explicitly QSS-scored question. */
     private ?array $qss_evaluation = null;
+    /** Server-created grading revision for a submitted QSS answer. */
+    private ?array $qss_grading_context = null;
 
     private const QSS_MAX_JSON_BYTES = 16384;
 
@@ -83,6 +85,9 @@ class ParticipantInput
 
         if ($this->qss_evaluation !== null) {
             $arr['qss_evaluation'] = $this->qss_evaluation;
+        }
+        if ($this->qss_grading_context !== null) {
+            $arr['qss_grading_context'] = $this->qss_grading_context;
         }
 
         return json_encode($arr);
@@ -162,6 +167,9 @@ class ParticipantInput
         if (isset($decoded_json['qss_evaluation']) && is_array($decoded_json['qss_evaluation'])) {
             $participant_input->setQssEvaluation($decoded_json['qss_evaluation']);
         }
+        if (isset($decoded_json['qss_grading_context']) && is_array($decoded_json['qss_grading_context'])) {
+            $participant_input->setQssGradingContext($decoded_json['qss_grading_context']);
+        }
 
         return $participant_input;
     }
@@ -169,6 +177,25 @@ class ParticipantInput
     public function getQssEvaluation(): ?array
     {
         return $this->qss_evaluation;
+    }
+
+    public function getQssGradingContext(): ?array { return $this->qss_grading_context; }
+
+    public function setQssGradingContext(array $context): void
+    {
+        $maximum = $context['maxPoints'] ?? null;
+        $points = $context['points'] ?? null;
+        $this->qss_grading_context = null;
+        if (($context['version'] ?? null) !== 1 || ($context['mode'] ?? null) !== 'qss'
+            || (!is_int($maximum) && !is_float($maximum)) || !is_finite((float)$maximum) || $maximum <= 0
+            || (!is_int($points) && !is_float($points)) || !is_finite((float)$points) || $points < 0 || $points > $maximum
+            || !is_string($context['referenceRevision'] ?? null) || !preg_match('/^[a-f0-9]{64}$/D',$context['referenceRevision'])
+            || !self::isBoundedQssMetadata($context) || strlen(json_encode($context, JSON_INVALID_UTF8_SUBSTITUTE)) > self::QSS_MAX_JSON_BYTES) {
+            return;
+        }
+        $context['points'] = (float)$points;
+        $context['maxPoints'] = (float)$maximum;
+        $this->qss_grading_context = array_intersect_key($context,array_fill_keys(['version','mode','points','maxPoints','referenceRevision','engineVersion','rubric','scale','costProfile'],true));
     }
 
     /** Invalid optional diagnostics are discarded without rejecting the answer. */

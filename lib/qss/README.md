@@ -2,8 +2,11 @@
 
 All SQL parsing, SQL-edit generation and shortest-path calculation runs in a
 browser Worker. There is no server-side SQL/QSS executor and no Node service.
-The host may store the result as untrusted shadow evidence; regular ILIAS grades
-continue to use the established metrics.
+ILIAS question authors explicitly choose either result-based grading or QSS.
+Only that method is evaluated. The host validates answer/revision bindings and
+recomputes the linear points from the certified browser distance before storing
+the official QSS score and its cost revision. Browser evidence remains untrusted
+in the same sense as the existing browser-generated result metrics.
 
 ## Method and model
 
@@ -112,9 +115,13 @@ The paid `relocateOuterJoinPredicate` edit also moves one pure conjunct between
 ON and WHERE while retaining a joining predicate. Its default cost is 1; outer
 join predicate relocation does not become a free equivalence.
 
-The existing `costs` API is not a saved teacher setting. Planned per-question
-cost profiles, default values, round trips and explicit method constraints are
-documented in [the configuration requirement](../../docs/qss-kostenkonfiguration.md).
+Version 0.3.0 saves a versioned per-question profile of 50 configurable cost
+entries: 35 named SQL transformations/repairs and 15 basic operation categories.
+Known inactive steps are accepted independently of the current AST pair.
+Basic-operation category costs apply to the generated atomic edits; an explicit
+pair-specific atomic `costs` API entry still takes precedence. See
+[cost profiles](../../docs/qss-kostenkonfiguration.md) and
+[native grading acceptance](../../docs/qss-bewertung.md).
 
 `questionText` supplies explicit construct requirements. They restrict free edits
 only when the question states a method constraint. Explicitly unconstrained

@@ -247,7 +247,7 @@ qss_failed#:#QSS assessment failed.
 qss_cancelled#:#QSS assessment cancelled manually.
 qss_notevaluated#:#No QSS assessment available yet.
 qss_distance#:#SQL edit cost
-qss_points#:#QSS comparison points
+qss_points#:#QSS points
 qss_edits#:#SQL edits
 qss_model#:#Comparison model
 qss_visited#:#Visited states
@@ -259,3 +259,18 @@ qss_editinsert#:#Insert
 qss_editdelete#:#Delete
 qss_editreplace#:#Replace
 qss_cost#:#Cost
+
+assessment_mode#:#Assessment method
+assessment_result#:#Result-based assessment
+assessment_qss#:#Graph-QSS assessment
+assessment_maximum#:#Maximum QSS points
+assessment_qss_info#:#Points follow the cheapest edit path to the model answer. One cost unit deducts one fifth of the maximum. Costs are nonnegative integers. State any required method explicitly in the question.
+assessment_qss_active#:#This question is graded using Graph-QSS.
+assessment_group_equivalence#:#Equivalence transformations (free by default)
+assessment_group_repair#:#Logical repair steps
+assessment_group_basic#:#Basic SQL component and attribute operations
+assessment_step#:#Edit step
+assessment_cost#:#Cost
+assessment_reset#:#Reset all edit costs to defaults
+assessment_invalid#:#Choose a valid assessment method, positive QSS maximum points, and integer edit costs from 0 to 1000000.
+assessment_execute#:#Execute the model answer with the current QSS settings before saving the question.

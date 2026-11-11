@@ -28,6 +28,8 @@ class ExecutionHandler
     this.qss = null;
     this.runToken = 0;
     this.navigationControls = [];
+    this.configElement = document.getElementById('qpisql-qss-config');
+    this.assessmentMode = 'result';
     this.initializeQSS();
   }
 
@@ -51,8 +53,8 @@ class ExecutionHandler
         reference: this.qss && this.qss.config.referenceSql !== null ? this.qss.config.referenceSql : this.getSequenceB(),
         maxPoints: this.qss ? this.qss.config.maxPoints : 0 };
       if (this.qss && this.qss.config.context === 'author') {
-        const fields = Array.from(document.querySelectorAll('[name^="points_"]'));
-        if (fields.length) this.snapshot.maxPoints = fields.reduce((sum, field) => sum + (Number(field.value) || 0), 0);
+        const maximum = document.getElementById('qpisql-qss-maximum');
+        if (maximum) this.snapshot.maxPoints = Number(maximum.value);
       }
       const callback = { onResult: result => this.sqlFinished(token, null, result),
         onError: error => this.sqlFinished(token, error, null) };
@@ -91,6 +93,10 @@ class ExecutionHandler
   {
     if (typeof QSSShadow === 'undefined') return;
     const config = QSSShadow.configuration();
+    const element = document.getElementById('qpisql-qss-config');
+    if (element) {
+      try { this.assessmentMode = JSON.parse(element.dataset.config).assessmentMode || (config ? 'qss' : 'result'); } catch (error) { /* Default to result scoring. */ }
+    }
     if (!config) return;
     if (!this.qss) this.qss = new QSSShadow(config);
     if (!document.getElementById('qpisql-output-area') || this.qss.card) return;
@@ -135,9 +141,10 @@ class ExecutionHandler
       return;
     }
     this.phase = 'qss';
-    // Keep the established grade available to native deadline submission and
-    // autosave. Only visible output and manual navigation wait for shadow QSS.
-    for (const output of this.outputs) {
+    // Historical shadow mode published the result grade before QSS. An actual
+    // QSS assessment publishes its completed evidence once, after the graph job;
+    // an early SQL-result autosave must not race that authoritative submission.
+    if (this.qss.config.mode === 'shadow') for (const output of this.outputs) {
       if (result && output.onSQLResult) output.onSQLResult(result);
       else if (error && output.onSQLError) output.onSQLError(error);
     }
@@ -190,7 +197,7 @@ class ExecutionHandler
 
   isCurrent()
   {
-    return !this.qss || this.qss.isCurrent();
+    return this.configElement === document.getElementById('qpisql-qss-config') && (!this.qss || this.qss.isCurrent());
   }
 
   dispose()
@@ -347,8 +354,8 @@ class ExecutionHandler
      if (this.qss) {
        this.qss.clear();
        this.qss.progress({ phase: 'sqlRunning' });
-       this.setNavigationBusy(true);
      }
+     this.setNavigationBusy(true);
      for(var i = 0; i < this.outputs.length; i++)
      {
        this.outputs[i].onExecution();
@@ -385,6 +392,7 @@ class ExecutionHandler
      this.setNavigationBusy(false);
      for(var i = 0; i < this.outputs.length; i++)
      {
+       if (this.assessmentMode === 'qss' && this.outputs[i].isResultMetric) continue;
        this.outputs[i].onResult(result);
      }
    }

@@ -130,10 +130,13 @@ class Output extends GUIElement
         $tpl->setVariable("OUTPUT_RELATION", htmlspecialchars($output_relation, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->setVariable("ERROR_NO_EXECUTION", $this->plugin->txt('ai_oa_er_no_exec'));
         $this->setOutputLabels($tpl);
-        $qss = $participant_input?->getQssEvaluation();
+        $gradingContext = $participant_input?->getQssGradingContext();
+        $qss = $gradingContext !== null || $this->object->getAssessmentMode() === QssAssessment::QSS ? $participant_input?->getQssEvaluation() : null;
         $tpl->setVariable('QSS_EVALUATION', $qss === null ? '' : JsBlock::jsonAttribute($qss));
-        $tpl->setVariable('QSS_LABELS', JsBlock::jsonAttribute(JsBlock::getQssLabels($this->plugin)));
-        $tpl->setVariable('QSS_REFERENCE_REVISION', JsBlock::getQssReferenceRevision($this->object));
+        $labels = JsBlock::getQssLabels($this->plugin);
+        $labels['shadow'] = strip_tags($this->plugin->txt('assessment_qss_active'));
+        $tpl->setVariable('QSS_LABELS', JsBlock::jsonAttribute($labels));
+        $tpl->setVariable('QSS_REFERENCE_REVISION', $gradingContext['referenceRevision'] ?? JsBlock::getQssReferenceRevision($this->object));
         return $tpl->get();
     }
 

@@ -1,4 +1,4 @@
-/** Browser-only, experimental parallel assessment. Never changes the ILIAS score. */
+/** Browser-only Graph-QSS assessment for explicitly selected QSS questions. */
 class QSSShadow
 {
   constructor(config)
@@ -20,7 +20,7 @@ class QSSShadow
     if (!element) return null;
     try {
       const config = JSON.parse(element.dataset.config);
-      return config.enabled && config.mode === 'shadow' ? config : null;
+      return config.enabled && ['assessment', 'shadow'].includes(config.mode) ? config : null;
     } catch (error) { return null; }
   }
 
@@ -181,6 +181,7 @@ class QSSShadow
           finish({ status: 'error', engine: 'qss', version: '1', limitations: [String(event.message || this.label('failed'))] });
         };
         this.worker.postMessage({ type: 'evaluate', id, engine: this.config.engine || 'graph-qss-sqlite-v2',
+          costs: this.config.costs || {},
           scale: this.config.scaleMode === 'question-relative' || this.config.scale === undefined
             ? (snapshot.maxPoints > 0 ? snapshot.maxPoints / (this.config.scaleBudget || 5) : 1) : this.config.scale,
           questionText: this.config.questionText || '', reference: snapshot.reference,

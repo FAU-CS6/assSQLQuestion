@@ -1,71 +1,64 @@
-# Konfigurierbare QSS-Kosten für die spätere Bewertungsalternative
+# Konfigurierbare QSS-Kosten
 
-Diese Anforderung betrifft die spätere Freischaltung von QSS als auswählbare
-Bewertung. Der aktuelle Stand bleibt eine parallele Bewertung mit Standardkosten;
-die folgende Dozentenoberfläche ist noch nicht implementiert.
+Seit Plugin **0.3.0** wählt der Fragenersteller im Bewertungsbereich zwischen
+„Ergebnisbasierte Bewertung“ und „Graph-QSS-Bewertung“. Neue und bestehende
+Fragen verwenden zunächst die Ergebnisbewertung. Die bisherige Bedienung und
+Berechnung bleiben dabei erhalten.
 
-Das [Graph-QSS-Paper, insbesondere Abschnitt 4.3.1](https://www.cs6.tf.fau.eu/files/2025/03/Koeberlein-Graph-based_QSS-141_b.pdf)
-berücksichtigt unterschiedliche pädagogische Vergleichsziele. Eine semantisch
-äquivalente Umformung kann deshalb in einem bestimmten Aufgabenkontext Kosten
-erhalten. Während einer einzelnen Graphsuche müssen die gewählten Editkosten
-fest und nichtnegativ sein.
+## QSS einstellen
 
-## Geplante Bedienung
+Für QSS gibt es eine eigene Maximalpunktzahl sowie **50 vorbelegte Kostenwerte**:
+35 benannte Äquivalenzumformungen beziehungsweise logische Reparaturen und
+15 Kategorien grundlegender Komponenten-/Attributoperationen. Letztere gelten
+für alle entsprechenden atomaren Edits, unabhängig vom konkreten SQL-AST.
+Die Gruppen können aufgeklappt werden; jede Kostenposition ist einzeln änderbar.
+Ein Knopf setzt alle Kosten auf die Standardwerte zurück. Verborgene Einstellungen
+der jeweils anderen Bewertungsart werden beim Umschalten nicht überschrieben.
 
-- Eine Frage startet mit den vollständigen Standardkosten des jeweiligen
-  Editkatalogs. Die Oberfläche zeigt verständliche Beschreibungen und Kosten.
-- Dozenten können einzelne Werte überschreiben und einzeln oder vollständig
-  auf die Standardwerte zurücksetzen.
-- Auch bisher kostenlose Äquivalenz-Edits können positive Kosten erhalten.
-- Die Bearbeitung unterscheidet übersichtlich zwischen Äquivalenzen, logischen
-  Reparaturen und grundlegenden Konstruktoren. Die stabilen Edit-IDs bleiben
-  für Speicherung und Diagnose erhalten.
-- Eine Vorschau mit Beispielantworten macht die Auswirkungen der gewählten
-  Kosten sichtbar.
+Kosten sind ganze Zahlen von **0 bis 1.000.000**. Auch bisher kostenlose
+Äquivalenzumformungen können Kosten erhalten und kostenpflichtige Schritte
+können kostenlos werden. Die Maximalpunkte lassen bis zu vier Nachkommastellen zu.
+Der Maßstab bleibt `Maximalpunkte / 5`: Kosten 1 ziehen 20 Prozent des Maximums ab.
+Standardwerte und Skala sind weiterhin vorläufig und nicht menschlich kalibriert.
 
-Die Engine nimmt solche Überschreibungen bereits als `costs` entgegen und prüft
-Editnamen und nichtnegative ganzzahlige Werte. Diese technische API ist noch
-keine in ILIAS gespeicherte Dozenteneinstellung. Für feinere Abstufungen wäre
-eine exakt repräsentierbare Kostenskala vorzusehen; ungenaue Fließkomma-Vergleiche
-dürfen keine Optimalitätszertifikate erzeugen.
+Das [Graph-QSS-Paper, Abschnitte 4.3 und 4.7](https://www.cs6.tf.fau.eu/files/2025/03/Koeberlein-Graph-based_QSS-141_b.pdf)
+bleibt die Grundlage. Auch mit eigenen Kosten zählt der günstigste tatsächliche
+Editpfad im konfigurierten Graphen. Die gewählten nichtnegativen Kosten bleiben
+während eines Jobs fest. Suchoptimierungen benötigen weiterhin gültige Beweise;
+kostenlose Überschreibungen dürfen keine unbewiesene positive Schranke erzeugen.
 
-Vor einer Speicherung braucht der Katalog eine stabile Validierung unabhängig
-vom einzelnen Antwort-AST. Ein bekanntes, konfiguriertes Edit kann auf eine
-bestimmte Antwort nicht anwendbar sein; allein das darf die Auswertung nicht
-abbrechen. Die aktuelle API weist Kosten-IDs außerhalb des jeweils aufgebauten
-Graphkatalogs noch ab. Das muss bei der Einführung gespeicherter Kostenprofile
-berücksichtigt werden.
+## Speichern und Übertragen
 
-## Speicherung und Bewertungsbindung
+Die Frage speichert Bewertungsart, QSS-Maximalpunkte, Katalogversion und vollständig
+aufgelöste Kosten. Das Profil verwendet Version 1 zum Graphmodell 2.1.1. Bekannte
+Schritte dürfen im aktuellen Antwortpaar fehlen; das macht das Profil nicht ungültig.
+Unbekannte Kostenpositionen, nicht ganzzahlige oder negative Werte und unbekannte
+Profilversionen werden abgewiesen.
 
-Zur Frage gehören die Version des Standardkatalogs, die gewählten
-Kostenüberschreibungen und ausdrückliche Methodenvorgaben. Die aufgelöste
-Kostentabelle muss während eines Bewertungsjobs unverändert bleiben.
+Kopien, Testfragen und QTI-Import/Export behalten diese Angaben. Alte Fragen und
+Exporte ohne die neuen Angaben bleiben ausdrücklich ergebnisbewertet. Ihre
+Maximalpunkte und bisherigen Bewertungsmetriken werden nicht umgerechnet.
 
-Diese Konfiguration muss bei Fragenkopien sowie Import und Export erhalten
-bleiben und in den Fingerabdruck der Bewertungsrevision eingehen. Eine Änderung
-der Kosten macht frühere parallele Diagnosen als Bewertung des neuen Profils
-ungültig. Für bereits begonnene beziehungsweise abgegebene Prüfungsversuche
-muss die dort gültige Konfiguration nachvollziehbar bleiben. Bestehende Fragen
-ohne eigene Konfiguration verwenden die dokumentierten Standardwerte.
+Beim Ändern von SQL, Aufgabenbedingungen, Maximalpunkten oder Kosten wird die
+aktuelle Browserauswertung ungültig. Vor dem Speichern einer neuen oder geänderten
+QSS-Konfiguration muss die Musterlösung erfolgreich mit QSS ausgeführt werden.
+Unveränderte Einstellungen erfordern bei einer reinen Titeländerung keine neue
+Ausführung. Eine Vorschau erlaubt das Erproben von Studentenantworten.
 
-Die Browserauswertung muss genau die gespeicherte Kostentabelle erhalten.
-Konfigurierbare Kosten rechtfertigen keine Näherungsnote: Auch damit zählt der
-günstigste tatsächliche Editpfad im definierten Graphen. Suchoptimierungen müssen
-für geänderte Kosten weiterhin korrekt sein oder ihre unbewiesenen Schranken
-deaktivieren. Die aktuellen Tests berücksichtigen bereits kostenlose
-Überschreibungen ursprünglich kostenpflichtiger Edits.
+Zu jeder gespeicherten QSS-Abgabe hält der Server die verwendete Kostenrevision
+und die aus dem Browserabstand berechneten offiziellen Punkte fest. Spätere
+Kosten-/Modelländerungen rechnen diese historischen Abgaben nicht stillschweigend
+neu oder zu null um. Der Server führt dafür weder SQL noch eine Graphsuche aus.
+Die normalen ILIAS-Testkopien trennen Poolbearbeitung und laufende Tests weiterhin.
 
 ## Methodenvorgaben
 
-Das Verteuern eines einzelnen Äquivalenz-Edits garantiert nicht, dass ein
-bestimmtes Konstrukt verwendet wird: Der Graph kann einen anderen kostenlosen
-Pfad enthalten. Verlangt die Aufgabe etwa ausdrücklich ein bestimmtes JOIN-
-oder WITH-Konstrukt, muss diese Vorgabe zusätzlich ausdrücklich konfigurierbar
-und Bestandteil der Bewertungsrevision sein. Die dazugehörigen Kosten und
-zulässigen Umformungen müssen zusammen geprüft werden.
+Das Verteuern eines einzelnen Edits garantiert kein bestimmtes Konstrukt:
+Es kann einen anderen günstigeren Pfad geben. Fachliche Methodenvorgaben müssen
+im Aufgabentext ausdrücklich genannt werden. Die vorhandene Erkennung solcher
+Vorgaben bleibt bestehen; ein eigener zusätzlicher Methodenvorgaben-Editor ist
+nicht Teil dieser Änderung.
 
-Vor einer Freischaltung sind die Konfiguration, ihre Speicherung und Migration,
-unterschiedliche Kostenprofile, Methodenvorgaben sowie Import/Export im nativen
-Dozenten- und Studentenablauf zu prüfen. Die derzeit laufende Abnahme verwendet
-weiterhin das unveränderte Standardprofil.
+Die [Abnahme und Grenzen](qss-bewertung.md) dokumentieren echte native Abläufe,
+ältere Exporte, gespeicherte Noten und die verbleibende Vertrauensgrenze der
+clientseitigen Bewertung.

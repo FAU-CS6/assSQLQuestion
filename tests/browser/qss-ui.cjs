@@ -1,4 +1,4 @@
-/* Deterministic Chrome regressions for the SQL -> parallel assessment barrier. */
+/* Deterministic Chrome regressions for exclusive scoring and the QSS barrier. */
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const http = require('node:http');
@@ -52,11 +52,11 @@ async function main() {
         }
         terminate() { this.terminated = true; }
       };
-      const labels = { title: 'Parallel QSS', shadow: 'Does not change test points', sqlRunning: 'Running SQL',
+      const labels = { title: 'QSS', shadow: 'This question uses QSS grading', sqlRunning: 'Running SQL',
         parsing: 'Parsing SQL', comparing: 'Comparing queries', completed: 'Completed', notEvaluated: 'Not evaluated',
         unsupported: 'Unsupported', failed: 'Failed', cancelled: 'Cancelled', waiting: 'Evaluating',
         visited: 'States', lowerBound: 'Distance lower bound', points: 'Points', distance: 'Distance', details: 'Details', model: 'Model', cost: 'Cost', stale: 'Outdated model or answer' };
-      document.getElementById('qpisql-qss-config').dataset.config = JSON.stringify({ version: 2, mode: 'shadow', context: 'participant', enabled: true,
+      document.getElementById('qpisql-qss-config').dataset.config = JSON.stringify({ version: 2, mode: 'assessment', assessmentMode: 'qss', context: 'participant', enabled: true,
         engine: 'graph-qss-sqlite-v2', engineVersion: '2.1.1', rubric: 'paper-linear-v2', scale: 1, scaleMode:'fixed',
         referenceSql: 'SELECT 1 AS value', referenceRevision: 'a'.repeat(64), referenceExecutionValid: true, referenceRows: 1, maxPoints: 3, labels });
       document.getElementById('qpisql-output-area').dataset.labels = JSON.stringify({ running: 'Running SQL', success: 'Executed',
@@ -66,7 +66,7 @@ async function main() {
       handler.registerInput({ getName: () => 'sequence_b', getValue: () => document.getElementById('sequence_b').value });
       handler.registerOutput(new OutputAreaOutput());
       handler.registerOutput(new ExecuteButtonOutput());
-      handler.registerOutput(new ScoringMetricOutputQuestion('result_lines', result => result.getNumberOfRows()));
+      handler.registerOutput(new ScoringMetricOutputQuestion('result_lines', () => { throw new Error('Inactive result metric executed in QSS mode'); }));
       handler.execute();
       workers[0].onmessage({ data: { results: [{ columns: ['value'], values: [[1]] }] } });
     });
@@ -78,9 +78,9 @@ async function main() {
       references: [workers[1].message.referenceExecutionValid, workers[1].message.answerExecutionValid],
       rows: [workers[1].message.referenceRows, workers[1].message.answerRows],
       schemaTypes: workers[1].message.schema.tables.map(table => ({name: table.name, type: table.type})) }));
-    assert.deepEqual(pending, { running: true, phase: 'qss', visible: 'none', executed: 'true', nextDisabled: true, progress: true,
+    assert.deepEqual(pending, { running: true, phase: 'qss', visible: 'none', executed: 'false', nextDisabled: true, progress: true,
       sqlTerminated: true, references: [true, true], rows: [1, 1], schemaTypes: [{name: 'items', type: 'table'}, {name: 'visible_items', type: 'view'}] });
-    assert.equal(await page.locator('#qpisql-scoring-metric-value-result_lines').inputValue(), '1', 'The established grade remains available at the native test deadline');
+    assert.equal(await page.locator('#qpisql-scoring-metric-value-result_lines').inputValue(), 'false', 'Inactive result metrics must not execute in QSS mode');
     const guard = await page.evaluate(() => {
       const form = document.getElementById('answer');
       const user = new SubmitEvent('submit', { cancelable: true, submitter: document.getElementById('next') });
@@ -123,7 +123,7 @@ async function main() {
         executed: document.getElementById('qpisql-executed-bool').value,
         rows: document.getElementById('qpisql-scoring-metric-value-result_lines').value };
     });
-    assert.deepEqual(cancelled, { running: false, terminated: true, sidecar: '', nextDisabled: false, visible: 'block', executed: 'true', rows: '1' });
+    assert.deepEqual(cancelled, { running: false, terminated: true, sidecar: '', nextDisabled: false, visible: 'block', executed: 'true', rows: 'false' });
     console.log('PASS: cancellation terminates the QSS worker and suppresses its late result without a timeout');
 
     await page.evaluate(() => { document.getElementById('qpisql-qss-evaluation').value = '{"points":999}'; handler.onChange(); });
@@ -218,6 +218,33 @@ async function main() {
     console.log('PASS: edits invalidate parallel assessments; no page errors or HTML injection');
     console.log('PASS: SQL cancellation clears progress; AJAX replacement suppresses old workers; restored diagnoses are idempotent and revision-bound');
     console.log('PASS: previous syntax-model diagnostics are stale; SQL errors still receive a static QSS assessment without changing official error fields');
+    const legacy = await page.evaluate(() => {
+      const element = document.getElementById('qpisql-qss-config');
+      const config = JSON.parse(element.dataset.config);
+      element.dataset.config = JSON.stringify({...config,enabled:false,assessmentMode:'result',referenceSql:null});
+      window.handler = window.EXECUTE_HANDLER = new ExecutionHandler();
+      for (const [name,value] of Object.entries({sequence_a:'',sequence_b:'SELECT 1 AS value',sequence_c:'',integrity_check:false})) {
+        handler.registerInput({getName:()=>name,getValue:()=>value});
+      }
+      handler.registerOutput(new OutputAreaOutput());
+      let metricCalls=0;
+      handler.registerOutput(new ScoringMetricOutputQuestion('result_lines',result=>{metricCalls++;return result.getNumberOfRows();}));
+      const before=workers.length;handler.execute();
+      workers.at(-1).onmessage({data:{results:[{columns:['value'],values:[[1]]}]}});
+      return {workers:workers.length-before,worker:workers.at(-1).url,qss:handler.qss,metricCalls,
+        value:document.getElementById('qpisql-scoring-metric-value-result_lines').value,running:handler.running};
+    });
+    assert.deepEqual(legacy,{workers:1,worker:'/lib/sql.js/worker.sql.js',qss:null,metricCalls:1,value:'1',running:false});
+    const legacyStale=await page.evaluate(()=>{
+      handler.execute();const worker=workers.at(-1),late=worker.onmessage;
+      const config=document.getElementById('qpisql-qss-config');config.replaceWith(config.cloneNode(true));
+      document.getElementById('qpisql-scoring-metric-value-result_lines').value='new-question';
+      late({data:{results:[{columns:['value'],values:[[9]]}]}});
+      return {value:document.getElementById('qpisql-scoring-metric-value-result_lines').value,terminated:worker.terminated,running:handler.running};
+    });
+    assert.deepEqual(legacyStale,{value:'new-question',terminated:true,running:false});
+    assert.deepEqual(errors, []);
+    console.log('PASS: result mode starts only SQL and result metrics; QSS mode skips inactive result getters');
   } finally {
     await context.close();
     if (!process.env.CHROME_CDP_URL) await browser.close();

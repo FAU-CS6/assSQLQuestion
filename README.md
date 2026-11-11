@@ -1,20 +1,24 @@
 # Question Plugin for ILIAS - SQL
 
-This experimental branch adds browser-only Graph-based QSS shadow assessment
+This branch offers a per-question choice between established result-based grading
+and browser-only Graph-based QSS grading,
 following [Köberlein, Probst and Lenz, sections 4.2–4.7](https://www.cs6.tf.fau.eu/files/2025/03/Koeberlein-Graph-based_QSS-141_b.pdf).
 Concrete SQLite AST states are connected by named SQL edits with fixed costs;
 exact shortest-path search includes actual zero-cost semantic transformations.
 The score uses the paper's linear deduction formula. This replaces the earlier
-syntax-tree comparison. Regular ILIAS grades still use the established metrics.
+syntax-tree comparison. Only the selected method computes the official grade.
+Existing questions and old exports default to the established result metrics.
 
 The comparison runs directly at each question with progress, a result/navigation
 barrier and manual cancellation. It has no execution timeout and starts no Node
-service. Reference SQL is accessible in the student's browser; this branch remains
-an experimental shadow/teaching pilot before any exam deployment. See
-[the model, workflow and limitations](docs/qss-shadow.md) and the
+service. QSS reference SQL is accessible in the student's browser. Assessment
+uses client evidence, with the same trust limitation as the result metrics.
+See [assessment settings and compatibility](docs/qss-bewertung.md) and the
 [engine/edit catalogue](lib/qss/README.md).
 
-The [answer-robustness report](docs/qss-robustheit-2026-11-10.md) confirms model
+The [assessment activation report](docs/qss-bewertung.md) documents version 0.3.0,
+its upgrade checks and native author/student and import/export acceptance.
+The [earlier answer-robustness report](docs/qss-robustheit-2026-11-10.md) confirms model
 2.1.1 on all 699 unchanged original questions with 6,812 fresh native Chrome
 cases, 132 additional anonymous semantic cases, saved official grades and all
 five import/export/reimport round trips. It records phase timings, remaining
@@ -33,7 +37,7 @@ In this project - called ***Q**uestion **P**lugin for **I**LIAS - **SQL** (**QPI
 
 ## Installation
 
-Version 0.2.2 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
+Version 0.3.0 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
 reproducible tests are documented in [the ILIAS 11 upgrade guide](docs/ilias-11.md).
 
 The [full Chrome acceptance report](docs/chrome-abnahme-2026-11-06.md) covers all
@@ -76,11 +80,11 @@ Both QSS browser bundles are included. Node.js is needed only for development
 and rebuilding them; the ILIAS installation runs no Node service. See the
 [QSS build and test commands](lib/qss/README.md).
 
-The current experimental parallel QSS model is `2.1.1` (`paper-linear-v2`).
+The current Graph-QSS model is `2.1.1` (`paper-linear-v2`).
 It uses named SQL graph edits and a question-relative linear scale of
-`maxPoints / 5`; the official ILIAS scoring metrics remain authoritative.
-See the [parallel-assessment documentation](docs/qss-shadow.md) for its rules
-and trust boundary.
+`maxPoints / 5`. Question authors select result-based or QSS grading and can edit
+the QSS step costs, including originally free equivalences. See
+[assessment settings](docs/qss-bewertung.md) and [cost profiles](docs/qss-kostenkonfiguration.md).
 
 Some of the artifacts are uploaded to the repository in built form, some need to be built during installation. For the PHP part of the plugin, we adhere to the suggestions of ILIAS, namely to `composer install --no-dev` all dependencies during installation and not check in dependency artifacts into git (c.f. https://github.com/ILIAS-eLearning/ILIAS/pull/1833 and specifically https://docu.ilias.de/go/wiki/wpage_6371_1357 for plugins).
 

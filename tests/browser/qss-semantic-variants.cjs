@@ -5,6 +5,8 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const {chromium}=require('playwright');
 const {installOracle}=require('./student-variant-oracle.cjs');
 const {cases,datasets}=require('../qss/semantic-answer-cases.cjs');
+const costCatalog=require('../../lib/qss/cost-catalog.json');
+const defaultCosts=Object.fromEntries(costCatalog.steps.map(step=>[step.id,step.defaultCost]));
 const base=process.env.ILIAS_TEST_URL||'http://localhost:8080',plugin='/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion';
 const out=process.env.QSS_SEMANTIC_OUTPUT;assert.ok(out,'Use a private output directory outside the repository.');
 const digest=x=>crypto.createHash('sha256').update(x).digest('hex');
@@ -17,7 +19,7 @@ const emptyResult=value=>value.phase==='result'&&value.error==='No visible resul
 async function main(){
  fs.mkdirSync(out,{recursive:true,mode:0o700});const browser=await chromium.connectOverCDP(process.env.CHROME_CDP_URL);
  const context=await browser.newContext();context.setDefaultTimeout(0);context.setDefaultNavigationTimeout(0);
- const report={headless:true,browser:await browser.version(),model_version:'2.1.1',native_student_ui:false,cases:0,correct:0,wrong:0,failures:[],observations:[],finished:false};
+ const report={headless:true,browser:await browser.version(),model_version:'2.1.1',cost_profile_version:costCatalog.version,configured_costs:Object.keys(defaultCosts).length,native_student_ui:false,cases:0,correct:0,wrong:0,failures:[],observations:[],finished:false};
  const variants=cases(),inputs=datasets(),witnesses=new Set(),times=[];let next=0;
  const jobs=variants.flatMap(spec=>inputs.map(data=>({spec,data})));const save=()=>fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2)+'\n',{mode:0o600});
  try{
@@ -34,7 +36,7 @@ async function main(){
     if(spec.equivalent&&!equal)failures.push('Declared equivalence changed independent SQL behavior');
     const result=await page.evaluate(({request,plugin})=>new Promise(resolve=>{
      const began=performance.now(),worker=new Worker(plugin+'/lib/qss/worker.qss.js');window.__semanticCase.phase='qss';worker.onmessage=({data})=>{if(data.type==='progress'){window.__semanticCase.progress=data;return;}if(data.type!=='result')return;worker.terminate();resolve({qss:data.result,wall_ms:performance.now()-began});};worker.onerror=event=>{event.preventDefault();worker.terminate();resolve({qss:{status:'error'},wall_ms:performance.now()-began});};worker.postMessage({type:'evaluate',id:1,...request});
-    }),{plugin,request:{reference:spec.reference,answer:spec.answer,schema:prepared.schema,maxPoints:5,referenceExecutionValid:!reference.error,answerExecutionValid:!answer.error}});
+    }),{plugin,request:{reference:spec.reference,answer:spec.answer,schema:prepared.schema,maxPoints:5,costs:defaultCosts,referenceExecutionValid:!reference.error,answerExecutionValid:!answer.error}});
     const q=result.qss;if(!['exact','score-zero-certified'].includes(q.status))failures.push('Valid SQL did not receive a certified QSS result');
     if(q.version!==report.model_version)failures.push('Unexpected QSS model version');
     if(spec.equivalent&&(q.distance!==0||q.points!==5))failures.push('Correct alternative lost points');

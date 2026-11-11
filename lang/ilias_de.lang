@@ -246,7 +246,7 @@ qss_failed#:#QSS-Auswertung fehlgeschlagen.
 qss_cancelled#:#QSS-Auswertung manuell abgebrochen.
 qss_notevaluated#:#Noch keine QSS-Auswertung vorhanden.
 qss_distance#:#SQL-Editkosten
-qss_points#:#QSS-Vergleichspunkte
+qss_points#:#QSS-Punkte
 qss_edits#:#SQL-Edits
 qss_model#:#Vergleichsmodell
 qss_visited#:#Untersuchte Zustände
@@ -258,3 +258,18 @@ qss_editinsert#:#Einfügen
 qss_editdelete#:#Entfernen
 qss_editreplace#:#Ersetzen
 qss_cost#:#Kosten
+
+assessment_mode#:#Bewertungsverfahren
+assessment_result#:#Ergebnisbasierte Bewertung
+assessment_qss#:#Graph-QSS-Bewertung
+assessment_maximum#:#Maximalpunkte für QSS
+assessment_qss_info#:#Die Punkte ergeben sich aus dem günstigsten Umformungspfad zur Musterlösung. Ein Kostenschritt zieht ein Fünftel der Maximalpunkte ab. Kosten sind nichtnegative ganze Zahlen. Für zusätzliche Methodenvorgaben muss auch der Aufgabentext eindeutig sein.
+assessment_qss_active#:#Diese Frage wird mit Graph-QSS bewertet.
+assessment_group_equivalence#:#Äquivalenzumformungen (standardmäßig kostenlos)
+assessment_group_repair#:#Logische Reparaturschritte
+assessment_group_basic#:#Grundoperationen für SQL-Komponenten und Attribute
+assessment_step#:#Umformung
+assessment_cost#:#Kosten
+assessment_reset#:#Alle Umformungskosten auf Standardwerte zurücksetzen
+assessment_invalid#:#Bitte ein gültiges Bewertungsverfahren, positive QSS-Maximalpunkte und ganze Umformungskosten von 0 bis 1000000 eingeben.
+assessment_execute#:#Bitte die Musterlösung mit den aktuellen QSS-Einstellungen ausführen, bevor die Frage gespeichert wird.

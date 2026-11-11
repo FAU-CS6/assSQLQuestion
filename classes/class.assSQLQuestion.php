@@ -84,6 +84,25 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
      */
     public array $solution_metrics = array();
 
+    private string $assessment_mode = QssAssessment::RESULT;
+    private float $qss_maximum_points = 5.0;
+    private array $qss_costs = [];
+
+    public function getAssessmentMode(): string { return $this->assessment_mode; }
+    public function setAssessmentMode(string $mode): void { $this->assessment_mode = QssAssessment::mode($mode); }
+    public function getQssMaximumPoints(): float { return $this->qss_maximum_points; }
+    public function setQssMaximumPoints(float $points): void
+    {
+        if (!is_finite($points) || $points < 0.0001 || $points > 1000000) {
+            throw new InvalidArgumentException('QSS maximum points must be positive and at most 1000000.');
+        }
+        $this->qss_maximum_points = $points;
+    }
+    public function getQssCosts(): array { return QssAssessment::costs($this->qss_costs); }
+    public function setQssCosts(array $costs): void { $this->qss_costs = QssAssessment::costs($costs); }
+    public function getQssCostsAsJSON(): string { return json_encode(QssAssessment::profile($this->getQssCosts()), JSON_THROW_ON_ERROR); }
+    public function setQssCostsFromJSON(string $json): void { $this->qss_costs = QssAssessment::costsFromJSON($json); }
+
     /**
      * Member functions that have to be part of every assQuestion
      */
@@ -166,7 +185,9 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
             'Sequence B' => $this->getSequence('sequence_b'),
             'Sequence C' => $this->getSequence('sequence_c'),
             'Integrity check' => $additional_info->getTrueFalseTagForBool($this->getIntegrityCheck()),
-            'Scoring metrics' => $this->getAllSolutionMetricsAsJSON()
+            'Assessment mode' => $this->getAssessmentMode(),
+            'Scoring metrics' => $this->getAllSolutionMetricsAsJSON(),
+            'QSS cost profile' => $this->getAssessmentMode() === QssAssessment::QSS ? $this->getQssCostsAsJSON() : ''
         ];
     }
 
@@ -254,6 +275,9 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
      */
     public function saveToDb(?int $original_id = null): void
     {
+        if ($this->getAssessmentMode() === QssAssessment::QSS) {
+            $this->setPoints($this->getMaximumPoints());
+        }
         // Save the basic data (implemented in assQuestion)
         $this->saveQuestionDataToDb($original_id);
 
@@ -339,7 +363,7 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
             $guiArea->writeParticipantInput($participant_input);
         }
 
-        if (isset($_POST['qss_evaluation']) && is_string($_POST['qss_evaluation'])) {
+        if ($this->getAssessmentMode() === QssAssessment::QSS && isset($_POST['qss_evaluation']) && is_string($_POST['qss_evaluation'])) {
             $participant_input->setQssEvaluationFromJSON($_POST['qss_evaluation']);
             $qss = $participant_input->getQssEvaluation();
             $answer = str_replace(["\r\n", "\r"], "\n", $participant_input->getSequence());
@@ -350,6 +374,19 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
             }
         }
 
+        if ($this->getAssessmentMode() === QssAssessment::QSS) {
+            // This score and revision are generated here, never accepted from POST.
+            // Retain the grading used for this submission across later cost/model
+            // changes without rerunning SQL or graph search on the server.
+            $points = QssAssessment::points($this, $participant_input);
+            $participant_input->setQssGradingContext([
+                'version'=>1, 'mode'=>'qss', 'points'=>$points, 'maxPoints'=>$this->getMaximumPoints(),
+                'referenceRevision'=>JsBlock::getQssReferenceRevision($this),
+                'engineVersion'=>JsBlock::QSS_ENGINE_VERSION, 'rubric'=>JsBlock::QSS_RUBRIC,
+                'scale'=>JsBlock::getQssScale($this->getMaximumPoints()),
+                'costProfile'=>QssAssessment::profile($this->getQssCosts())
+            ]);
+        }
         // Set value1 to be $participant_input serialized to JSON
         $value1 = $participant_input->toJSON();
 
@@ -415,6 +452,15 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
     {
         // Transform value1 of solution into a ParticipantInput
         $participant_input = isset($solution["value1"]) ? ParticipantInput::fromJSON($solution["value1"]) : new ParticipantInput();
+
+        $context = $participant_input->getQssGradingContext();
+        if ($context !== null) {
+            return round($context['points'],4);
+        }
+
+        if ($this->getAssessmentMode() === QssAssessment::QSS) {
+            return QssAssessment::points($this, $participant_input);
+        }
 
         if (!$participant_input->getExecutedBool() || $participant_input->getErrorBool()) {
             return 0.0;
@@ -686,6 +732,9 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
      */
     public function getMaximumPoints(): float
     {
+        if ($this->getAssessmentMode() === QssAssessment::QSS) {
+            return $this->getQssMaximumPoints();
+        }
         // Initialize with 0
         $maximum_points = 0;
 
@@ -799,9 +848,12 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
                 error_bool,
                 error,
                 executed_bool,
-                output_relation
+                output_relation,
+                assessment_mode,
+                qss_maximum_points,
+                qss_costs
             )
-			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+			VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             array(
                 "integer",
                 "text",
@@ -812,6 +864,9 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
                 "integer",
                 "clob",
                 "integer",
+                "clob",
+                "text",
+                "float",
                 "clob"
             ),
             array(
@@ -824,7 +879,10 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
                 $this->getErrorBool(),
                 $this->getError(),
                 $this->getExecutedBool(),
-                $this->getOutputRelation()
+                $this->getOutputRelation(),
+                $this->getAssessmentMode(),
+                $this->getQssMaximumPoints(),
+                $this->getQssCostsAsJSON()
             )
         );
 
@@ -888,6 +946,9 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
             $this->setError((string) $data_qd['error']);
             $this->setExecutedBool((bool) $data_qd['executed_bool']);
             $this->setOutputRelation((string) $data_qd['output_relation']);
+            $this->setAssessmentMode((string) ($data_qd['assessment_mode'] ?? QssAssessment::RESULT));
+            $this->setQssMaximumPoints((float) ($data_qd['qss_maximum_points'] ?? 5));
+            $this->setQssCostsFromJSON((string) ($data_qd['qss_costs'] ?? ''));
         }
 
         // Set SolutionMetrics from il_qpl_qst_qpisql_qsm
