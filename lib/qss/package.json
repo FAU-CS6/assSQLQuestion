@@ -8,13 +8,14 @@
   "scripts": {
     "build": "rollup --config",
     "build:check": "node scripts/check-build.mjs",
-    "test": "node --test ../../tests/qss/*.test.*"
+    "test": "node scripts/test-browser.mjs"
   },
   "dependencies": {
     "node-sql-parser": "5.4.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "29.0.3",
+    "assert": "2.1.0",
     "rollup": "4.68.1"
   }
 }

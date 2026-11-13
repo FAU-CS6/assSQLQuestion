@@ -327,6 +327,7 @@ cd lib/qss
 npm ci --ignore-scripts
 npm run build
 npm run build:check
+npm --prefix ../../tests/browser ci --ignore-scripts --no-audit --no-fund
 npm test
 npm audit --audit-level=low
 ```
@@ -336,6 +337,22 @@ prototype uses Node's build-time transformer; ILIAS itself requires no Node runt
 The local resolver avoids an additional object-merging build dependency.
 `build:check` rebuilds in a clean temporary source directory and compares both
 committed bundles byte-for-byte.
+
+`npm test` requires an installed Google Chrome. It launches a fresh headless
+browser and runs the SQL/QSS test bodies with the shipped SQLite 3.22.0 asset.
+Node only bundles the tests and runs four report/transport test files that do
+not execute SQL or QSS. The same Rollup TypeScript resolution is used as in the
+product build. Browser assertions use the strict API of the pinned `assert`
+test dependency; SQL values are not compared through a lossy JSON substitute.
+The limited SQLite test adapter preserves prepare errors and exact integer
+reads; it does not replace or modify the deployed SQLite runtime.
+
+The test runner has no execution deadline and writes individual results to
+`test-results/qss/browser-tests.json` (or `QSS_TEST_REPORT_DIR`). Eight optional
+CDP oracle groups remain separately declared skips in this suite, as before;
+the real browser-worker cancellation test now runs here too. GitHub Actions
+installs Chrome and the browser test dependencies before invoking this same
+command, followed by bundle reproduction, dependency audit and UI checks.
 
 Unit/SQLite tests use anonymous fixtures, including the paper's missing-argument
 and reverse-equivalence examples, directed edit costs, path replay and independent
