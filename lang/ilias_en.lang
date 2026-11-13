@@ -246,6 +246,7 @@ qss_unsupported#:#This answer cannot be represented by the current SQL AST model
 qss_failed#:#QSS assessment failed.
 qss_cancelled#:#QSS assessment cancelled manually.
 qss_notevaluated#:#No QSS assessment available yet.
+qss_notcompleted#:#No completed QSS assessment is available. The 0 points displayed by ILIAS are not a certified QSS result. This answer still needs to be assessed.
 qss_distance#:#SQL edit cost
 qss_points#:#QSS points
 qss_edits#:#SQL edits

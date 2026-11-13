@@ -20,7 +20,7 @@ edit catalogue. It does not use the former syntax-tree distance.
   allowed, including the argument hole in `AVG()` and unresolved column names.
 * Each named SQL edit has a fixed nonnegative integer cost. Its neighbour
   function applies at every compatible position, not only positions that differ
-  from the target. Constructors add shallow components with holes or intrinsic
+  from the target. Basic constructors add shallow components with holes or intrinsic
   leaves; they do not insert complete reference subtrees in one step.
 * Atomic additions/removals and attribute changes connect states. Semantic
   shortcuts provide cheaper logical changes. Equivalence edits are actual
@@ -42,6 +42,17 @@ An actual all-zero path is also optimal under nonnegative costs. These return
 `exact-zero-path-certificate`. Structural guides only schedule attempts to find
 these witnesses; they never supply a distance, prune the graph or grade an answer.
 An unsuccessful witness attempt falls through to the complete lazy search.
+A witnessed path above the initial lower bound supplies an upper bound only;
+the remaining search must still prove that no cheaper path exists.
+
+All configured edge costs are integers, so a proven rational lower bound can be
+rounded up to the next integer. Effect ratios and cost partitions use exact
+BigInt arithmetic for this certificate; floating-point `Math.ceil` is not used.
+The lazy edit schedule subtracts each exact per-edit decrease before rounding
+the remaining bound. Thus a bound of 4.8 already excludes every path below
+the five-cost score cutoff without changing an edge or inventing an exact path.
+Task yields use short-lived browser MessageChannels instead of nested timers;
+cancellation checks and the frequency of real task boundaries remain unchanged.
 
 AST identity ignores representation-only empty fields (missing/null slots,
 empty lists and an unset DISTINCT flag). It does not merge semantically equivalent
@@ -115,13 +126,119 @@ The paid `relocateOuterJoinPredicate` edit also moves one pure conjunct between
 ON and WHERE while retaining a joining predicate. Its default cost is 1; outer
 join predicate relocation does not become a free equivalence.
 
-Version 0.3.0 saves a versioned per-question profile of 50 configurable cost
-entries: 35 named SQL transformations/repairs and 15 basic operation categories.
+Graph model 2.7.0 uses cost-profile version 7 with 71 configurable entries:
+56 named SQL transformations/repairs and 15 basic operation categories.
+Profiles from models 2.1.1, 2.2.0, 2.3.0, 2.4.0, 2.5.0, 2.6.0 and 2.6.1 retain all their previous overrides;
+new entries receive their defaults. Stored grades retain their saved model,
+scale and reference revision, including in the released solution view.
 Known inactive steps are accepted independently of the current AST pair.
+Patch 2.6.1 preserved all 64 then-existing costs and permitted the optional ADD COLUMN
+edit when schema metadata is inspected: SQLite omits that keyword from stored
+column definitions. Other metadata-sensitive DDL edits and EXPLAIN remain
+guarded. Historical scores keep their saved model and are not recomputed.
 Basic-operation category costs apply to the generated atomic edits; an explicit
 pair-specific atomic `costs` API entry still takes precedence. See
 [cost profiles](../../docs/qss-kostenkonfiguration.md) and
 [native grading acceptance](../../docs/qss-bewertung.md).
+
+Model 2.7.0 adds seven independently configurable directed edits. Existing
+costs are unchanged; six additions default to 0 and one repair defaults to 1:
+
+| Edit | Default | Guarded operation |
+| --- | ---: | --- |
+| `toggleJoinedProjectionAlias` | 0 | Add/remove the exact physical column name as an AS alias across known joined base tables, preserving output spelling and excluding duplicate names and ORDER/GROUP/HAVING bindings. |
+| `toggleJoinedIdenticalTableAlias` | 0 | Add/remove a base-table alias identical to its table binding across known sources, without capture or implicit output-name changes. |
+| `rewriteUniqueFilteredSemijoin` | 0 | Rewrite a positive IN subquery and INNER JOIN when a declared PK/UNIQUE key plus literal equality filters proves at most one matching inner row; comparison affinity and BINARY collation must agree. |
+| `changeSubqueryComparison` | 1 | Replace IN/NOT IN around one subquery with a scalar comparison, or conversely, preserving the left operand and inner query. This is a semantic repair: multiple matches and NULL can change the result. |
+| `qualifyLocalSubqueryColumn` | 0 | Add/remove the qualifier of a proved local physical column in a single-source, uncorrelated subquery. |
+| `toggleLocalSubqueryTableAlias` | 0 | Add/remove an identical table-name alias in that proved local subquery scope. |
+| `commuteInnerJoinSources` | 0 | Exchange two ordinary INNER JOIN sources with explicit unambiguous physical output columns, retaining the ON expression exactly. |
+
+These rules require their individual scope, provenance, output-name and purity
+guards. In particular, the semijoin rule excludes DISTINCT, aggregates, ordering,
+limits, correlation and nested scopes, and retains duplicate outer rows and SQL
+NULL behavior. The JOIN commutation rule excludes outer/USING/NATURAL joins,
+wildcards, grouping, ordering, limits and volatile expressions. Unknown schema
+or unproved bindings withhold the affected equivalence rather than assume it.
+Every rule generates a concrete replayable AST edge; none replaces AST identity
+with observed result equality. Costs 0, 1 and 7 are regression-tested, including
+custom prices on otherwise free steps.
+
+The existing `commuteBooleanOperands` step additionally accepts a proved
+side-effect-free AND/OR expression containing exactly one uncorrelated subquery
+in the outer WHERE of SELECT, UPDATE or DELETE. Actual ordinary-table metadata
+and CREATE provenance are required. Functions, views, triggers, attached/TEMP
+namespaces, unknown or captured columns, nested queries, CTEs, ordering, limits
+and grouped subqueries are excluded. The subquery itself is not rewritten;
+scalar first-row/empty-NULL and IN/NOT IN behavior stay inside the same operand.
+This extends an existing guarded edit without adding an eighth price.
+
+The matching search optimizations retain exact shortest paths within the
+configured graph. Statement alignment and independently certified effect bounds
+can exclude whole lazy edit families before allocating their neighbours.
+Scalar fact views deliberately forget distinctions changed by free edits;
+concrete keys, operations and replay keep those distinctions. Missing effect
+certificates or free overrides disable the affected positive lower bound.
+No search guide supplies an approximate distance, timeout or visited-node budget.
+A cheap existing bound can reject a successor before expensive fact collection;
+accepted states retain their full bounds and queue order. The semijoin fact
+relaxation is omitted when the fixed schema provenance proves that no semijoin
+edge can exist anywhere in the graph. A non-collapsing canonical OR is retained
+even when semijoins are possible: neither endpoint of the guarded semijoin rule
+contains that disjunction. Both tests concern search facts only, never AST identity.
+
+The final native answer retest covers 33 unchanged answers on model 2.7.0:
+30 QSS cases all complete with a certified result (23 exact paths and seven
+zero-point certificates), while three legacy result cases retain their previous
+behavior without starting QSS. UI elapsed time has a median of 754 ms and a
+maximum of 4.035 s; QSS-worker time has a median of 91.8 ms and a maximum of
+3.557 s. The custom-cost comparison finishes in 3.206 s of QSS work. These
+measurements cover that regression matrix, not all possible SQL answers or
+reference SQL execution times. The earlier 100 official random test attempts
+retain their historical model versions and grades. See the dated
+[assessment report](../../docs/qss-bewertung.md).
+
+The final native author-form self-check also covers all 699 unchanged model
+answers: 351 QSS answers return exact distance zero and full points, and 348
+result-based answers run the established metrics successfully. Every question
+fingerprint remains unchanged and only its selected evaluator runs. QSS time
+has a median of 66.3 ms and a maximum of 173.2 ms. Original SQL execution can
+take substantially longer; the longest observed SQL run takes 74.515 s.
+These three disjoint browser ranges do not constitute another 100-attempt
+student test or a general runtime bound.
+
+The SQLite runtime remains the existing 3.22.0 browser build. The graph adapter
+also represents its CTE/DML, transaction, trigger, FTS3/FTS4, index-hint, row
+assignment, declaration-constraint and EXPLAIN syntax. Runtime features absent
+from that build, such as window functions and FTS5, are not supplied by QSS.
+This coverage does not claim a complete SQLite grammar or equivalence decision.
+
+New guarded free edits cover BETWEEN, literal IN lists, proven SQLite DQS strings,
+rowid-primary-key nullability, explicit parent-key lists, unambiguous single-table
+qualification, redundant aliases and canonical integer/TEXT comparisons.
+A separate configurable edge qualifies or unqualifies a WHERE column across
+known ordinary joined tables when exactly one physical source owns the column.
+It requires ordinary CREATE TABLE provenance and excludes virtual tables,
+namespace changes, hidden row aliases, USING/NATURAL joins and nested scopes.
+It does not rewrite projection names or move predicates between ON and WHERE.
+Output-name flags, alias capture, schema metadata and affinity can invalidate an
+apparent equivalence; the affected edges are withheld. Alias renaming preserves
+implicit output names, including names used by outer queries. A missing binary
+operand, a missing atomic NULL filter and a missing ORDER BY column have explicit paid repair steps, each
+with default cost 1. These never insert a complete query or subquery.
+
+Search optimizations intern immutable structural keys, share lazy edit schedules
+and memoize scheduling guides per job. An optional guide walk from the reference
+can construct a zero-cost witness when a forward guide stalls. It does not
+assume that graph edges are reversible: every step, including a possible bridge
+from the answer, must be generated in the actual forward direction and replayed.
+A failed witness leaves the complete shortest-path search unchanged. The guide
+never supplies a grade, lower bound or execution budget.
+Coarse AST views are used exclusively for
+admissible facts; graph keys and operation replays retain concrete distinctions.
+The ordinary NOT NULL predicate bound remains distinct from the guarded free
+INTEGER PRIMARY KEY rule. None of these optimizations introduces an execution
+deadline, a visited-node budget or an approximate score.
 
 `questionText` supplies explicit construct requirements. They restrict free edits
 only when the question states a method constraint. Explicitly unconstrained
@@ -251,8 +368,10 @@ Google Chrome CDP endpoint and verify headless operation.
   union of native ranges, distinct source/original/native IDs, current bundles,
   browser observations and participant-finalized database grades.
 
-The final 699-question proof uses disjoint ranges 1–175, 176–350, 351–525 and
-526–699 for both browser paths. Create fixtures and run database reports
+The historical 699-question proof used disjoint ranges 1–175, 176–350, 351–525 and
+526–699 for both browser paths. These commands describe that fixture workflow;
+the current native 2.7.0 checks are recorded in the assessment report above.
+Create fixtures and run database reports
 sequentially: ILIAS CLI authentication rewrites the CLI user's preferences.
 Browser runs use separate private contexts. Neither runner imposes a SQL or QSS
 execution deadline.

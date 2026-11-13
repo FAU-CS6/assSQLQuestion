@@ -97,13 +97,13 @@ test('positive direct paths cannot use the trivial zero bound when heuristics ar
     assert.equal(result.search, 'exact-lazy-uniform-cost');
 });
 
-test('a merely lower fractional bound is not rounded into a direct-path equality certificate', async () => {
+test('an exact fractional lower bound rounds up when every graph edge has an integer cost', async () => {
     const edits = [edit('direct', 1, [[0, 2]], 2)];
     assert.equal(heuristicCertificate(edits).unit, 0.5);
     const result = await shortestSqlEditPath(node(2), node(0), {edits}, context());
     assert.equal(result.distance, dijkstra(0, 2, edits));
     assert.equal(result.distance, 1);
-    assert.notEqual(result.search, 'exact-direct-bound-certificate');
+    assert.equal(result.search, 'exact-direct-bound-certificate');
 });
 
 test('identity keeps its ordinary empty path and does not generate direct neighbours', async () => {
@@ -195,6 +195,29 @@ test('mathematical score cutoff has a lower-bound certificate and no invented ex
     assert.deepEqual(result.edits, []);
 });
 
+test('shared lazy schedules preserve directed shortest paths and score cutoffs with free cycles', async () => {
+    let seed = 4217;
+    const random = limit => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) % limit);
+    for (let sample = 0; sample < 12; sample++) {
+        const edits = [edit('connected-cycle', 1, [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0]])];
+        for (let i = 0; i < 10; i++) edits.push(edit('edge-' + i, random(4), [[random(5), random(5)]]));
+        for (let from = 0; from < 5; from++) for (let to = 0; to < 5; to++) {
+            const expected = dijkstra(from, to, edits);
+            for (const cutoff of [1, 2, 4, Infinity]) {
+                const result = await shortestSqlEditPath(node(to), node(from), {edits}, context(), {cutoff});
+                assert.equal(result.distance, Math.min(expected, cutoff));
+                assert.equal(Boolean(result.capped), expected >= cutoff);
+                if (result.capped) assert.deepEqual(result.edits, []);
+                else {
+                    let replay = node(from);
+                    for (const edge of result.edits) replay = replayOperation(replay, edge.operation);
+                    assert.deepEqual(replay, node(to));
+                }
+            }
+        }
+    }
+});
+
 test('symbol heuristic uses presence only: copying does not introduce another fact', () => {
     const root = {kind: 'Script', attrs: {}, slots: {statements: [node(1), node(1)]}};
     assert.equal(symbolFacts(root).size, 1);
@@ -210,11 +233,15 @@ test('SQL work remains admissible when a projection shortcut overlaps symbol and
         const have = symbolFacts(root);
         return bound.measure(root, [...target].filter(value => !have.has(value)).length * unit);
     };
-    assert.equal(measure(answer), 2);
+    // Semijoin edges disable the global SelectItem count. The remaining symbol
+    // and DISTINCT charges are disjoint and can now be added safely.
+    assert.equal(measure(answer), 2 + unit);
     assert.equal(measure(reference), 0);
     for (const edit of graph.edits) for (const next of edit.apply(answer)) {
         assert.ok(measure(answer) <= edit.cost + measure(next.root), edit.name);
-        assert.ok(measure(answer) - measure(next.root) <= bound.decrease(edit), edit.name);
+        const missing = root => [...target].filter(value => !symbolFacts(root).has(value)).length;
+        assert.ok(bound.integerMeasure(answer, missing(answer)) - bound.integerMeasure(next.root, missing(next.root))
+            <= bound.integerDecrease(edit), edit.name);
     }
 });
 

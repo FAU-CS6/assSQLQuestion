@@ -245,6 +245,7 @@ qss_unsupported#:#Diese Antwort lässt sich im aktuellen SQL-AST-Modell nicht da
 qss_failed#:#QSS-Auswertung fehlgeschlagen.
 qss_cancelled#:#QSS-Auswertung manuell abgebrochen.
 qss_notevaluated#:#Noch keine QSS-Auswertung vorhanden.
+qss_notcompleted#:#Keine abgeschlossene QSS-Bewertung vorhanden. Die in ILIAS angezeigten 0 Punkte sind kein nachgewiesenes QSS-Ergebnis. Diese Antwort muss noch bewertet werden.
 qss_distance#:#SQL-Editkosten
 qss_points#:#QSS-Punkte
 qss_edits#:#SQL-Edits

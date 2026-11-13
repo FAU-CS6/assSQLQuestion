@@ -82,8 +82,8 @@ test('all new free neighbours preserve admissible facts, including mixed Boolean
    'CREATE TABLE checked(id INTEGER DEFAULT(2*3), CHECK(id>2+3))']){
   const root=ast(sql),g=createEditGraph(root,root,schema);let edges=0;
   for(const e of g.edits.filter(e=>e.cost===0))for(const n of e.apply(root)){
-   assert.deepEqual(set(symbolFacts(n.root)),set(symbolFacts(root)),e.name);
-   assert.deepEqual(set(predicateFacts(n.root)),set(predicateFacts(root)),e.name);edges++;
+   assert.deepEqual(set(symbolFacts(g.abstractRoot(n.root))),set(symbolFacts(g.abstractRoot(root))),e.name);
+   assert.deepEqual(set(predicateFacts(g.abstractRoot(n.root))),set(predicateFacts(g.abstractRoot(root))),e.name);edges++;
   }assert.ok(edges>0);
  }
 });

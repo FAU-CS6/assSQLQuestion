@@ -16,7 +16,7 @@ function checkCase(row,expected){
  assert.deepEqual(row.failures,[]);
  assert.equal(row.answer_sha256,typeof row.answer==='string'?hash(row.answer):expected.answer_sha256);
  const result=row.result,q=result?.qss;assert.ok(q,'Missing native QSS sidecar');
- assert.equal(q.engine,'graph-qss-sqlite-v2');assert.equal(q.version,'2.1.1');assert.equal(q.modelVersion,'2.1.1');
+ assert.equal(q.engine,'graph-qss-sqlite-v2');assert.equal(q.version,require('../../lib/qss/cost-catalog.json').modelVersion);assert.equal(q.modelVersion,require('../../lib/qss/cost-catalog.json').modelVersion);
  assert.equal(q.rubric,'paper-linear-v2');assert.equal(q.provisionalRubric,true);
  assert.equal(q.scale,expected.maximum>0?expected.maximum/5:1);assert.equal(q.maxPoints,expected.maximum);
  assert.equal(q.answerDigest,row.answer_sha256,'Answer binding');assert.match(q.referenceRevision,/^[a-f0-9]{64}$/);
@@ -44,7 +44,7 @@ async function verify({corpus,out,frozenFile,prefixes,teacherFile,semanticFile})
  assert.equal(prefixes.length,4);assert.equal(new Set(prefixes).size,4);
  const frozen=json(frozenFile),manifest=json(path.join(corpus,'manifest.json'));
  assert.equal(manifest.questions,699);assert.deepEqual(manifest.pools.map(p=>p.count),[23,65,504,68,39]);
- assert.equal(frozen.model_version,'2.1.1');
+ assert.equal(frozen.model_version,require('../../lib/qss/cost-catalog.json').modelVersion);
  for(const [file,digest]of Object.entries(frozen.files))assert.equal(hash(fs.readFileSync(path.join(ROOT,file))),digest,'Frozen source '+file);
  const sources=new Map(),keys=[],pools={};let maximum=0;
  const original=await stream(path.join(corpus,'questions.jsonl'),(row,i)=>{
@@ -156,7 +156,7 @@ async function verify({corpus,out,frozenFile,prefixes,teacherFile,semanticFile})
  assert.equal(semantic.teacher_user_id,teacher.teacher_user_id);assert.equal(semantic.teacher_is_system_administrator,false);
  assert.equal(semantic.all_pool_and_question_owners_are_teacher,true);assert.equal(semantic.ownership_verified_questions,1398);assert.deepEqual(semantic.failures,[]);
  timings.sort((a,b)=>a-b);
- return{accepted:true,completed:true,observed_at:new Date().toISOString(),model_version:'2.1.1',...totals,parts,pool_counts:pools,
+ return{accepted:true,completed:true,observed_at:new Date().toISOString(),model_version:require('../../lib/qss/cost-catalog.json').modelVersion,...totals,parts,pool_counts:pools,
   source_questions_sha256:original.sha256,plans_sha256:planInput.sha256,frozen_proof_sha256:hash(fs.readFileSync(frozenFile)),
   teacher_transfer_sha256:hash(fs.readFileSync(teacherFile)),teacher_semantics_sha256:hash(fs.readFileSync(semanticFile)),
   qss_worker_sha256:frozen.qss_worker_sha256,runtime_sha256:frozen.runtime_sha256,shortfalls,correct_families:families,

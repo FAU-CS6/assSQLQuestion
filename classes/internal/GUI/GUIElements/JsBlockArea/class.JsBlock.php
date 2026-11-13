@@ -10,7 +10,7 @@ declare(strict_types=1);
 class JsBlock extends GUIElement
 {
     public const QSS_ENGINE = 'graph-qss-sqlite-v2';
-    public const QSS_ENGINE_VERSION = '2.1.1';
+    public const QSS_ENGINE_VERSION = '2.7.0';
     public const QSS_RUBRIC = 'paper-linear-v2';
     public const QSS_SCALE = 1;
     public const QSS_DEDUCTION_BUDGET = 5;
@@ -88,6 +88,7 @@ class JsBlock extends GUIElement
                 'costs' => $this->object->getQssCosts(),
                 'engine' => self::QSS_ENGINE,
                 'engineVersion' => self::QSS_ENGINE_VERSION,
+                'workerRevision' => filemtime(dirname(__DIR__, 5) . '/lib/qss/worker.qss.js'),
                 'rubric' => self::QSS_RUBRIC,
                 'scale' => self::getQssScale($this->object->getMaximumPoints()),
                 'scaleMode' => 'question-relative',

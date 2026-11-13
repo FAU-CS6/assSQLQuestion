@@ -35,7 +35,7 @@ async function execute(page,sql){
  if(sql!==undefined)await page.evaluate(value=>{const view=editor_sequence_b.codeMirrorView;view.dispatch({changes:{from:0,to:view.state.doc.length,insert:value}});},sql);
  await page.locator('#qpisql-execute-button').click();await ready(page);
  return page.evaluate(()=>({mode:EXECUTE_HANDLER.assessmentMode,qss:EXECUTE_HANDLER.qss?.result||null,
-  qssWorkers:__assessmentWorkers.filter(url=>url.endsWith('/worker.qss.js')).length,metricCalls:__assessmentMetrics,
+  qssWorkers:__assessmentWorkers.filter(url=>new URL(url,location.href).pathname.endsWith('/worker.qss.js')).length,metricCalls:__assessmentMetrics,
   output:document.getElementById('qpisql-output-relation').value}));
 }
 async function main(){
@@ -54,7 +54,7 @@ async function main(){
     assert.equal(await page.locator('[name=assessment_mode]').inputValue(),'result');
     if(i){
      await page.locator('[name=assessment_mode]').selectOption('qss');
-     assert.equal(await page.locator('[data-qss-cost]').count(),50);
+     assert.equal(await page.locator('[data-qss-cost]').count(),require('../../lib/qss/cost-catalog.json').steps.length);
      await page.locator('[name=qss_maximum_points]').fill('10');await page.locator('[name=qss_maximum_points]').dispatchEvent('change');
      const input=page.locator('[data-qss-cost=negateComplementaryComparison]');
      await input.evaluate(element=>{element.closest('details').open=true;});

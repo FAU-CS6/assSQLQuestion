@@ -5,7 +5,7 @@ const digest=crypto.createHash('sha256').update('SELECT 1').digest('hex');
 const expected={maximum:2,answer_sha256:digest};
 const fixture=()=>({answer:'SELECT 1',answer_sha256:digest,category:'correct',proof:'anonymous-gate-fixture',failures:[],result:{
  error:null,workers_disposed:true,next_disabled:false,progress:[{resultHidden:true,nextDisabled:true}],
- qss:{engine:'graph-qss-sqlite-v2',version:'2.1.1',modelVersion:'2.1.1',rubric:'paper-linear-v2',provisionalRubric:true,scale:.4,maxPoints:2,points:2,
+ qss:{engine:'graph-qss-sqlite-v2',version:require('../../lib/qss/cost-catalog.json').modelVersion,modelVersion:require('../../lib/qss/cost-catalog.json').modelVersion,rubric:'paper-linear-v2',provisionalRubric:true,scale:.4,maxPoints:2,points:2,
   answerDigest:digest,referenceRevision:'a'.repeat(64),formula:'max(maxPoints - distance * scale, 0)',scoreCertifiedWithinModel:true,status:'exact',
   exactWithinModel:true,distance:0,edits:[],editsTruncated:false}}});
 test('native matrix gate accepts its anonymous sidecar fixture and restored digest without SQL execution',()=>{

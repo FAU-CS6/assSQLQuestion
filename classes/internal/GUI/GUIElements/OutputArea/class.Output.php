@@ -131,12 +131,25 @@ class Output extends GUIElement
         $tpl->setVariable("ERROR_NO_EXECUTION", $this->plugin->txt('ai_oa_er_no_exec'));
         $this->setOutputLabels($tpl);
         $gradingContext = $participant_input?->getQssGradingContext();
-        $qss = $gradingContext !== null || $this->object->getAssessmentMode() === QssAssessment::QSS ? $participant_input?->getQssEvaluation() : null;
+        $qssRequired = $participant_input !== null &&
+            ($gradingContext !== null || $this->object->getAssessmentMode() === QssAssessment::QSS);
+        $qss = $qssRequired ? $participant_input->getQssEvaluation() : null;
+        $tpl->setVariable('QSS_REQUIRED', $qssRequired ? 'true' : 'false');
         $tpl->setVariable('QSS_EVALUATION', $qss === null ? '' : JsBlock::jsonAttribute($qss));
         $labels = JsBlock::getQssLabels($this->plugin);
         $labels['shadow'] = strip_tags($this->plugin->txt('assessment_qss_active'));
+        $labels['notCompleted'] = strip_tags($this->plugin->txt('qss_notcompleted'));
         $tpl->setVariable('QSS_LABELS', JsBlock::jsonAttribute($labels));
         $tpl->setVariable('QSS_REFERENCE_REVISION', $gradingContext['referenceRevision'] ?? JsBlock::getQssReferenceRevision($this->object));
+        $tpl->setVariable('QSS_STORED_MODEL', JsBlock::jsonAttribute([
+            'engine' => JsBlock::QSS_ENGINE,
+            'engineVersion' => $gradingContext['engineVersion'] ?? JsBlock::QSS_ENGINE_VERSION,
+            'rubric' => $gradingContext['rubric'] ?? JsBlock::QSS_RUBRIC,
+            'scale' => $gradingContext['scale'] ?? JsBlock::getQssScale($this->object->getMaximumPoints()),
+            'maxPoints' => $gradingContext['maxPoints'] ?? $this->object->getMaximumPoints(),
+            'answerDigest' => $participant_input === null ? null : hash('sha256',
+                str_replace(["\r\n", "\r"], "\n", $participant_input->getSequence())),
+        ]));
         return $tpl->get();
     }
 

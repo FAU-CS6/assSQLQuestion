@@ -14,6 +14,13 @@
   min-height: 200px;
 }
 
+/* Let the SQL editor scroll inside ILIAS's flex item. A long answer must not
+ * widen the whole question and move the test navigation out of view. */
+#tst_right:has(.qpisql-input-area),
+.c-layout-alignment__block:has(.qpisql-output-area) {
+  min-width: 0;
+}
+
 /**
  * Custom CSS for the Sequence area
  */
@@ -160,7 +167,8 @@
   margin-top: 10px;
 }
 .qpisql-execution-controls #qpisql-execute-button { margin-top: 0; }
-#qpisql-cancel-button[hidden] { display: none; }
+#qpisql-cancel-button[hidden],
+#qpisql-schema-cancel[hidden] { display: none; }
 .qpisql-execution-controls .qpisql-shortcut { margin: 0; }
 .qpisql-answer-status {
   display: flex;

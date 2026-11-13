@@ -185,7 +185,8 @@ class QSSShadow
         resolve(result);
       };
       try {
-        this.worker = new Worker(window.QPISQL_URL_PATH + '/lib/qss/worker.qss.js');
+        const revision = this.config.workerRevision === undefined ? '' : '?v=' + encodeURIComponent(this.config.workerRevision);
+        this.worker = new Worker(window.QPISQL_URL_PATH + '/lib/qss/worker.qss.js' + revision);
         this.worker.onmessage = event => {
           const data = event.data || {};
           if (data.id !== id || id !== this.job) return;
@@ -202,7 +203,7 @@ class QSSShadow
           scale: this.config.scaleMode === 'question-relative' || this.config.scale === undefined
             ? (snapshot.maxPoints > 0 ? snapshot.maxPoints / (this.config.scaleBudget || 5) : 1) : this.config.scale,
           questionText: this.config.questionText || '', reference: snapshot.reference,
-          answer: snapshot.answer, schema: snapshot.schema, schemaSql: snapshot.schemaSql, maxPoints: snapshot.maxPoints,
+          answer: snapshot.answer, schema: snapshot.schema, schemaSql: snapshot.schemaSql, controlSql: snapshot.controlSql, maxPoints: snapshot.maxPoints,
           referenceRows: this.config.context === 'author' ? snapshot.answerRows : this.config.referenceRows,
           answerRows: snapshot.answerRows,
           referenceExecutionValid: snapshot.referenceExecutionValid,
@@ -293,16 +294,39 @@ class QSSShadow
   static renderStored(container)
   {
     for (const card of container.querySelectorAll(':scope > .qpisql-qss-shadow')) card.remove();
-    if (!container.dataset.qssEvaluation) return;
+    const required = container.dataset.qssRequired === 'true';
+    if (!required && !container.dataset.qssEvaluation) return;
     try {
       // Only the server-rendered solution output calls this after ILIAS grants access.
-      const qss = new QSSShadow({ context: 'solution', labels: JSON.parse(container.dataset.qssLabels || '{}') });
+      // Completed answers keep the server-saved model and scale that produced
+      // their official grade, even after the current question/model changes.
+      const model = JSON.parse(container.dataset.qssModel || '{}');
+      const qss = new QSSShadow({ ...model, context: 'solution', labels: JSON.parse(container.dataset.qssLabels || '{}') });
       qss.card = document.createElement('section');
       qss.card.className = 'qpisql-qss-shadow';
       container.appendChild(qss.card);
       qss.mount = () => qss.card;
-      const result = JSON.parse(container.dataset.qssEvaluation);
-      if (!QSSShadow.isCurrentModel(result) || (container.dataset.qssReferenceRevision
+      let result = null;
+      try { result = JSON.parse(container.dataset.qssEvaluation || 'null'); } catch (error) { /* Missing evidence remains ungraded. */ }
+      if (required) {
+        // ILIAS stores a numeric zero when no assessment finished. That value
+        // is not a QSS zero certificate; only bound, terminal evidence may
+        // display an assessed score in the released solution view.
+        const completed = result && QSSShadow.isCurrentModel(result, model)
+          && result.modelVersion === model.engineVersion
+          && result.referenceRevision === container.dataset.qssReferenceRevision
+          && result.answerDigest === model.answerDigest
+          && result.maxPoints === model.maxPoints
+          && result.scoreCertifiedWithinModel === true
+          && result.formula === 'max(maxPoints - distance * scale, 0)'
+          && (result.status === 'score-zero-certified' || (result.status === 'exact'
+            && result.exactWithinModel === true && Number.isSafeInteger(result.distance) && result.distance >= 0));
+        if (!completed) {
+          qss.message(qss.label('notCompleted'), false);
+          return;
+        }
+      }
+      if (!QSSShadow.isCurrentModel(result, model) || (container.dataset.qssReferenceRevision
         && result.referenceRevision !== container.dataset.qssReferenceRevision)) {
         qss.message(qss.label('stale'), false);
       } else qss.render(result);

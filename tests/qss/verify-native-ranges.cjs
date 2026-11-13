@@ -16,7 +16,7 @@ const readline = require('node:readline');
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const canonical = value => JSON.stringify(value);
 const normalizeSQL = value => value.replace(/\r\n?/g, '\n');
-const ENGINE = 'graph-qss-sqlite-v2', VERSION = '2.1.1';
+const ENGINE = 'graph-qss-sqlite-v2', VERSION = require('../../lib/qss/cost-catalog.json').modelVersion;
 const ROOT = path.resolve(__dirname, '../..');
 const files = ['exam-state.json', 'browser-report.json', 'browser-results.jsonl', 'database-report.json'];
 

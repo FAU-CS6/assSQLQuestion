@@ -49,7 +49,7 @@ class ExecutionHandler
     const token = ++this.runToken;
     this.onExecution();
     try {
-      this.snapshot = { schemaSql: this.getSequenceA(), answer: this.getSequenceB(),
+      this.snapshot = { schemaSql: this.getSequenceA(), controlSql: this.getSequenceC(), answer: this.getSequenceB(),
         reference: this.qss && this.qss.config.referenceSql !== null ? this.qss.config.referenceSql : this.getSequenceB(),
         maxPoints: this.qss ? this.qss.config.maxPoints : 0 };
       if (this.qss && this.qss.config.context === 'author') {
@@ -60,7 +60,7 @@ class ExecutionHandler
         onError: error => this.sqlFinished(token, error, null) };
       if (this.qss) callback.onSchema = schema => { if (token === this.runToken) this.snapshot.schema = schema; };
       this.phase = 'sql';
-      const run = new SQLRun(this.snapshot.schemaSql, this.snapshot.answer, this.getSequenceC(), this.getIntegrityCheck(), callback);
+      const run = new SQLRun(this.snapshot.schemaSql, this.snapshot.answer, this.snapshot.controlSql, this.getIntegrityCheck(), callback);
       // Empty sequences or validation errors can finish synchronously in the constructor.
       this.activeRun = this.running && this.phase === 'sql' ? run : null;
     } catch (error) {

@@ -58,6 +58,9 @@ function compareAll(result) {
   const reference = new SQLResult({columns: result.columns, values: result.values});
   reference.checkFunctionalDependency = legacy;
   reference.getAllFunctionalDependencies = function () {return legacyFind.call(this, [], this.columns.slice());};
+  reference.getAllMinimalFunctionalDependencies = function () {
+    return this.removeNonMinimalFunctionalDependencies(this.removeDoubleFunctionalDependencies(this.getAllFunctionalDependencies()));
+  };
   assert.equal(result.getAllMinimalFunctionalDependenciesAsJSON(), reference.getAllMinimalFunctionalDependenciesAsJSON());
   assert.equal(JSON.stringify(result.getAllFunctionalDependencies()), JSON.stringify(reference.getAllFunctionalDependencies()));
 }
@@ -98,6 +101,25 @@ test('recomputes after rows change and preserves first-column handling for dupli
   compareAll(result);
 });
 
+test('preserves legacy global-length minimization and depth-first output ordering', () => {
+  // A determines C; B,D also determine C, but the legacy minimizer discards
+  // this longer determinant even though A is not its subset. Preserve grades.
+  const rows = [[0,0,0,0], [0,1,0,1], [1,0,1,1], [1,1,1,0]];
+  compareAll(new SQLResult({columns: ['A','B','C','D'], values: rows}));
+  compareAll(new SQLResult({columns: ['A','A','B','C','D'], values: rows.map(row => [row[0], 'ignored', ...row.slice(1)])}));
+});
+
+test('wide single-row results stop after all shortest determinants are found', () => {
+  const columns = Array.from({length: 20}, (_, i) => 'column' + i);
+  const result = new SQLResult({columns, values: [columns.map((_, i) => i)]});
+  let calls = 0;
+  const check = result.checkFunctionalDependency;
+  result.checkFunctionalDependency = function (...args) {calls++; return check.apply(this, args);};
+  const dependencies = result.getAllMinimalFunctionalDependencies();
+  assert.equal(dependencies.length, 20 * 19);
+  assert.equal(calls, 20 * 19);
+});
+
 test('keeps the memo local and rechecks mutated result rows on every complete call', () => {
   const result = new SQLResult({columns: ['A', 'B', 'C'], values: [[1, 'x', 1], [2, 'y', 2]]});
   const before = result.getAllMinimalFunctionalDependenciesAsJSON();
@@ -132,7 +154,7 @@ test('minimal evaluation handles nine columns without building determinant permu
   const dependencies = result.getAllMinimalFunctionalDependencies();
   assert.equal(dependencies.length, columns.length * (columns.length - 1));
   assert.ok(dependencies.every(fd => fd.getDeterminateAttributes().length === 1 && fd.getDependentAttributes().length === 1));
-  assert.equal(checks, columns.length * (2 ** (columns.length - 1) - 1));
+  assert.equal(checks, columns.length * (columns.length - 1));
 });
 
 test('handles 26000 rows and a late conflicting row with unchanged legacy results', () => {

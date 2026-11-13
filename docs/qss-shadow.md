@@ -35,6 +35,11 @@ neue Antworten noch deren Diagnosefelder verändern.
 
 ## Vergleichsmodell und vorläufige Punkte
 
+Dieser technische Modellabschnitt ist auf 2.7.0 aktualisiert; der oben beschriebene
+Parallelbetrieb bleibt historisch. Für aktuelle native Abnahme, exklusive
+Bewertung, neutrale Studentenanzeige und Altimporte siehe
+[QSS-Bewertung](qss-bewertung.md).
+
 Das Modell `graph-qss-sqlite-v2` folgt den Abschnitten 4.2–4.7 von
 [Graph-based QSS](https://www.cs6.tf.fau.eu/files/2025/03/Koeberlein-Graph-based_QSS-141_b.pdf).
 Es erweitert die SQL-Abdeckung des SELECT-Prototyps durch einen neuen SQLite-AST
@@ -55,6 +60,15 @@ Umformungen einschließlich der vergrößernden Idempotenzrichtung sowie geeigne
 INNER-JOIN-/WHERE-Umformungen. Unbewiesene Varianten, beispielsweise die pauschale
 Übertragung auf LEFT JOIN, werden nicht gleichgesetzt. Fertige Pfade werden
 nachgespielt und ihre Gesamtkosten geprüft.
+
+Da alle Editkosten ganzzahlig sind, lässt sich eine bewiesene gebrochene
+Untergrenze auf die nächste ganze Zahl anheben. Brüche und Kostenaufteilung
+werden dafür exakt mit BigInt berechnet. Für noch nicht erzeugte Edits wird
+die maximale Abnahme exakt abgezogen und erst der Rest aufgerundet; die
+verzögerte Suche bleibt zulässig. Eine Untergrenze von 4,8 genügt damit bereits für den Fünf-Kosten-
+Nullpunktnachweis. Das ändert weder Graphkanten noch Umformungskosten.
+Kurze Browser-Taskpausen verwenden MessageChannel mit anschließend geschlossenen
+Ports; Abbruchprüfungen und Pausenhäufigkeit bleiben unverändert.
 
 Bei der Verlagerung eines INNER-JOIN-Prädikats bleibt die Reihenfolge der
 FROM-Quellen erhalten. Daher ist diese kostenfreie Regel auch für `SELECT *`
@@ -86,7 +100,8 @@ Vergleichspunkte = max(Maximalpunkte - Abstand * Skala, 0)
 Die Skala ist pro Frage fest auf `Maximalpunkte / 5` gesetzt (bei Maximum 0 auf 1).
 Ein lokaler Edit mit Kosten 1 zieht damit 20 Prozent der Maximalpunkte ab.
 Die API erlaubt weiterhin eine ausdrücklich gesetzte feste Skala. Die Rubrik
-heißt `paper-linear-v2`, die Modellversion `2.1.1`.
+heißt `paper-linear-v2`, die aktuelle Modellversion `2.7.0` (Kostenprofil 7,
+71 einzeln konfigurierbare Positionen).
 Gewöhnliche atomare Änderungen und positive Shortcuts kosten zunächst 1,
 DISTINCT-Änderungen 2 und das Hinzufügen/Entfernen einer ganzen Skriptanweisung
 oder Datenquelle sowie das Ändern ihrer Relation 5. Neue atomare Komponenten
@@ -122,14 +137,15 @@ gespeicherte native Studentenabgaben und gezielt falsche Varianten. Er trennt
 diese technischen Nachweise von der noch ausstehenden menschlichen Kalibrierung
 der Editkosten und Punkteskala.
 Der [Bericht zu studentischen Antwortvarianten vom 10. November](qss-studentenvarianten-2026-11-10.md)
-dokumentiert Modell 2.1.0. Der [aktuelle Robustheitsbericht](qss-robustheit-2026-11-10.md)
+dokumentiert Modell 2.1.0. Der [damalige Robustheitsbericht](qss-robustheit-2026-11-10.md)
 bestätigt Modell 2.1.1 mit 6.812 frischen nativen Chrome-Fällen auf allen 699
 unveränderten Originalfragen, 132 zusätzlichen anonymen Fällen, gespeicherten
 Noten und fünf Pool-Roundtrips. Er enthält getrennte Laufzeitmessungen sowie
 verbleibende Varianten-, Laufzeit- und Kalibrierungsgrenzen.
-Die Anforderungen an [später konfigurierbare Editkosten](qss-kostenkonfiguration.md)
-gelten für die künftige Freischaltung einer Bewertungsalternative; eine solche
-Dozenteneinstellung ist aktuell noch nicht implementiert.
+Die damals formulierten Anforderungen an
+[konfigurierbare Editkosten](qss-kostenkonfiguration.md) sind inzwischen als
+eigene Bewertungsalternative umgesetzt. Der aktuelle Ablauf und seine native
+Abnahme stehen in [Ergebnisbewertung oder Graph-QSS](qss-bewertung.md).
 Modell, Schnittstelle und reproduzierbare Builds stehen in
 [lib/qss/README.md](../lib/qss/README.md).
 

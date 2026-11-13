@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "modelVersion": "2.1.1",
+  "version": 7,
+  "modelVersion": "2.7.0",
   "steps": [
     {
       "id": "baseAddComponent",
@@ -351,6 +351,183 @@
       "group": "repair",
       "en": "Repair one column nullable",
       "de": "Eine NULL-/NOT-NULL-Bedingung der Spalte reparieren"
+    },
+    {
+      "id": "toggleAlterAddColumnKeyword",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Use or omit COLUMN in ALTER TABLE ADD",
+      "de": "Optionales COLUMN bei ALTER TABLE ADD verwenden oder weglassen"
+    },
+    {
+      "id": "quoteUnboundSqliteString",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Change quotes of an unbound SQLite string literal",
+      "de": "Anführungszeichen eines ungebundenen SQLite-Textliterals wechseln"
+    },
+    {
+      "id": "toggleIntegerPrimaryKeyNotNull",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Use or omit redundant NOT NULL on a SQLite INTEGER rowid primary key",
+      "de": "Redundantes NOT NULL bei einem SQLite-INTEGER-Rowid-Primärschlüssel verwenden oder weglassen"
+    },
+    {
+      "id": "toggleExplicitPrimaryKeyReference",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Use or omit a proven parent primary-key column list in a foreign key",
+      "de": "Nachgewiesene Primärschlüsselspalten im Fremdschlüssel explizit angeben oder weglassen"
+    },
+    {
+      "id": "rewriteBetweenRange",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Express BETWEEN or NOT BETWEEN as two equivalent range comparisons",
+      "de": "BETWEEN oder NOT BETWEEN durch zwei gleichwertige Bereichsvergleiche ausdrücken"
+    },
+    {
+      "id": "rewriteLiteralInList",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Express a literal IN or NOT IN list as equivalent equality comparisons",
+      "de": "IN- oder NOT-IN-Literalliste durch gleichwertige Vergleiche ausdrücken"
+    },
+    {
+      "id": "restoreMissingBinaryTerm",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Restore one missing non-query operand and its binary SQL operator",
+      "de": "Fehlenden Operanden und seinen binären SQL-Operator wiederherstellen"
+    },
+    {
+      "id": "qualifySingleTableColumn",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Use or omit the unambiguous single-table qualifier of a known column",
+      "de": "Eindeutigen Tabellenqualifizierer einer bekannten Spalte verwenden oder weglassen"
+    },
+    {
+      "id": "toggleRedundantProjectionAlias",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Use or omit an alias equal to the actual single-table output column name",
+      "de": "Alias mit identischem Ausgabespaltennamen verwenden oder weglassen"
+    },
+    {
+      "id": "toggleIdenticalTableAlias",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Use or omit a table alias identical to its unambiguous base table name",
+      "de": "Alias mit identischem eindeutigem Basistabellennamen verwenden oder weglassen"
+    },
+    {
+      "id": "toggleCanonicalIntegerTextComparison",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Use an integer or its canonical string under proven TEXT comparison affinity",
+      "de": "Ganzzahl oder identische kanonische Zeichenfolge bei nachgewiesener TEXT-Vergleichsaffinität verwenden"
+    },
+    {
+      "id": "restoreMissingNullPredicate",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Restore one missing atomic IS NULL or IS NOT NULL filter",
+      "de": "Fehlenden einfachen Filter IS NULL oder IS NOT NULL wiederherstellen"
+    },
+    {
+      "id": "restoreMissingOrderByColumn",
+      "defaultCost": 1,
+      "group": "repair",
+      "en": "Restore one missing ORDER BY column and its observed sort direction",
+      "de": "Fehlende ORDER-BY-Spalte mit beobachteter Sortierrichtung wiederherstellen"
+    },
+    {
+      "id": "qualifyUnambiguousJoinedWhereColumn",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "en": "Use or omit the unique base-table qualifier of a WHERE column across known joins",
+      "de": "Eindeutigen Basistabellenpräfix einer WHERE-Spalte über bekannte Joins verwenden oder weglassen"
+    },
+    {
+      "id": "toggleJoinedProjectionAlias",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "de": "Redundanten AS-Namen einer eindeutigen Projektionsspalte bei mehreren Basistabellen verwenden oder weglassen",
+      "en": "Use or omit a redundant projection alias across known base tables"
+    },
+    {
+      "id": "toggleJoinedIdenticalTableAlias",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "de": "Mit dem Tabellennamen identischen Alias bei mehreren Basistabellen verwenden oder weglassen",
+      "en": "Use or omit an identical table-name alias across known base tables"
+    },
+    {
+      "id": "rewriteUniqueFilteredSemijoin",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "de": "IN-Unterabfrage und INNER JOIN bei nachgewiesener Eindeutigkeit und passenden Vergleichseigenschaften umformen",
+      "en": "Rewrite an IN subquery and INNER JOIN with proven uniqueness and matching comparison semantics"
+    },
+    {
+      "id": "changeSubqueryComparison",
+      "defaultCost": 1,
+      "group": "repair",
+      "de": "IN-/NOT-IN-Unterabfrage in einen skalaren Unterabfragevergleich umwandeln oder umgekehrt",
+      "en": "Change an IN or NOT IN subquery to a scalar subquery comparison or vice versa"
+    },
+    {
+      "id": "qualifyLocalSubqueryColumn",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "de": "Eindeutigen Tabellenpräfix einer nachweislich lokalen Unterabfragespalte verwenden oder weglassen",
+      "en": "Use or omit the table qualifier of a proven local subquery column"
+    },
+    {
+      "id": "toggleLocalSubqueryTableAlias",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "de": "Identischen Tabellennamen-Alias in einer nachweislich unkorrelierten Unterabfrage verwenden oder weglassen",
+      "en": "Use or omit an identical table-name alias in a proven uncorrelated subquery"
+    },
+    {
+      "id": "commuteInnerJoinSources",
+      "defaultCost": 0,
+      "group": "equivalence",
+      "de": "Zwei INNER-JOIN-Basistabellen unter Erhalt eindeutiger Ausgabespalten und der ON-Bedingung vertauschen",
+      "en": "Commute two INNER JOIN base tables while preserving unambiguous output columns and the ON predicate"
+    }
+  ],
+  "compatibleProfiles": [
+    {
+      "version": 1,
+      "modelVersion": "2.1.1"
+    },
+    {
+      "version": 2,
+      "modelVersion": "2.2.0"
+    },
+    {
+      "version": 3,
+      "modelVersion": "2.3.0"
+    },
+    {
+      "version": 4,
+      "modelVersion": "2.4.0"
+    },
+    {
+      "version": 5,
+      "modelVersion": "2.5.0"
+    },
+    {
+      "version": 6,
+      "modelVersion": "2.6.0"
+    },
+    {
+      "version": 6,
+      "modelVersion": "2.6.1"
     }
   ]
 }

@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import {parseGraphSql, stableKey, walkNodes} from '../../lib/qss/src/graph-model.mjs';
 import {createEditGraph, replayOperation} from '../../lib/qss/src/graph-edits.mjs';
+import {shortestSqlEditPath} from '../../lib/qss/src/graph-search.mjs';
 
 const sandbox = {setTimeout, clearTimeout, AbortController};
 vm.createContext(sandbox);
@@ -22,7 +23,7 @@ const round = value => Math.round((value + Number.EPSILON) * 10000) / 10000;
 function scored(result, maximum = 5) {
     assert.ok(['exact', 'score-zero-certified'].includes(result.status), JSON.stringify(result));
     assert.equal(result.engine, 'graph-qss-sqlite-v2');
-    assert.equal(result.version, '2.1.1');
+    assert.equal(result.version, '2.7.0');
     assert.equal(result.rubric, 'paper-linear-v2');
     assert.equal(result.scoreCertifiedWithinModel, true);
     assert.ok(Number.isFinite(result.points) && result.points >= 0 && result.points <= maximum);
@@ -263,14 +264,43 @@ test('directed edit prices can differ for adding and removing an AVG argument', 
     const reference = 'SELECT AVG(amount) FROM items', answer = 'SELECT AVG() FROM items';
     const costs = {addAggregateArgumentsExprColumnReference: 1, removeAggregateArgumentsExprColumnReference: 2};
     const forward = await evaluate(reference, answer, {costs, exactDistance: true});
-    const reverse = await evaluate(answer, reference, {costs, exactDistance: true});
-    scored(forward); scored(reverse); assert.equal(forward.distance, 1); assert.equal(reverse.distance, 2);
-    trace(reference, answer, forward, {costs}); trace(answer, reference, reverse, {costs});
+    scored(forward); assert.equal(forward.distance, 1);
+    trace(reference, answer, forward, {costs});
+    // Partial student states remain vertices in the directed edit graph, but
+    // an incomplete reference must not become an accepted grading rubric.
+    const invalidReference = await evaluate(answer, reference, {costs, exactDistance: true});
+    assert.equal(invalidReference.status, 'unsupported');
+    assert.equal(invalidReference.points, null);
+    const target = parseGraphSql(answer, {schema}).root, start = parseGraphSql(reference, {schema}).root;
+    const graph = createEditGraph(target, start, schema, costs);
+    const reverse = await shortestSqlEditPath(target, start, graph, {async tick() {}}, {cutoff: Infinity});
+    assert.equal(reverse.distance, 2);
+    let replayed = start;
+    for (const step of reverse.edits) replayed = replayOperation(replayed, step.operation);
+    assert.equal(stableKey(replayed), stableKey(target));
+});
+
+test('foreign-key checks allow redundant rowid NOT NULL while schema metadata keeps its distinction', async () => {
+    const reference = 'CREATE TABLE child(id INTEGER PRIMARY KEY,pid REFERENCES items(id))';
+    const answer = reference.replace('PRIMARY KEY', 'PRIMARY KEY NOT NULL');
+    for (const controlSql of ['PRAGMA foreign_keys=OFF;SELECT * FROM pragma_foreign_key_check',
+        'PRAGMA foreign_key_check(child)']) {
+        const result = await evaluate(reference, answer, {controlSql});
+        scored(result); assert.equal(result.distance, 0);
+        assert.ok(result.edits.some(edit => edit.name === 'toggleIntegerPrimaryKeyNotNull'));
+        trace(reference, answer, result);
+    }
+    for (const controlSql of ['PRAGMA table_info(child)', "SELECT sql FROM sqlite_master WHERE name='child'"]) {
+        const result = await evaluate(reference, answer, {controlSql});
+        scored(result); assert.equal(result.distance, 1);
+    }
 });
 
 test('paper Figure 7 needs a cost-free growing intermediate before a paid repair', async () => {
     const reference = 'SELECT id FROM items WHERE id=1 AND id=2', answer = 'SELECT id FROM items WHERE id=1';
-    const result = await evaluate(reference, answer, {exactDistance: true});
+    // The extended catalogue also offers direct missing-term repair. Price it
+    // above the paper's duplicate-then-change path to exercise that path here.
+    const result = await evaluate(reference, answer, {exactDistance: true, costs: {restoreMissingBinaryTerm: 2}});
     scored(result); assert.equal(result.distance, 1);
     assert.ok(result.edits.some(edit => edit.name === 'duplicateBooleanPredicate' && edit.cost === 0));
     trace(reference, answer, result);

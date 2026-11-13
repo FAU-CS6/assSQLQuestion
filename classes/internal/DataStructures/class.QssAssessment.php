@@ -46,10 +46,23 @@ final class QssAssessment
             return self::costs();
         }
         $profile = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
-        if (!is_array($profile) || ($profile['version'] ?? null) !== self::catalog()['version']
-            || ($profile['modelVersion'] ?? null) !== self::catalog()['modelVersion'] || !is_array($profile['costs'] ?? null)) {
+        $catalog = self::catalog();
+        $supported = array_merge([
+            ['version' => $catalog['version'], 'modelVersion' => $catalog['modelVersion']]
+        ], $catalog['compatibleProfiles'] ?? []);
+        $known = false;
+        foreach ($supported as $version) {
+            if (is_array($profile) && ($profile['version'] ?? null) === $version['version']
+                && ($profile['modelVersion'] ?? null) === $version['modelVersion']) {
+                $known = true;
+                break;
+            }
+        }
+        if (!$known || !is_array($profile['costs'] ?? null)) {
             throw new InvalidArgumentException('Unsupported QSS cost profile.');
         }
+        // Preserve every saved override, filling newly introduced steps with
+        // their defaults. Stored submissions retain their own grading context.
         return self::costs($profile['costs']);
     }
 

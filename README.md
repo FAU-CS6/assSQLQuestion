@@ -16,8 +16,10 @@ uses client evidence, with the same trust limitation as the result metrics.
 See [assessment settings and compatibility](docs/qss-bewertung.md) and the
 [engine/edit catalogue](lib/qss/README.md).
 
-The [assessment activation report](docs/qss-bewertung.md) documents version 0.3.0,
-its upgrade checks and native author/student and import/export acceptance.
+The [assessment report](docs/qss-bewertung.md) documents the current model 2.7.0
+native retests of 33 unchanged answers and all 699 original model answers,
+upgrade and import/export checks, and the separately
+identified historical acceptance of plugin 0.3.0.
 The [earlier answer-robustness report](docs/qss-robustheit-2026-11-10.md) confirms model
 2.1.1 on all 699 unchanged original questions with 6,812 fresh native Chrome
 cases, 132 additional anonymous semantic cases, saved official grades and all
@@ -80,7 +82,8 @@ Both QSS browser bundles are included. Node.js is needed only for development
 and rebuilding them; the ILIAS installation runs no Node service. See the
 [QSS build and test commands](lib/qss/README.md).
 
-The current Graph-QSS model is `2.1.1` (`paper-linear-v2`).
+The current Graph-QSS model is `2.7.0` (`paper-linear-v2`), with 71 configurable
+costs. Native release checks are documented in the assessment report below.
 It uses named SQL graph edits and a question-relative linear scale of
 `maxPoints / 5`. Question authors select result-based or QSS grading and can edit
 the QSS step costs, including originally free equivalences. See

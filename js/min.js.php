@@ -32,6 +32,7 @@ class Minifier
         $minifier->add(__DIR__.'/classes/class.ExecutionHandler.js');
         $minifier->add(__DIR__.'/classes/class.QSSShadow.js');
         $minifier->add(__DIR__.'/classes/class.AssessmentSettings.js');
+        $minifier->add(__DIR__.'/classes/class.TestFormToken.js');
 
         // ExecutionInputs
         $minifier->add(__DIR__.'/classes/ExecutionInputs/class.ExecutionInput.js');
@@ -67,7 +68,7 @@ class Minifier
         // output initializes an execution handler; showing a model solution
         // alongside it must keep that handler and its registered inputs.
         return '(function () {' . $minifier->minify() . ';Object.assign(window, {'
-            . 'ExecutionHandler, QSSShadow, AssessmentSettings, ExecutionInput, SequenceTextareaInput, IntegrityCheckCheckboxInput, '
+            . 'ExecutionHandler, QSSShadow, AssessmentSettings, TestFormToken, ExecutionInput, SequenceTextareaInput, IntegrityCheckCheckboxInput, '
             . 'HiddenFieldInput, HiddenTextareaInput, ExecutionOutput, SequenceTextareaOutput, '
             . 'ExecuteButtonOutput, IntegrityCheckCheckboxOutput, OutputAreaOutput, '
             . 'ScoringMetricEditQuestion, ScoringMetricOutputQuestion, SQLFunctionalDependency, '

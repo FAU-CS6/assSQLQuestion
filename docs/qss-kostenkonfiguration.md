@@ -7,8 +7,8 @@ Berechnung bleiben dabei erhalten.
 
 ## QSS einstellen
 
-Für QSS gibt es eine eigene Maximalpunktzahl sowie **50 vorbelegte Kostenwerte**:
-35 benannte Äquivalenzumformungen beziehungsweise logische Reparaturen und
+Für QSS gibt es eine eigene Maximalpunktzahl sowie **71 vorbelegte Kostenwerte**:
+56 benannte Äquivalenzumformungen beziehungsweise logische Reparaturen und
 15 Kategorien grundlegender Komponenten-/Attributoperationen. Letztere gelten
 für alle entsprechenden atomaren Edits, unabhängig vom konkreten SQL-AST.
 Die Gruppen können aufgeklappt werden; jede Kostenposition ist einzeln änderbar.
@@ -27,10 +27,31 @@ Editpfad im konfigurierten Graphen. Die gewählten nichtnegativen Kosten bleiben
 während eines Jobs fest. Suchoptimierungen benötigen weiterhin gültige Beweise;
 kostenlose Überschreibungen dürfen keine unbewiesene positive Schranke erzeugen.
 
+## Sieben neue Schritte in Modell 2.7.0
+
+Die bisherigen 64 Kosten werden unverändert übernommen. Sechs neue Schritte
+sind standardmäßig kostenlos: redundante Projektionsnamen und identische
+Tabellenaliase bei mehreren Basistabellen, ein durch Schlüssel und Filter
+abgesicherter IN-/INNER-JOIN-Wechsel, lokale Spaltenpräfixe und identische
+Tabellenaliase in unkorrelierten Unterabfragen sowie das Vertauschen zweier
+geeigneter INNER-JOIN-Quellen. Sie gelten nur, wenn ihre jeweiligen Bedingungen
+für Bindungen, NULL, Duplikate, Datentypaffinität und Ausgabenamen nachgewiesen
+sind. Aus gleichen Ergebnissen eines Beispieldatensatzes folgt keine freie Kante.
+
+Der siebte Schritt `changeSubqueryComparison` kostet standardmäßig **1**:
+Er wechselt zwischen IN/NOT IN und einem skalaren Unterabfragevergleich, ohne
+die innere Abfrage zu verändern. Er ist eine Reparatur, keine allgemeine
+Äquivalenz: mehrere Treffer und NULL können das Ergebnis verändern. Alle sieben
+Preise sind unabhängig einstellbar. Die einzelnen IDs und ihre Grenzen stehen
+im [technischen Katalog](../lib/qss/README.md#provisional-costs-and-linear-grading).
+
 ## Speichern und Übertragen
 
 Die Frage speichert Bewertungsart, QSS-Maximalpunkte, Katalogversion und vollständig
-aufgelöste Kosten. Das Profil verwendet Version 1 zum Graphmodell 2.1.1. Bekannte
+aufgelöste Kosten. Das Profil verwendet Version 7 zum Graphmodell 2.7.0. Ältere Profile der
+Versionen 1 (Modell 2.1.1), 2 (Modell 2.2.0), 3 (Modell 2.3.0), 4 (Modell 2.4.0),
+5 (Modell 2.5.0) und 6 (Modelle 2.6.0 und 2.6.1) behalten alle eingestellten Kosten;
+neu hinzugekommene Schritte erhalten ihre Standardwerte. Bekannte
 Schritte dürfen im aktuellen Antwortpaar fehlen; das macht das Profil nicht ungültig.
 Unbekannte Kostenpositionen, nicht ganzzahlige oder negative Werte und unbekannte
 Profilversionen werden abgewiesen.
