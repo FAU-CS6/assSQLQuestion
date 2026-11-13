@@ -350,7 +350,8 @@ reads; it does not replace or modify the deployed SQLite runtime.
 The test runner has no execution deadline and writes individual results to
 `test-results/qss/browser-tests.json` (or `QSS_TEST_REPORT_DIR`). Eight optional
 CDP oracle groups remain separately declared skips in this suite, as before;
-the real browser-worker cancellation test now runs here too. GitHub Actions
+the real browser-worker cancellation test now runs here too. The QSS GitHub
+Actions job uses Ubuntu 24.04, supported by the pinned Playwright version, and
 installs Chrome and the browser test dependencies before invoking this same
 command, followed by bundle reproduction, dependency audit and UI checks.
 

@@ -41,7 +41,8 @@ jobs:
         working-directory: tests/browser
         run: npm audit --package-lock-only
   qss:
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 supports Noble; ubuntu-latest now selects Ubuntu 26.04.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: lib/qss
