@@ -1,6 +1,8 @@
-'use strict';
-const test=require('node:test'),assert=require('node:assert/strict'),{DatabaseSync}=require('node:sqlite');
-const {candidates}=require('./student-variants.cjs');
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import variants from './student-variants.cjs';
+const {candidates, parsed} = variants;
 const setup="CREATE TABLE sample(x INTEGER,y INTEGER,label TEXT);INSERT INTO sample VALUES(NULL,NULL,NULL),(0,0,''),(1,2,'a'),(2,1,'b'),(3,3,'a'),(7,1,'a'),(7,1,'a');CREATE TABLE detail(x INTEGER);INSERT INTO detail VALUES(1),(2),(2),(7),(NULL);";
 for(const sql of [
  'SELECT x FROM sample WHERE x>1 AND y<3',
@@ -20,7 +22,6 @@ for(const sql of [
 });
 
 test('serializing a subquery cannot mutate the intended AST used by later variants',()=>{
- const {parsed}=require('./student-variants.cjs');
  const p=parsed('DELETE FROM sample WHERE x IN(SELECT x FROM detail WHERE x>1 AND x<8)');
  const before=JSON.stringify(p.ast);p.render(p.ast);assert.equal(JSON.stringify(p.ast),before);
 });

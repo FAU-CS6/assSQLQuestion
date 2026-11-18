@@ -332,16 +332,15 @@ npm test
 npm audit --audit-level=low
 ```
 
-Rollup builds self-contained browser bundles. The explicitly retained TypeScript
-prototype uses Node's build-time transformer; ILIAS itself requires no Node runtime.
-The local resolver avoids an additional object-merging build dependency.
+Rolldown builds the self-contained browser bundles and handles the retained
+TypeScript prototype, JSON imports and CommonJS dependencies during the build.
 `build:check` rebuilds in a clean temporary source directory and compares both
 committed bundles byte-for-byte.
 
 `npm test` requires an installed Google Chrome. It launches a fresh headless
 browser and runs the SQL/QSS test bodies with the shipped SQLite 3.22.0 asset.
 Node only bundles the tests and runs four report/transport test files that do
-not execute SQL or QSS. The same Rollup TypeScript resolution is used as in the
+not execute SQL or QSS. The same Rolldown TypeScript resolution is used as in the
 product build. Browser assertions use the strict API of the pinned `assert`
 test dependency; SQL values are not compared through a lossy JSON substitute.
 The limited SQLite test adapter preserves prepare errors and exact integer
