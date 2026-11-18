@@ -182,11 +182,44 @@ class SQLResult
    */
   getAllMinimalFunctionalDependencies()
   {
-    // Get all functional dependencies
-    var allDependencies = this.getAllFunctionalDependencies();
-    var allUniqueDependencies = this.removeDoubleFunctionalDependencies(allDependencies);
-
-    return this.removeNonMinimalFunctionalDependencies(allUniqueDependencies);
+    // Preserve the legacy minimizer exactly: for each dependent name it keeps
+    // all determinants of the shortest length (not mathematical subset minima).
+    // Once that length is known, larger sets cannot contribute to its output.
+    // Building every larger FD first makes even one wide row freeze the UI.
+    const unresolved = new Set(this.columns), found = [];
+    for(let size = 1; size < this.columns.length && unresolved.size; size++)
+    {
+      const resolved = new Set();
+      const visit = (selected, start) => {
+        if(selected.length === size)
+        {
+          const determinate = selected.map(position => this.columns[position]);
+          for(let j = 0; j < this.columns.length; j++)
+          {
+            const dependent = this.columns[j];
+            if(!selected.includes(j) && unresolved.has(dependent)
+              && this.checkFunctionalDependency(determinate, [dependent]))
+            {
+              found.push({positions: selected, dependent: j,
+                value: new SQLFunctionalDependency(determinate, [dependent])});
+              resolved.add(dependent);
+            }
+          }
+          return;
+        }
+        for(let i = start; i <= this.columns.length - (size - selected.length); i++)
+          visit(selected.concat(i), i + 1);
+      };
+      visit([], 0);
+      for(const name of resolved) unresolved.delete(name);
+    }
+    // Restore the old depth-first first-seen order, including duplicate names.
+    found.sort((a, b) => {
+      for(let i = 0; i < Math.min(a.positions.length, b.positions.length); i++)
+        if(a.positions[i] !== b.positions[i]) return a.positions[i] - b.positions[i];
+      return a.positions.length - b.positions.length || a.dependent - b.dependent;
+    });
+    return this.removeDoubleFunctionalDependencies(found.map(entry => entry.value));
   }
 
   /**

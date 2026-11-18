@@ -104,6 +104,14 @@ class assSQLQuestionImport extends assQuestionImport
         $this->object->setExecutedBool((bool) $item->getMetadataEntry("EXECUTED_BOOL"));
         $this->object->setOutputRelation($item->getMetadataEntry("OUTPUT_RELATION"));
         $this->object->setAllSolutionMetricsFromJSON($item->getMetadataEntry("SOLUTION_METRICS"));
+        // Pre-0.3 exports have none of these fields and remain result-scored.
+        $this->object->setAssessmentMode($item->getMetadataEntry('ASSESSMENT_MODE') ?: QssAssessment::RESULT);
+        $maximum = $item->getMetadataEntry('QSS_MAXIMUM_POINTS');
+        if ($maximum !== '' && $maximum !== null && !is_numeric($maximum)) {
+            throw new InvalidArgumentException('Invalid QSS maximum points in QTI metadata.');
+        }
+        $this->object->setQssMaximumPoints($maximum === '' || $maximum === null ? 5.0 : (float) $maximum);
+        $this->object->setQssCostsFromJSON($item->getMetadataEntry('QSS_COSTS') ?: '');
 
         // Additional content editing mode information
         $this->object->setAdditionalContentEditingMode(

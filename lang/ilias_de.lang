@@ -232,3 +232,51 @@ help_schema_loading#:#Schema wird geladen …
 help_schema_empty#:#Sequenz A definiert keine Tabellen oder Views.
 help_schema_cancelled#:#Laden abgebrochen.
 help_schema_changed#:#Sequenz A wurde geändert. Laden Sie das Schema erneut.
+
+// Experimental structural shadow evaluation; these values do not determine test grades.
+qss_title#:#Graph-based QSS
+qss_shadow#:#Experimentelle Parallelbewertung – keine Prüfungsnote. Die regulären Punkte bleiben unverändert.
+qss_sqlrunning#:#SQL wird ausgeführt …
+qss_parsing#:#SQL-AST wird gelesen …
+qss_normalizing#:#SQL-Edits werden vorbereitet …
+qss_comparing#:#Kostenminimaler SQL-Editpfad wird gesucht …
+qss_completed#:#QSS-Auswertung abgeschlossen.
+qss_unsupported#:#Diese Antwort lässt sich im aktuellen SQL-AST-Modell nicht darstellen.
+qss_failed#:#QSS-Auswertung fehlgeschlagen.
+qss_cancelled#:#QSS-Auswertung manuell abgebrochen.
+qss_notevaluated#:#Noch keine QSS-Auswertung vorhanden.
+qss_notcompleted#:#Keine abgeschlossene QSS-Bewertung vorhanden. Die in ILIAS angezeigten 0 Punkte sind kein nachgewiesenes QSS-Ergebnis. Diese Antwort muss noch bewertet werden.
+qss_distance#:#SQL-Editkosten
+qss_points#:#QSS-Punkte
+qss_edits#:#SQL-Edits
+qss_model#:#Vergleichsmodell
+qss_visited#:#Untersuchte Zustände
+qss_lowerbound#:#Nachgewiesene Untergrenze
+qss_waiting#:#QSS-Vergleich wird vorbereitet …
+qss_stale#:#Die gespeicherte Auswertung gehört zu einem anderen Modell, Antwort- oder Referenzstand.
+qss_details#:#Details zur QSS-Auswertung
+qss_editinsert#:#Einfügen
+qss_editdelete#:#Entfernen
+qss_editreplace#:#Ersetzen
+qss_cost#:#Kosten
+qss_participanttitle#:#Bewertung
+qss_participantrunning#:#Ihre Antwort wird bewertet. Bitte warten Sie, bis die Bewertung abgeschlossen ist.
+qss_participantcompleted#:#Bewertung abgeschlossen. Das Ergebnis sehen Sie erst in der freigegebenen Auswertung.
+qss_participantpending#:#Bitte führen Sie Ihre Antwort aus, um sie bewerten zu lassen.
+qss_participantcancelled#:#Bewertung abgebrochen. Bitte führen Sie Ihre Antwort erneut aus.
+qss_participantfailed#:#Die Bewertung konnte nicht abgeschlossen werden. Bitte führen Sie Ihre Antwort erneut aus.
+
+assessment_mode#:#Bewertungsverfahren
+assessment_result#:#Ergebnisbasierte Bewertung
+assessment_qss#:#Graph-QSS-Bewertung
+assessment_maximum#:#Maximalpunkte für QSS
+assessment_qss_info#:#Die Punkte ergeben sich aus dem günstigsten Umformungspfad zur Musterlösung. Ein Kostenschritt zieht ein Fünftel der Maximalpunkte ab. Kosten sind nichtnegative ganze Zahlen. Für zusätzliche Methodenvorgaben muss auch der Aufgabentext eindeutig sein.
+assessment_qss_active#:#Diese Frage wird mit Graph-QSS bewertet.
+assessment_group_equivalence#:#Äquivalenzumformungen (standardmäßig kostenlos)
+assessment_group_repair#:#Logische Reparaturschritte
+assessment_group_basic#:#Grundoperationen für SQL-Komponenten und Attribute
+assessment_step#:#Umformung
+assessment_cost#:#Kosten
+assessment_reset#:#Alle Umformungskosten auf Standardwerte zurücksetzen
+assessment_invalid#:#Bitte ein gültiges Bewertungsverfahren, positive QSS-Maximalpunkte und ganze Umformungskosten von 0 bis 1000000 eingeben.
+assessment_execute#:#Bitte die Musterlösung mit den aktuellen QSS-Einstellungen ausführen, bevor die Frage gespeichert wird.

@@ -1,6 +1,10 @@
 <p class="js-is-loading" style="color: #6c757d;">{LOADING_TEXT}</p>
 <script>window.QPISQL_URL_PATH = '{PLUGIN_PATH}';</script>
 <script src="{PLUGIN_PATH}/js/min.js.php"></script>
+<!-- BEGIN qss_config -->
+<div id="qpisql-qss-config" data-config="{QSS_CONFIG}" hidden></div>
+<input type="hidden" id="qpisql-qss-evaluation" name="qss_evaluation" value="{QSS_EVALUATION}">
+<!-- END qss_config -->
 <script>
   if ({INITIALIZE_HANDLER}) {
     window.EXECUTE_HANDLER = new ExecutionHandler();

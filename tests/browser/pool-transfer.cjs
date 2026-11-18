@@ -3,13 +3,14 @@
  */
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const crypto = require('node:crypto');
 const path = require('node:path');
 const { chromium } = require('playwright');
 
 const directory = path.resolve(process.env.ILIAS_CORPUS_DIR || '/tmp/asssql-pool-corpus');
 const accountFile = process.env.ILIAS_CHROME_ACCOUNTS || '/tmp/asssql-chrome-accounts.json';
 const storageFile = process.env.ILIAS_TEACHER_STORAGE || '/tmp/asssql-teacher-storage.json';
-const artifacts = path.resolve(process.env.ILIAS_TEST_ARTIFACTS || 'test-results/chrome-transfer');
+const artifacts = path.resolve(process.env.ILIAS_TEST_ARTIFACTS || path.join(require('node:os').tmpdir(), 'asssql-private-artifacts', 'chrome-transfer'));
 const phase = process.env.ILIAS_TRANSFER_PHASE || 'all';
 const reportFile = path.join(artifacts, 'teacher-transfer-report.json');
 const manifest = JSON.parse(fs.readFileSync(path.join(directory, 'manifest.json'), 'utf8'));
@@ -19,6 +20,7 @@ fs.mkdirSync(artifacts, { recursive: true, mode: 0o700 });
 fs.chmodSync(artifacts, 0o700);
 const report = fs.existsSync(reportFile) ? JSON.parse(fs.readFileSync(reportFile, 'utf8')) : { format: 1, account: accounts.teacher.login, category_ref_id: accounts.category_ref_id, pools: [] };
 const save = () => fs.writeFileSync(reportFile, JSON.stringify(report, null, 2) + '\n', { mode: 0o600 });
+const hash = data => crypto.createHash('sha256').update(data).digest('hex');
 const countQuestions = async page => {
   const match = (await page.locator('body').innerText()).match(/Number of Questions\s+(\d+)/);
   assert.ok(match, 'The native question list must report its total question count.');
@@ -44,7 +46,7 @@ async function importQuestions(page, pool, archive, expectedCount) {
   await page.locator('input[type=file]').setInputFiles(archive);
   // ILIAS queues uploads until the modal's submit action. Wait for its native verification page.
   await Promise.all([
-    page.waitForURL(url => url.searchParams.get('fallbackCmd') === 'uploadQuestionsImport', { timeout: 600000 }),
+    page.waitForURL(url => url.searchParams.get('fallbackCmd') === 'uploadQuestionsImport', { timeout: 0 }),
     page.getByRole('button', { name: 'Import', exact: true }).last().click()
   ]);
   const choices = page.locator('input[type=checkbox][name^="form/"]');
@@ -52,40 +54,69 @@ async function importQuestions(page, pool, archive, expectedCount) {
   pool.source_item_ids = await choices.evaluateAll(inputs => inputs.map(input => input.value));
   for (const choice of await choices.all()) if (!(await choice.isChecked())) await choice.check();
   await page.getByRole('button', { name: 'Import', exact: true }).click();
-  await page.getByRole('button', { name: 'Create Question', exact: true }).waitFor({ timeout: 600000 });
+  await page.getByRole('button', { name: 'Create Question', exact: true }).waitFor({ timeout: 0 });
   assert.equal(await countQuestions(page), expectedCount, 'Every verified source question must be imported.');
 }
 
-async function exportQuestions(page, pool) {
-  await page.goto(`${base}/goto.php/qpl/${pool.pool_ref_id}`);
-  await page.getByRole('link', { name: 'Export', exact: true }).click();
-  // The native export action and download links are resolved from the displayed page below.
-  const create = page.getByRole('button', { name: /Create.*Export|Create Export File|Exportieren/i }).first();
-  if (await create.count()) await create.click();
-  else {
-    const xmlExport = page.getByRole('button', { name: /Export.*XML|XML.*Export/i }).first();
-    assert.ok(await xmlExport.count(), 'Expected native XML export action');
-    await xmlExport.click();
+function exportPackageInfo(filename) {
+  const code = "import sys,json,zipfile,xml.etree.ElementTree as E\nwith zipfile.ZipFile(sys.argv[1]) as z:\n n=sum(sum(1 for e in E.fromstring(z.read(p)).iter() if e.tag.rsplit('}',1)[-1].lower()=='item') for p in z.namelist() if '_qti_' in p.lower() and p.lower().endswith('.xml'))\n print(json.dumps({'questions':n,'manifest':any(p.lower().endswith('manifest.xml') for p in z.namelist())}))";
+  return JSON.parse(require('node:child_process').execFileSync('python3', ['-c', code, filename], { encoding: 'utf8' }));
+}
+
+async function exportQuestions(page, pool, expectedCount) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.goto(`${base}/goto.php/qpl/${pool.pool_ref_id}`);
+    assert.equal(await countQuestions(page), expectedCount);
+    await page.getByRole('link', { name: 'Export', exact: true }).click();
+    const names = () => page.locator('table tbody tr').evaluateAll(rows => rows.flatMap(row => row.innerText.match(/\d+__\d+__qpl_\d+\.zip/g) || []));
+    const previous = new Set(await names());
+    // The generic wrapper and the legacy QTI exporter derive their own dated
+    // paths. Start well inside a second, then verify the actual native package.
+    await new Promise(resolve => setTimeout(resolve, 1100 - Date.now() % 1000));
+    const create = page.getByRole('button', { name: /Create.*Export|Create Export File|Exportieren/i }).first();
+    if (await create.count()) await create.click();
+    else await page.getByRole('button', { name: /Export.*XML|XML.*Export/i }).first().click();
+    await page.getByRole('button', { name: 'Actions', exact: true }).first().waitFor({ timeout: 0 });
+    const fresh = (await names()).filter(name => !previous.has(name));
+    assert.ok(fresh.length, 'Native export must create a new package.');
+    for (const name of fresh) {
+      const row = page.locator('table tbody tr').filter({ hasText: name });
+      await row.getByRole('button', { name: 'Actions', exact: true }).click();
+      const [file] = await Promise.all([
+        page.waitForEvent('download', { timeout: 0 }),
+        page.getByRole('button', { name: 'Download', exact: true }).filter({visible:true}).first().click()
+      ]);
+      const filename = path.join(artifacts, file.suggestedFilename());
+      await file.saveAs(filename); fs.chmodSync(filename, 0o600);
+      const info = exportPackageInfo(filename);
+      if (info.questions === expectedCount && info.manifest) {
+        pool.export_package_info = info;
+        return filename;
+      }
+      // Preserve incomplete native output; never repair archives or weaken the
+      // expected question/metadata checks to make a roundtrip pass.
+      (pool.rejected_exports ||= []).push({file: filename, ...info, reason: 'Native package lacks complete QTI questions or pool manifest.'});
+      save();
+    }
   }
-  await page.getByRole('button', { name: 'Actions', exact: true }).first().waitFor({ timeout: 600000 });
-  await page.getByRole('button', { name: 'Actions', exact: true }).first().click();
-  const download = page.getByRole('button', { name: 'Download', exact: true }).first();
-  await download.waitFor({ timeout: 600000 });
-  const [file] = await Promise.all([page.waitForEvent('download', { timeout: 600000 }), download.click()]);
-  const filename = path.join(artifacts, file.suggestedFilename());
-  await file.saveAs(filename);
-  fs.chmodSync(filename, 0o600);
-  assert.ok(fs.statSync(filename).size > 0);
-  return filename;
+  throw new Error('Native exporter did not produce a complete QTI plus metadata package.');
 }
 
 async function main() {
   const browser = await chromium.connectOverCDP(process.env.ILIAS_CHROME_CDP || 'http://localhost:9223');
   const context = await browser.newContext({ acceptDownloads: true, ...(fs.existsSync(storageFile) ? { storageState: storageFile } : {}) });
   const page = await context.newPage();
-  page.setDefaultTimeout(600000);
-  page.setDefaultNavigationTimeout(600000);
+  page.setDefaultTimeout(0);
+  page.setDefaultNavigationTimeout(0);
+  let rejectNativeFailure;
+  const nativeFailure = new Promise((resolve, reject) => { rejectNativeFailure = reject; });
+  page.on('framenavigated', frame => {
+    if (frame === page.mainFrame() && new URL(frame.url()).pathname.endsWith('/error.php')) {
+      rejectNativeFailure(new Error('ILIAS displayed its native server-error page; this transfer is incomplete.'));
+    }
+  });
   try {
+    await Promise.race([(async () => {
     await page.goto(`${base}/goto.php/cat/${accounts.category_ref_id}`);
     if (await page.locator('input[type=password]').count()) {
       await page.locator('input[name^="login_form/"][type=text]').fill(accounts.teacher.login);
@@ -94,7 +125,22 @@ async function main() {
       await page.goto(`${base}/goto.php/cat/${accounts.category_ref_id}`);
     }
     report.browser = await browser.version();
+    report.user_agent = await page.evaluate(() => navigator.userAgent);
+    assert.match(report.user_agent, /HeadlessChrome\//, 'Native acceptance uses an invisible dedicated Chrome process.');
+    report.headless = true;
     report.teacher_user_id = accounts.teacher.id;
+    const workerURL = base + '/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion/lib/qss/worker.qss.js';
+    const worker = await context.request.get(workerURL);
+    assert.ok(worker.ok());
+    const workerHash = hash(await worker.body());
+    if (report.qss_worker_sha256) assert.equal(report.qss_worker_sha256, workerHash, 'Resume only against the same final QSS bundle.');
+    report.qss_worker_sha256 = workerHash;
+    report.source_archive_sha256 = {};
+    for (const source of manifest.pools) {
+      const actualHash = hash(fs.readFileSync(path.join(directory, source.archive)));
+      if (source.sha256) assert.equal(actualHash, source.sha256, 'Import the unchanged private source ZIP.');
+      report.source_archive_sha256[source.key] = actualHash;
+    }
     if (phase !== 'roundtrip') {
       for (const source of manifest.pools) {
         let pool = report.pools.find(item => item.key === source.key);
@@ -110,7 +156,7 @@ async function main() {
         }
         await importQuestions(page, pool, path.join(directory, source.archive), source.count);
         pool.imported_count = source.count;
-        pool.chrome_mode ||= new URL(process.env.ILIAS_CHROME_CDP || 'http://localhost:9223').port === '9223' ? 'installed-google-chrome-headless' : 'installed-google-chrome-headed';
+        pool.chrome_mode = 'installed-google-chrome-headless';
         save();
         await page.screenshot({ path: path.join(artifacts, `source-${source.key}.png`), fullPage: true });
         console.log(`PASS: Chrome teacher imported pool ${source.key}: ${source.count} questions, ref ${pool.pool_ref_id}`);
@@ -122,7 +168,7 @@ async function main() {
       for (const source of manifest.pools) {
         const pool = report.pools.find(item => item.key === source.key);
         if (!pool.export_file) {
-          pool.export_file = await exportQuestions(page, pool);
+          pool.export_file = await exportQuestions(page, pool, source.count);
           pool.export_chrome_mode = 'installed-google-chrome-headless';
           save();
         }
@@ -138,16 +184,21 @@ async function main() {
       }
       report.reimported_questions = report.pools.reduce((total, pool) => total + pool.reimported_count, 0); save();
     }
+    const finalWorker = await context.request.get(workerURL);
+    report.qss_worker_unchanged = finalWorker.ok() && hash(await finalWorker.body()) === workerHash;
+    save();
+    assert.equal(report.qss_worker_unchanged, true, 'Import/export evidence must use one unchanged final plugin bundle.');
     await context.storageState({ path: storageFile }); fs.chmodSync(storageFile, 0o600);
+    })(), nativeFailure]);
   } catch (error) {
     console.error('Original Chrome transfer error:', error.stack || error);
     await page.screenshot({ path: path.join(artifacts, 'failure.png'), fullPage: true, timeout: 5000 }).catch(() => {});
-    console.error('Chrome transfer failed at', page.url());
+    console.error('Chrome transfer failed at', new URL(page.url()).pathname);
     console.error((await page.locator('body').innerText({ timeout: 5000 }).catch(() => '(No readable document body)')).slice(-1800));
     throw error;
   } finally {
     await context.close();
-    await browser.close();
   }
 }
-main().catch(error => { console.error(error); process.exitCode = 1; });
+// A CDP runner owns its context, not the externally launched Chrome process.
+main().then(() => process.exit(0)).catch(error => { console.error(error); process.exit(1); });

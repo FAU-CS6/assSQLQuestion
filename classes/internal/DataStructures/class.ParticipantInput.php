@@ -39,6 +39,13 @@ class ParticipantInput
      */
     public array $participant_metrics = array();
 
+    /** Browser-side QSS evidence; used only by an explicitly QSS-scored question. */
+    private ?array $qss_evaluation = null;
+    /** Server-created grading revision for a submitted QSS answer. */
+    private ?array $qss_grading_context = null;
+
+    private const QSS_MAX_JSON_BYTES = 16384;
+
     /**
      * Constructor
      *
@@ -75,6 +82,13 @@ class ParticipantInput
         }
 
         $arr['participant_metrics'] = $participant_metrics_json;
+
+        if ($this->qss_evaluation !== null) {
+            $arr['qss_evaluation'] = $this->qss_evaluation;
+        }
+        if ($this->qss_grading_context !== null) {
+            $arr['qss_grading_context'] = $this->qss_grading_context;
+        }
 
         return json_encode($arr);
     }
@@ -150,7 +164,192 @@ class ParticipantInput
             throw new Exception("We need the participant_metrics to decode a JSON into a ParticipantInput");
         }
 
+        if (isset($decoded_json['qss_evaluation']) && is_array($decoded_json['qss_evaluation'])) {
+            $participant_input->setQssEvaluation($decoded_json['qss_evaluation']);
+        }
+        if (isset($decoded_json['qss_grading_context']) && is_array($decoded_json['qss_grading_context'])) {
+            $participant_input->setQssGradingContext($decoded_json['qss_grading_context']);
+        }
+
         return $participant_input;
+    }
+
+    public function getQssEvaluation(): ?array
+    {
+        return $this->qss_evaluation;
+    }
+
+    public function getQssGradingContext(): ?array { return $this->qss_grading_context; }
+
+    public function setQssGradingContext(array $context): void
+    {
+        $maximum = $context['maxPoints'] ?? null;
+        $points = $context['points'] ?? null;
+        $this->qss_grading_context = null;
+        if (($context['version'] ?? null) !== 1 || ($context['mode'] ?? null) !== 'qss'
+            || (!is_int($maximum) && !is_float($maximum)) || !is_finite((float)$maximum) || $maximum <= 0
+            || (!is_int($points) && !is_float($points)) || !is_finite((float)$points) || $points < 0 || $points > $maximum
+            || !is_string($context['referenceRevision'] ?? null) || !preg_match('/^[a-f0-9]{64}$/D',$context['referenceRevision'])
+            || !self::isBoundedQssMetadata($context) || strlen(json_encode($context, JSON_INVALID_UTF8_SUBSTITUTE)) > self::QSS_MAX_JSON_BYTES) {
+            return;
+        }
+        $context['points'] = (float)$points;
+        $context['maxPoints'] = (float)$maximum;
+        $this->qss_grading_context = array_intersect_key($context,array_fill_keys(['version','mode','points','maxPoints','referenceRevision','engineVersion','rubric','scale','costProfile'],true));
+    }
+
+    /** Invalid optional diagnostics are discarded without rejecting the answer. */
+    public function setQssEvaluation(?array $evaluation): void
+    {
+        $this->qss_evaluation = self::validateQssEvaluation($evaluation);
+    }
+
+    public function setQssEvaluationFromJSON(string $json): void
+    {
+        $this->qss_evaluation = null;
+        // Allow some extra incoming edits before keeping only the first fifty.
+        if ($json === '' || strlen($json) > self::QSS_MAX_JSON_BYTES * 4) {
+            return;
+        }
+        try {
+            $decoded = json_decode($json, true, 32, JSON_THROW_ON_ERROR);
+            if (is_array($decoded)) {
+                $this->setQssEvaluation($decoded);
+            }
+        } catch (JsonException $error) {
+            // A malformed sidecar must not break the legacy answer/autosave.
+        }
+    }
+
+    private static function validateQssEvaluation(?array $evaluation): ?array
+    {
+        if ($evaluation === null || !in_array($evaluation['status'] ?? null,
+            ['exact', 'unsupported', 'error', 'cancelled', 'partial', 'score-zero-certified'], true)) {
+            return null;
+        }
+        // Do not persist full queries, schemas or ASTs supplied by the browser.
+        $keys = ['status', 'engine', 'version', 'distance', 'points', 'maxPoints',
+            'edits', 'limitations', 'exactWithinModel', 'answerDigest', 'referenceRevision',
+            'lowerBound', 'upperBound', 'runtimeMs', 'method', 'model', 'nodeCount',
+            'referenceNodes', 'candidateNodes', 'visitedStates', 'visited', 'reason',
+            'message', 'searchStats', 'diagnostics', 'editsTruncated', 'referenceDistance',
+            'pointsPerEdit', 'formula', 'scoreCertifiedWithinModel', 'validation', 'code',
+            'normalizationDistance', 'provisionalRubric', 'rubric', 'scale', 'modelVersion'];
+        $result = array_intersect_key($evaluation, array_fill_keys($keys, true));
+        foreach (['engine', 'method', 'answerDigest', 'referenceRevision', 'formula', 'code', 'rubric', 'modelVersion'] as $key) {
+            if (isset($result[$key]) && !is_string($result[$key])) {
+                return null;
+            }
+        }
+        if (isset($result['version']) && !is_string($result['version']) && !is_int($result['version'])) {
+            return null;
+        }
+        foreach (['answerDigest', 'referenceRevision'] as $key) {
+            if (isset($result[$key]) && !preg_match('/^[a-f0-9]{64}$/iD', $result[$key])) {
+                return null;
+            }
+        }
+        foreach (['distance', 'points', 'maxPoints', 'lowerBound', 'upperBound', 'runtimeMs',
+                  'nodeCount', 'referenceNodes', 'candidateNodes', 'visitedStates', 'visited',
+                  'referenceDistance', 'pointsPerEdit', 'normalizationDistance', 'scale'] as $key) {
+            if (isset($result[$key]) &&
+                ((!is_int($result[$key]) && !is_float($result[$key])) || !is_finite((float) $result[$key]) || $result[$key] < 0)) {
+                return null;
+            }
+        }
+        foreach (['exactWithinModel', 'scoreCertifiedWithinModel', 'editsTruncated', 'provisionalRubric'] as $key) {
+            if (isset($result[$key]) && !is_bool($result[$key])) {
+                return null;
+            }
+        }
+        if (isset($result['validation'])) {
+            if (!is_array($result['validation'])) {
+                return null;
+            }
+            foreach (['reference', 'answer'] as $key) {
+                if (isset($result['validation'][$key]) && !is_string($result['validation'][$key])) {
+                    return null;
+                }
+            }
+        }
+        foreach (['edits', 'limitations'] as $key) {
+            if (isset($result[$key])) {
+                if (!is_array($result[$key]) || !array_is_list($result[$key])) {
+                    return null;
+                }
+                foreach ($result[$key] as $entry) {
+                    if ($key === 'limitations' ? !is_string($entry) :
+                        (!is_string($entry) && (!is_array($entry) || array_is_list($entry)))) {
+                        return null;
+                    }
+                }
+                if (count($result[$key]) > 50 && $key === 'edits') {
+                    $result['editsTruncated'] = true;
+                }
+                $result[$key] = array_slice($result[$key], 0, 50);
+            }
+        }
+        if (isset($result['edits'])) {
+            foreach ($result['edits'] as &$edit) {
+                if (is_array($edit)) {
+                    // Replay operations may contain complete ASTs. Retain only
+                    // their compact feedback, never query/state snapshots.
+                    $edit = array_intersect_key($edit, array_fill_keys(
+                        ['type', 'name', 'description', 'path', 'cost'], true));
+                    foreach (['type', 'name', 'description', 'path'] as $key) {
+                        if (isset($edit[$key]) && !is_string($edit[$key])) {
+                            return null;
+                        }
+                    }
+                    if (isset($edit['cost']) && ((!is_int($edit['cost']) && !is_float($edit['cost'])) ||
+                        !is_finite((float) $edit['cost']) || $edit['cost'] < 0)) {
+                        return null;
+                    }
+                }
+            }
+            unset($edit);
+        }
+        if (!self::isBoundedQssMetadata($result)) {
+            return null;
+        }
+        try {
+            // Large but valid traces must not discard the whole assessment.
+            // Leave the score/bindings intact and identify abbreviated feedback.
+            while (!empty($result['edits']) &&
+                strlen(json_encode($result, JSON_THROW_ON_ERROR)) > self::QSS_MAX_JSON_BYTES - 32) {
+                array_pop($result['edits']);
+                $result['editsTruncated'] = true;
+            }
+            return strlen(json_encode($result, JSON_THROW_ON_ERROR)) <= self::QSS_MAX_JSON_BYTES ? $result : null;
+        } catch (JsonException $error) {
+            return null;
+        }
+    }
+
+    /** Accept only bounded plain JSON metadata, not objects or executable values. */
+    private static function isBoundedQssMetadata(mixed $value, int $depth = 0): bool
+    {
+        if ($depth > 6) {
+            return false;
+        }
+        if (is_string($value)) {
+            return strlen($value) <= 2048;
+        }
+        if (is_float($value)) {
+            return is_finite($value);
+        }
+        if ($value === null || is_int($value) || is_bool($value)) {
+            return true;
+        }
+        if (!is_array($value) || count($value) > 100) {
+            return false;
+        }
+        foreach ($value as $key => $entry) {
+            if ((is_string($key) && strlen($key) > 64) || !self::isBoundedQssMetadata($entry, $depth + 1)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

@@ -54,6 +54,14 @@ class assSQLQuestionExport extends assQuestionExport
         $a_xml_writer->xmlEndTag("qtimetadatafield");
 
         // Add plugin specific information
+        foreach (['ASSESSMENT_MODE' => $this->object->getAssessmentMode(),
+            'QSS_MAXIMUM_POINTS' => (string) $this->object->getQssMaximumPoints(),
+            'QSS_COSTS' => $this->object->getQssCostsAsJSON()] as $label => $value) {
+            $a_xml_writer->xmlStartTag('qtimetadatafield');
+            $a_xml_writer->xmlElement('fieldlabel', null, $label);
+            $a_xml_writer->xmlElement('fieldentry', null, $value);
+            $a_xml_writer->xmlEndTag('qtimetadatafield');
+        }
         $a_xml_writer->xmlStartTag("qtimetadatafield");
         $a_xml_writer->xmlElement("fieldlabel", null, "SEQUENCE_A");
         $a_xml_writer->xmlElement("fieldentry", null, $this->object->getSequence("sequence_a"));

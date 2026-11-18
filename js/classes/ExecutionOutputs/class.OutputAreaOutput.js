@@ -42,6 +42,7 @@ class OutputAreaOutput extends ExecutionOutput
       if (!/[?&]test_answer_changed=/.test(settings.url || '')) return false;
       const sent = new URLSearchParams(settings.data || '');
       const names = ['sequence_b', 'executed_bool', 'error_bool', 'error', 'output_relation'];
+      if (document.querySelector('[name="qss_evaluation"]')) names.push('qss_evaluation');
       return names.every(name => {
         const input = document.querySelector('[name="' + name + '"]');
         // HTML form serialization canonicalizes textarea line endings to CRLF.
@@ -114,6 +115,18 @@ class OutputAreaOutput extends ExecutionOutput
     this.changed();
   }
 
+  onSQLResult(result)
+  {
+    this.setFields(null, result);
+    this.changed();
+  }
+
+  onSQLError(error)
+  {
+    this.setFields(error, null);
+    this.changed();
+  }
+
   static errorText(error, labels)
   {
     const detail = String(error.errorMessage || '');
@@ -171,5 +184,6 @@ class OutputAreaOutput extends ExecutionOutput
       errorArea.textContent = labels.notExecuted;
       errorArea.style.display = 'block';
     }
+    if (typeof QSSShadow !== 'undefined') QSSShadow.renderStored(container);
   }
 }

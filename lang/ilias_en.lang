@@ -233,3 +233,51 @@ help_schema_loading#:#Loading schema …
 help_schema_empty#:#Sequence A defines no tables or views.
 help_schema_cancelled#:#Loading cancelled.
 help_schema_changed#:#Sequence A changed. Load the schema again.
+
+// Experimental structural shadow evaluation; these values do not determine test grades.
+qss_title#:#Graph-based QSS
+qss_shadow#:#Experimental parallel evaluation – not a test grade. Regular points remain unchanged.
+qss_sqlrunning#:#Executing SQL …
+qss_parsing#:#Parsing SQL AST …
+qss_normalizing#:#Preparing SQL edits …
+qss_comparing#:#Searching the lowest-cost SQL edit path …
+qss_completed#:#QSS assessment completed.
+qss_unsupported#:#This answer cannot be represented by the current SQL AST model.
+qss_failed#:#QSS assessment failed.
+qss_cancelled#:#QSS assessment cancelled manually.
+qss_notevaluated#:#No QSS assessment available yet.
+qss_notcompleted#:#No completed QSS assessment is available. The 0 points displayed by ILIAS are not a certified QSS result. This answer still needs to be assessed.
+qss_distance#:#SQL edit cost
+qss_points#:#QSS points
+qss_edits#:#SQL edits
+qss_model#:#Comparison model
+qss_visited#:#Visited states
+qss_lowerbound#:#Certified lower bound
+qss_waiting#:#Preparing QSS comparison …
+qss_stale#:#The stored assessment belongs to another model, answer or reference revision.
+qss_details#:#QSS assessment details
+qss_editinsert#:#Insert
+qss_editdelete#:#Delete
+qss_editreplace#:#Replace
+qss_cost#:#Cost
+qss_participanttitle#:#Assessment
+qss_participantrunning#:#Your answer is being assessed. Please wait until the assessment is complete.
+qss_participantcompleted#:#Assessment complete. Your result will only be available once the results page is released.
+qss_participantpending#:#Please execute your answer to have it assessed.
+qss_participantcancelled#:#Assessment cancelled. Please execute your answer again.
+qss_participantfailed#:#The assessment could not be completed. Please execute your answer again.
+
+assessment_mode#:#Assessment method
+assessment_result#:#Result-based assessment
+assessment_qss#:#Graph-QSS assessment
+assessment_maximum#:#Maximum QSS points
+assessment_qss_info#:#Points follow the cheapest edit path to the model answer. One cost unit deducts one fifth of the maximum. Costs are nonnegative integers. State any required method explicitly in the question.
+assessment_qss_active#:#This question is graded using Graph-QSS.
+assessment_group_equivalence#:#Equivalence transformations (free by default)
+assessment_group_repair#:#Logical repair steps
+assessment_group_basic#:#Basic SQL component and attribute operations
+assessment_step#:#Edit step
+assessment_cost#:#Cost
+assessment_reset#:#Reset all edit costs to defaults
+assessment_invalid#:#Choose a valid assessment method, positive QSS maximum points, and integer edit costs from 0 to 1000000.
+assessment_execute#:#Execute the model answer with the current QSS settings before saving the question.

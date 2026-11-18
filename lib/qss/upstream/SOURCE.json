@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/FAU-CS6/sql-query-distance",
+  "commit": "85685dd9513f8a25c140dabd50b6b0b0640ed7df",
+  "files": {
+    "sql.ts": "sha256:ca30848dd69c9d855ffa736bf8956e2e56c67c3cfd5d8be318f6101e84807715",
+    "index.js": "sha256:0ee79756e9000e342e7abcde0ad15c7f232623d732f2fc2088496fef018aad61",
+    "sqlQueryDistance.ts": "sha256:f5a74e18e10028256250034a767a2f0e8a95f1d1af9ff025b11ccd3fd878b858",
+    "parser.ts": "sha256:323e12fba8d7b2a03719eebcf44f1f5308356b8f379cdef6d63da6b8305aae73",
+    "util.ts": "sha256:d6a2a83648ec5a6e840a97cbf712de130adf5fd003c927fa817f35a403f05f12",
+    "config.ts": "sha256:ff41791dc25a2351697c5b42280a488207ac009b6e9cf1575e2c44cf22dda963",
+    "edits/atomicEdits.ts": "sha256:6672152c1dbc6faf811373b0828c4b0fd4d796991a3d5c8c7f4dd2db2b4baeab",
+    "edits/shortcutEdits.ts": "sha256:de340a7f01a7a4c688fd1f54008da9478d75627524fa175638d09d0a857e6937",
+    "edits/horizontalEdits.ts": "sha256:53aa9eea089604812650757572ecae9dc2c37818084a70b6195631284f316640",
+    "edits/edit.ts": "sha256:3931b4b21ffe9aee67f3158af9c29a1a1ff56c0a0427354af08ac212bea0030e",
+    "sql/schema.ts": "sha256:89fd4d17da12e6612d30b2b3113d1d621d3d96fdd5ba520e61f9da7f4f47c617",
+    "sql/heightInfo.ts": "sha256:ec244000aceac254ddddeb53d3c9e0d9f2cabce0f6c6c4ac4749876cdc154ecb",
+    "sql/query.ts": "sha256:80b2f08eda611f7df2d50bdb5941f222a030fb0bc528fd929dce1048b10426aa",
+    "sql/metaInfo.ts": "sha256:007368ed8829f7f3ef1ef217ff8df088c8ced35c1d3f122f4e0b508f98163be3",
+    "sql/query/expression.ts": "sha256:62308133645879ce9dc29b9a6beebbf09cd7cd2e4f161d32d79a3a626054d51d",
+    "sql/query/columnReference.ts": "sha256:fec2155e4976b540c29a33bf029ea153512ce56fab63fc0a79377d5eabe5ea19",
+    "sql/query/fromElement.ts": "sha256:08b6629b97e6a9ea66687b8af794cc7310e4332d920bdb13901538b0ab2f0fc4",
+    "sql/query/asterisk.ts": "sha256:a5bd466ba305914d66270a21f076b62088ccb7fa9e6d4abc39765d0c7f06a5d6",
+    "sql/query/orderBy.ts": "sha256:6c140dbb34c503904595f76b09c0ce99fabc8d8eb3866d831952e1a356e372fb",
+    "sql/query/not.ts": "sha256:ffb9904f65b7aefca7daa012df82ca4bf1f7003d6467126adb7353ddeba22090",
+    "sql/query/selectElement.ts": "sha256:c707c34bb656a04cf61b0501e2e0f5d689103ff385c7ba4bfdd7084eba75d84b",
+    "sql/query/binaryExpression.ts": "sha256:90b1fac45d16a5cecdfb5743900b537d4cd9e24e33c6f99146903d522c02e226",
+    "sql/query/literal.ts": "sha256:9c77aed2a57a52b3e057a0ea22a406168091ed817a3dd6fa7d62579f6f91669f",
+    "sql/query/aggregation.ts": "sha256:3e79096e3726d8972345db0550e8dc9949754f47558bc910d04c3168bf82feec",
+    "sql/query/hashable.ts": "sha256:e060874e50d0b19e22e64e8b27711db30bfacdb1273dfe016a0d1d223a6671fd"
+  }
+}

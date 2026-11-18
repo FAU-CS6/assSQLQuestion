@@ -24,9 +24,7 @@ class ScoringInfo extends GUIElement
      */
     public function getEditOutput()
     {
-        $tpl = $this->plugin->getTemplate('Mixed/tpl.il_as_qpl_qpisql_m_info.html');
-        $tpl->setVariable("INFO", $this->plugin->txt('ai_sca_eo_info'));
-        return $tpl->get();
+        return '';
     }
 
     /**
@@ -50,6 +48,10 @@ class ScoringInfo extends GUIElement
      */
     public function getSolutionOutput($participant_input)
     {
+        $context = $participant_input?->getQssGradingContext();
+        if ($context !== null || $this->object->getAssessmentMode() === QssAssessment::QSS) {
+            return '<p><b>' . $this->plugin->txt('assessment_qss') . '</b> (' . ($context['maxPoints'] ?? $this->object->getMaximumPoints()) . ')</p>';
+        }
         return "<div class='help-block'><b>" . $this->plugin->txt('ai_sca_so_name') . ":</b></div>";
     }
 

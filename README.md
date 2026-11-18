@@ -1,5 +1,36 @@
 # Question Plugin for ILIAS - SQL
 
+This branch offers a per-question choice between established result-based grading
+and browser-only Graph-based QSS grading,
+following [Köberlein, Probst and Lenz, sections 4.2–4.7](https://www.cs6.tf.fau.eu/files/2025/03/Koeberlein-Graph-based_QSS-141_b.pdf).
+Concrete SQLite AST states are connected by named SQL edits with fixed costs;
+exact shortest-path search includes actual zero-cost semantic transformations.
+The score uses the paper's linear deduction formula. This replaces the earlier
+syntax-tree comparison. Only the selected method computes the official grade.
+Existing questions and old exports default to the established result metrics.
+
+The comparison runs directly at each question with progress, a result/navigation
+barrier and manual cancellation. It has no execution timeout and starts no Node
+service. QSS reference SQL is accessible in the student's browser. Assessment
+uses client evidence, with the same trust limitation as the result metrics.
+See [assessment settings and compatibility](docs/qss-bewertung.md) and the
+[engine/edit catalogue](lib/qss/README.md).
+
+The [assessment report](docs/qss-bewertung.md) documents the current model 2.7.0
+native retests of 33 unchanged answers and all 699 original model answers,
+upgrade and import/export checks, and the separately
+identified historical acceptance of plugin 0.3.0.
+The [earlier answer-robustness report](docs/qss-robustheit-2026-11-10.md) confirms model
+2.1.1 on all 699 unchanged original questions with 6,812 fresh native Chrome
+cases, 132 additional anonymous semantic cases, saved official grades and all
+five import/export/reimport round trips. It records phase timings, remaining
+slow cases and gaps in variant coverage and calibration. The
+[earlier matrix report](docs/qss-studentenvarianten-2026-11-10.md) records model 2.1.0.
+The [9 November Graph-based QSS report](docs/qss-graph-abnahme-2026-11-09.md)
+records model 2.0.1 and does not establish acceptance of the current build. The
+[earlier QSS report](docs/qss-abnahme-2026-11-09.md) records the
+historical syntax experiment and is not acceptance of this replacement.
+
 The Open Source Learning Management System [ILIAS](https://www.ilias.de/) is a an extensive tool to support students at universities learning. One big feature of ILIAS is the testing module. Using this lecturers are enabled to give their students a test they have to solve before accessing important documents. Of course the testing module can be used to create real (online) exams, too.
 
 While the testing module supports a bunch of different question types by default, including [Single Choice](https://docu.ilias.de/ilias.php?ref_id=2221&obj_id=42830&obj_type=StructureObject&cmd=layout&cmdClass=illmpresentationgui&cmdNode=2c&baseClass=ilLMPresentationGUI), [Multiple Choice](https://docu.ilias.de/ilias.php?ref_id=2221&obj_id=41931&cmd=layout&cmdClass=illmpresentationgui&cmdNode=2c&baseClass=ilLMPresentationGUI) and [Ordering](https://docu.ilias.de/ilias.php?ref_id=2221&obj_id=41720&cmd=layout&cmdClass=illmpresentationgui&cmdNode=2c&baseClass=ilLMPresentationGUI) questions, more complex question types have to be added by installing a plugin.
@@ -8,7 +39,7 @@ In this project - called ***Q**uestion **P**lugin for **I**LIAS - **SQL** (**QPI
 
 ## Installation
 
-Version 0.1.1 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
+Version 0.3.0 targets **ILIAS 11 with PHP 8.3 or 8.4**. The migration notes and
 reproducible tests are documented in [the ILIAS 11 upgrade guide](docs/ilias-11.md).
 
 The [full Chrome acceptance report](docs/chrome-abnahme-2026-11-06.md) covers all
@@ -46,6 +77,17 @@ The plugin itself does not modify ILIAS core files.
 Run `composer install` followed by `composer test` for the scoring unit tests.
 Run the ILIAS integration suite with ILIAS's own PHPUnit executable to avoid
 mixing two PHPUnit installations; instructions are in the [upgrade guide](docs/ilias-11.md).
+
+Both QSS browser bundles are included. Node.js is needed only for development
+and rebuilding them; the ILIAS installation runs no Node service. See the
+[QSS build and test commands](lib/qss/README.md).
+
+The current Graph-QSS model is `2.7.0` (`paper-linear-v2`), with 71 configurable
+costs. Native release checks are documented in the assessment report below.
+It uses named SQL graph edits and a question-relative linear scale of
+`maxPoints / 5`. Question authors select result-based or QSS grading and can edit
+the QSS step costs, including originally free equivalences. See
+[assessment settings](docs/qss-bewertung.md) and [cost profiles](docs/qss-kostenkonfiguration.md).
 
 Some of the artifacts are uploaded to the repository in built form, some need to be built during installation. For the PHP part of the plugin, we adhere to the suggestions of ILIAS, namely to `composer install --no-dev` all dependencies during installation and not check in dependency artifacts into git (c.f. https://github.com/ILIAS-eLearning/ILIAS/pull/1833 and specifically https://docu.ilias.de/go/wiki/wpage_6371_1357 for plugins).
 

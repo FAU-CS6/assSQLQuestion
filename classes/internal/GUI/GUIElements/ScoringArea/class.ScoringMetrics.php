@@ -31,7 +31,7 @@ class ScoringMetrics extends GUIElement
         $html .= ColumnNames::getEditOutput($this->plugin, $this->object);
         $html .= FunctionalDependencies::getEditOutput($this->plugin, $this->object);
 
-        return $html;
+        return '<div id="qpisql-result-settings">' . $html . '</div>';
     }
 
     /**
@@ -43,6 +43,7 @@ class ScoringMetrics extends GUIElement
      */
     public function getQuestionOutput($participant_input)
     {
+        if ($this->object->getAssessmentMode() === QssAssessment::QSS) { return ''; }
         $html = "";
 
         // Add the html code of all ScoringMetrics
@@ -62,6 +63,7 @@ class ScoringMetrics extends GUIElement
      */
     public function getSolutionOutput($participant_input)
     {
+        if ($participant_input?->getQssGradingContext() !== null || $this->object->getAssessmentMode() === QssAssessment::QSS) { return ''; }
         $html = "";
 
         // Add the html code of all ScoringMetrics
@@ -83,6 +85,7 @@ class ScoringMetrics extends GUIElement
      */
     public function writePostData()
     {
+        if ($this->object->getAssessmentMode() === QssAssessment::QSS) { return; }
         // Write the POST data in every ScoringMetric
         ResultLines::writePostData($this->plugin, $this->object);
         ColumnNames::writePostData($this->plugin, $this->object);
@@ -97,6 +100,7 @@ class ScoringMetrics extends GUIElement
      */
     public function writeParticipantInput($participant_input)
     {
+        if ($this->object->getAssessmentMode() === QssAssessment::QSS) { return; }
         // Write the POST data in every ScoringMetric
         ResultLines::writeParticipantInput($participant_input);
         ColumnNames::writeParticipantInput($participant_input);

@@ -1,0 +1,4 @@
+# Preserve generated dependencies and upstream snapshots byte for byte.
+lib/qss/qss.js -whitespace
+lib/qss/worker.qss.js -whitespace
+lib/qss/upstream/** -whitespace

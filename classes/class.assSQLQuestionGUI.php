@@ -112,6 +112,15 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         if (!$checkonly) {
             $this->renderEditForm($form);
+            // ILIAS 11's direct question-pool controller returns immediately
+            // after editQuestion, before printing its main template. Links on
+            // the import page use that route; the repository route prints in
+            // its enclosing controller and must not be printed here twice.
+            $base_class = $DIC->http()->request()->getQueryParams()['baseClass'] ?? '';
+            if (is_string($base_class) && strtolower($base_class) === 'ilobjquestionpoolgui'
+                && strtolower($this->ctrl->getCmd()) === 'editquestion') {
+                $this->tpl->printToStdout();
+            }
         }
 
         return $errors;
@@ -191,6 +200,12 @@ class assSQLQuestionGUI extends assQuestionGUI
         foreach ($guiAreas as $guiArea) {
             $questionoutput .= $guiArea->getQuestionOutput($participant_input);
         }
+
+        // The core writes its seconds-based timestamp after this method. Bind
+        // a render nonce in the browser once the native enclosing form exists.
+        // Existing installations can retain a pre-update Composer classmap.
+        require_once __DIR__ . '/internal/Test/class.SQLQuestionTestFormToken.php';
+        $questionoutput .= SQLQuestionTestFormToken::render(ilSession::get('formtimestamp'));
 
         $pageoutput = $this->outQuestionPage("", $is_question_postponed, $active_id, $questionoutput);
         return $pageoutput;
@@ -322,7 +337,10 @@ class assSQLQuestionGUI extends assQuestionGUI
 
         // Custom CSS
         $path = $this->plugin->getRelativeDirectory();
-        $this->tpl->addCss($path . '/css/custom.css');
+        // ILIAS 11 strips CSS query parameters and versions plugin styles with
+        // the ILIAS release. Inline the small plugin stylesheet so an update
+        // also reaches browsers which cached the previous plugin version.
+        $this->tpl->addInlineCss(file_get_contents(dirname(__DIR__) . '/css/custom.css'));
 
         // Add JS files
 

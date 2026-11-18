@@ -22,6 +22,7 @@
      super();
 
      this.type = type;
+     this.isResultMetric = true;
      this.getter = getter;
      this.beautifier = beautifier;
 
@@ -74,6 +75,11 @@
      document.getElementById('qpisql-scoring-metric-not-executed-' + this.type).style.display = "none";
      document.getElementById('qpisql-scoring-metric-executed-' + this.type).style.display = "inherit";
      document.getElementById('qpisql-scoring-metric-output-' + this.type).textContent = this.beautifier(this.getter(result));
+     document.getElementById('qpisql-scoring-metric-value-' + this.type).value = this.getter(result);
+   }
+
+   onSQLResult(result)
+   {
      document.getElementById('qpisql-scoring-metric-value-' + this.type).value = this.getter(result);
    }
 
