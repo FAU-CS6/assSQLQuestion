@@ -31,6 +31,7 @@ class Minifier
         // ExecutionHandler
         $minifier->add(__DIR__.'/classes/class.ExecutionHandler.js');
         $minifier->add(__DIR__.'/classes/class.QSSShadow.js');
+        $minifier->add(__DIR__.'/classes/class.QSSReviewPath.js');
         $minifier->add(__DIR__.'/classes/class.AssessmentSettings.js');
         $minifier->add(__DIR__.'/classes/class.TestFormToken.js');
 

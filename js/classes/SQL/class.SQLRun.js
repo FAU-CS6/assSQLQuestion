@@ -19,13 +19,14 @@ class SQLRun
    * @param {boolean} checkIntegrity If set to true, changes to the database are not allowed in b sequence - This is checked by hashing the database after a and before c and comparing their hash values
    * @param {ExecutionHandler} callback A handler implementing a callback function onResult (for results) and a callback function onError (for errors)
    */
-  constructor(sequenceA, sequenceB, sequenceC, checkIntegrity, callback)
+  constructor(sequenceA, sequenceB, sequenceC, checkIntegrity, callback, schemaOnly = false)
   {
     // Set the calling parameters as member variables
     this.sequenceA = sequenceA;
     this.sequenceB = sequenceB;
     this.sequenceC = sequenceC;
     this.checkIntegrity = checkIntegrity;
+    this.schemaOnly = schemaOnly;
     this.callback = callback;
 
     this.worker = null;
@@ -39,6 +40,23 @@ class SQLRun
       return;
     }
     this.executeSequenceA();
+  }
+
+  /** Recreate only the grading schema on a fresh connection for a released answer. */
+  static async preparedSchema(sequenceA, signal)
+  {
+    let run, abort;
+    try {
+      return await new Promise((resolve, reject) => {
+        signal.throwIfAborted();
+        abort = () => { run?.dispose(); reject(signal.reason); };
+        signal.addEventListener('abort', abort, { once: true });
+        run = new SQLRun(sequenceA, '', '', false, { onSchema: resolve, onError: reject }, true);
+      });
+    } finally {
+      if (abort) signal.removeEventListener('abort', abort);
+      run?.dispose();
+    }
   }
 
   /** Terminate the worker on every completion path. There is deliberately no timeout. */
@@ -126,9 +144,18 @@ class SQLRun
         if (this.finished) return;
         callback(event.data.error ? null : (event.data.results || [])[0] || null);
       };
-      this.worker.postMessage({ action: 'exec', sql });
+      this.worker.onerror = event => {
+        event.preventDefault?.();
+        this.fail(new SQLRunErrorRunningSequence(event.message, 'A'));
+      };
+      try { this.worker.postMessage({ action: 'exec', sql }); }
+      catch (error) { this.fail(new SQLRunErrorRunningSequence(error.message, 'A')); }
     };
-    const finish = () => { this.callback.onSchema(schema); this.executeSequenceB(); };
+    const finish = () => {
+      this.callback.onSchema(schema);
+      if (this.schemaOnly) { this.finished = true; this.dispose(); }
+      else this.executeSequenceB();
+    };
     read("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY rowid", result => {
       if (!result) { finish(); return; }
       const names = result.values.map(row => ({ name: String(row[0]), type: String(row[1]) }));

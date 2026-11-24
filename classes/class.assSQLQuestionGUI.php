@@ -308,7 +308,10 @@ class assSQLQuestionGUI extends assQuestionGUI
         array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
-        array_push($guiAreas, new OutputArea($this->plugin, $this->object, $previewAnswer));
+        // ILIAS also uses getSolutionOutput for locked answers and the answer
+        // list during a test. Its result presenters request graphical output.
+        $showQssFeedback = $graphical_output || $show_manual_scoring || $previewAnswer !== null;
+        array_push($guiAreas, new OutputArea($this->plugin, $this->object, $previewAnswer, $showQssFeedback));
         array_push($guiAreas, new ScoringArea($this->plugin, $this->object));
 
         foreach ($guiAreas as $guiArea) {

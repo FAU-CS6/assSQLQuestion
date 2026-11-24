@@ -384,6 +384,7 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
                 'referenceRevision'=>JsBlock::getQssReferenceRevision($this),
                 'engineVersion'=>JsBlock::QSS_ENGINE_VERSION, 'rubric'=>JsBlock::QSS_RUBRIC,
                 'scale'=>JsBlock::getQssScale($this->getMaximumPoints()),
+                'referenceExecutionValid' => $this->getExecutedBool() && !$this->getErrorBool(),
                 'costProfile'=>QssAssessment::profile($this->getQssCosts())
             ]);
         }

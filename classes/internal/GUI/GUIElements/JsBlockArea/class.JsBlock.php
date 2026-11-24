@@ -121,7 +121,7 @@ class JsBlock extends GUIElement
         return $tpl->get();
     }
 
-    public static function getQssReferenceRevision($question): string
+    public static function getQssReferenceRevision($question, ?array $gradingContext = null): string
     {
         return hash('sha256', json_encode([
             'version' => 2,
@@ -135,9 +135,9 @@ class JsBlock extends GUIElement
             'sequence_b' => $question->getSequence('sequence_b'),
             'sequence_c' => $question->getSequence('sequence_c'),
             'metrics' => $question->getAllSolutionMetricsAsJSON(),
-            'assessmentMode' => method_exists($question, 'getAssessmentMode') ? $question->getAssessmentMode() : QssAssessment::RESULT,
-            'maximumPoints' => method_exists($question, 'getMaximumPoints') ? $question->getMaximumPoints() : null,
-            'costProfile' => method_exists($question, 'getQssCosts') ? QssAssessment::profile($question->getQssCosts()) : QssAssessment::profile(),
+            'assessmentMode' => $gradingContext['mode'] ?? (method_exists($question, 'getAssessmentMode') ? $question->getAssessmentMode() : QssAssessment::RESULT),
+            'maximumPoints' => $gradingContext['maxPoints'] ?? (method_exists($question, 'getMaximumPoints') ? $question->getMaximumPoints() : null),
+            'costProfile' => $gradingContext['costProfile'] ?? QssAssessment::profile(method_exists($question, 'getQssCosts') ? $question->getQssCosts() : []),
         ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
     }
 
@@ -150,7 +150,8 @@ class JsBlock extends GUIElement
             'editInsert', 'editDelete', 'editReplace', 'cost', 'participantTitle', 'participantRunning',
             'participantCompleted', 'participantPending', 'participantCancelled', 'participantFailed',
             'correctionPath', 'noChanges', 'traceMissing', 'traceShortened', 'zeroThreshold', 'submission',
-            'projection', 'filter', 'sort', 'group', 'groupFilter', 'scaleExplanation'] as $key) {
+            'projection', 'filter', 'sort', 'group', 'groupFilter', 'scaleExplanation',
+            'findPath', 'pathRunning', 'pathCancelled', 'cancelPath', 'pathFailed', 'pathUnavailable', 'pathReady', 'removeStatement', 'insertStatement'] as $key) {
             $labels[$key] = strip_tags($plugin->txt('qss_' . strtolower($key)));
         }
         if ($includeStepNames) {

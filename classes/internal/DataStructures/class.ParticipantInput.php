@@ -193,9 +193,12 @@ class ParticipantInput
             || !self::isBoundedQssMetadata($context) || strlen(json_encode($context, JSON_INVALID_UTF8_SUBSTITUTE)) > self::QSS_MAX_JSON_BYTES) {
             return;
         }
+        if (!is_bool($context['referenceExecutionValid'] ?? null)) {
+            unset($context['referenceExecutionValid']);
+        }
         $context['points'] = (float)$points;
         $context['maxPoints'] = (float)$maximum;
-        $this->qss_grading_context = array_intersect_key($context,array_fill_keys(['version','mode','points','maxPoints','referenceRevision','engineVersion','rubric','scale','costProfile'],true));
+        $this->qss_grading_context = array_intersect_key($context,array_fill_keys(['version','mode','points','maxPoints','referenceRevision','engineVersion','rubric','scale','costProfile','referenceExecutionValid'],true));
     }
 
     /** Invalid optional diagnostics are discarded without rejecting the answer. */

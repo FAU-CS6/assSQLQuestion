@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 class Output extends GUIElement
 {
-    public function __construct($plugin, $object, private ?ParticipantInput $previewAnswer = null)
+    public function __construct($plugin, $object, private ?ParticipantInput $previewAnswer = null, private bool $showQssFeedback = true)
     {
         parent::__construct($plugin, $object);
     }
@@ -135,11 +135,16 @@ class Output extends GUIElement
         $tpl->setVariable("OUTPUT_RELATION", htmlspecialchars($output_relation, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->setVariable("ERROR_NO_EXECUTION", $this->plugin->txt('ai_oa_er_no_exec'));
         $this->setOutputLabels($tpl);
-        $assessmentAnswer = $participant_input ?? $this->previewAnswer;
+        $assessmentAnswer = $this->showQssFeedback ? ($participant_input ?? $this->previewAnswer) : null;
         $gradingContext = $assessmentAnswer?->getQssGradingContext();
         $qssRequired = $assessmentAnswer !== null &&
             ($gradingContext !== null || $this->object->getAssessmentMode() === QssAssessment::QSS);
         $qss = $qssRequired ? $assessmentAnswer->getQssEvaluation() : null;
+        $answer = str_replace(["\r\n", "\r"], "\n", $assessmentAnswer?->getSequence() ?? '');
+        $digest = $assessmentAnswer === null ? null : hash('sha256', $answer);
+        $revision = $gradingContext['referenceRevision'] ?? JsBlock::getQssReferenceRevision($this->object);
+        $pathRequest = $qss === null ? null : $this->getPathRequest($assessmentAnswer, $qss, $answer, $digest, $revision);
+        $tpl->setVariable('QSS_PATH_REQUEST', $pathRequest === null ? '' : JsBlock::jsonAttribute($pathRequest));
         $tpl->setVariable('QSS_SUBMISSION', $this->previewAnswer === null ? '' : JsBlock::jsonAttribute(['sql' => $this->previewAnswer->getSequence()]));
         $tpl->setVariable('QSS_REQUIRED', $qssRequired ? 'true' : 'false');
         $tpl->setVariable('QSS_EVALUATION', $qss === null ? '' : JsBlock::jsonAttribute($qss));
@@ -147,17 +152,47 @@ class Output extends GUIElement
         $labels['shadow'] = strip_tags($this->plugin->txt('assessment_qss_active'));
         $labels['notCompleted'] = strip_tags($this->plugin->txt('qss_notcompleted'));
         $tpl->setVariable('QSS_LABELS', JsBlock::jsonAttribute($labels));
-        $tpl->setVariable('QSS_REFERENCE_REVISION', $gradingContext['referenceRevision'] ?? JsBlock::getQssReferenceRevision($this->object));
+        $tpl->setVariable('QSS_REFERENCE_REVISION', $revision);
         $tpl->setVariable('QSS_STORED_MODEL', JsBlock::jsonAttribute([
             'engine' => JsBlock::QSS_ENGINE,
             'engineVersion' => $gradingContext['engineVersion'] ?? JsBlock::QSS_ENGINE_VERSION,
             'rubric' => $gradingContext['rubric'] ?? JsBlock::QSS_RUBRIC,
             'scale' => $gradingContext['scale'] ?? JsBlock::getQssScale($this->object->getMaximumPoints()),
             'maxPoints' => $gradingContext['maxPoints'] ?? $this->object->getMaximumPoints(),
-            'answerDigest' => $assessmentAnswer === null ? null : hash('sha256',
-                str_replace(["\r\n", "\r"], "\n", $assessmentAnswer->getSequence())),
+            'answerDigest' => $digest,
         ]));
         return $tpl->get();
+    }
+
+    /** Load inputs only for a released attempt with a missing or incomplete path. */
+    private function getPathRequest(ParticipantInput $input, array $qss, string $answer, string $digest, string $revision): ?array
+    {
+        $context = $input->getQssGradingContext();
+        $needsPath = $qss['status'] === 'score-zero-certified' || ($qss['status'] === 'exact' &&
+            (!empty($qss['editsTruncated']) || empty($qss['edits']) && ($qss['distance'] ?? 0) > 0));
+        if (!$needsPath || ($qss['scoreCertifiedWithinModel'] ?? false) !== true || ($qss['answerDigest'] ?? null) !== $digest
+            || ($qss['engine'] ?? null) !== JsBlock::QSS_ENGINE || ($qss['modelVersion'] ?? null) !== JsBlock::QSS_ENGINE_VERSION
+            || ($qss['version'] ?? null) !== JsBlock::QSS_ENGINE_VERSION || ($qss['referenceRevision'] ?? null) !== $revision
+            || $revision !== JsBlock::getQssReferenceRevision($this->object, $context)) {
+            return null;
+        }
+        // Use the attempt's costs even if only the scoring settings changed.
+        // A different model solution or setup cannot explain this submission.
+        $error = json_decode($input->getError(), true);
+        return [
+            'answer' => $answer, 'reference' => $this->object->getSequence('sequence_b'),
+            'schemaSql' => str_replace(["\r\n", "\r"], "\n", $this->object->getSequence('sequence_a')),
+            'controlSql' => str_replace(["\r\n", "\r"], "\n", $this->object->getSequence('sequence_c')),
+            'questionText' => JsBlock::getQssQuestionText($this->object),
+            'costs' => $context['costProfile']['costs'] ?? $this->object->getQssCosts(),
+            'referenceRows' => JsBlock::getQssReferenceRows($this->object),
+            'answerRows' => JsBlock::getQssReferenceRows($input),
+            'referenceExecutionValid' => $context['referenceExecutionValid'] ?? ($this->object->getExecutedBool() && !$this->object->getErrorBool()),
+            'answerExecutionValid' => $input->getExecutedBool() && !$input->getErrorBool(),
+            'schemaUnavailable' => $input->getErrorBool() && (($error['sequence'] ?? null) === 'A' ||
+                ($error['errorType'] ?? null) === 'SQLRunErrorDBCreation'),
+            'workerRevision' => filemtime(dirname(__DIR__, 5) . '/lib/qss/worker.qss.js'),
+        ];
     }
 
     /** Supply plain text labels as an HTML attribute, never as JavaScript source. */

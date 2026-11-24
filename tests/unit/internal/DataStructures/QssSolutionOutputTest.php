@@ -4,7 +4,7 @@ use PHPUnit\Framework\TestCase;
 
 final class QssSolutionOutputTest extends TestCase
 {
-    private function render(string $mode, ?ParticipantInput $input, ?ParticipantInput $preview = null): array
+    private function render(string $mode, ?ParticipantInput $input, ?ParticipantInput $preview = null, bool $released = true, array $costs = []): array
     {
         global $DIC;
         $previous = $DIC ?? null;
@@ -26,8 +26,9 @@ final class QssSolutionOutputTest extends TestCase
                 };
             }
         };
-        $question = new class($mode) {
-            public function __construct(private string $mode) {}
+        $question = new class($mode, $costs) {
+            public function getQssCosts(): array { return $this->costs; }
+            public function __construct(private string $mode, private array $costs) {}
             public function getId(): int { return 1; }
             public function getErrorBool(): bool { return false; }
             public function getError(): string { return ''; }
@@ -39,7 +40,7 @@ final class QssSolutionOutputTest extends TestCase
             public function getAllSolutionMetricsAsJSON(): string { return '[]'; }
         };
         try {
-            return json_decode((new Output($plugin, $question, $preview))->getSolutionOutput($input), true, flags: JSON_THROW_ON_ERROR);
+            return json_decode((new Output($plugin, $question, $preview, $released))->getSolutionOutput($input), true, flags: JSON_THROW_ON_ERROR);
         } finally { $DIC = $previous; }
     }
 
@@ -65,6 +66,35 @@ final class QssSolutionOutputTest extends TestCase
         self::assertSame(hash('sha256', $answer->getSequence()), $model['answerDigest']);
         $labels = json_decode(html_entity_decode($output['QSS_LABELS'], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
         self::assertSame(array_column(QssAssessment::catalog()['steps'], 'de', 'id'), $labels['stepNames']);
+    }
+
+    public function testReleasedPathBindsTheAnswerAndReusesTheHistoricalCostProfile(): void
+    {
+        $answer = new ParticipantInput();
+        $answer->setSequence("SELECT 2;\r\nSELECT 3;");
+        $costs = ['baseRemoveStructural' => 7];
+        $revision = $this->render('qss', $answer, costs: $costs)['QSS_REFERENCE_REVISION'];
+        $result = ['status' => 'score-zero-certified', 'points' => 0, 'lowerBound' => 5,
+            'engine' => JsBlock::QSS_ENGINE, 'version' => JsBlock::QSS_ENGINE_VERSION, 'modelVersion' => JsBlock::QSS_ENGINE_VERSION,
+            'scoreCertifiedWithinModel' => true, 'referenceRevision' => $revision, 'answerDigest' => hash('sha256', "SELECT 2;\nSELECT 3;")];
+        $answer->setQssEvaluation($result);
+        $answer->setQssGradingContext(['version' => 1, 'mode' => 'qss', 'points' => 0, 'maxPoints' => 5,
+            'scale' => 1, 'engineVersion' => JsBlock::QSS_ENGINE_VERSION, 'rubric' => JsBlock::QSS_RUBRIC,
+            'referenceRevision' => $revision, 'costProfile' => QssAssessment::profile($costs), 'referenceExecutionValid' => false]);
+        $answer = ParticipantInput::fromJSON($answer->toJSON());
+        $view = $this->render('qss', $answer, costs: ['baseRemoveStructural' => 12]);
+        $request = json_decode(html_entity_decode($view['QSS_PATH_REQUEST'], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame(7, $request['costs']['baseRemoveStructural']);
+        self::assertSame("SELECT 2;\nSELECT 3;", $request['answer']);
+        self::assertFalse($request['referenceExecutionValid']);
+        $locked = $this->render('qss', $answer, released: false);
+        self::assertSame('', $locked['QSS_PATH_REQUEST']);
+        self::assertSame('', $locked['QSS_EVALUATION']);
+        $answer->setSequence('SELECT 0');
+        self::assertSame('', $this->render('qss', $answer)['QSS_PATH_REQUEST']);
+        $answer->setSequence("SELECT 2;\nSELECT 3;");
+        $answer->setQssEvaluation(array_replace($result, ['referenceRevision' => str_repeat('0', 64)]));
+        self::assertSame('', $this->render('qss', $answer)['QSS_PATH_REQUEST']);
     }
 
     public function testHistoricalContextKeepsItsModelAndRequiresMissingEvidence(): void

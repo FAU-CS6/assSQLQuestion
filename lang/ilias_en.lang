@@ -263,6 +263,15 @@ qss_correctionpath#:#One lowest-cost path from your answer to the model solution
 qss_nochanges#:#Your answer matches the model solution. No changes are needed.
 qss_tracemissing#:#No individual steps are available for this saved assessment.
 qss_traceshortened#:#The saved sequence of changes is abbreviated.
+qss_removestatement#:#Remove the SQL statement at position %s
+qss_insertstatement#:#Insert a SQL statement at position %s
+qss_findpath#:#Calculate lowest-cost edit path
+qss_pathrunning#:#Searching for the lowest-cost edit path.
+qss_pathcancelled#:#Search cancelled.
+qss_cancelpath#:#Cancel search
+qss_pathfailed#:#The path could not be verified. You can run the search again.
+qss_pathunavailable#:#The available question and model version cannot reproduce the original assessment.
+qss_pathready#:#Lowest-cost edit path calculated.
 qss_zerothreshold#:#The proven minimum cost accounts for all available points. This assessment did not determine a complete path.
 qss_submission#:#Your submitted SQL
 qss_projection#:#Selected columns

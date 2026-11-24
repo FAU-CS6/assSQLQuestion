@@ -267,10 +267,17 @@ class QSSShadow
       summary.className = 'qpisql-qss-score';
       const distance = Number.isFinite(result.distance) ? Number(result.distance).toLocaleString()
         : Number.isFinite(result.lowerBound) ? '≥ ' + Number(result.lowerBound).toLocaleString() : '—';
+      const distanceValue = document.createElement('span');
+      distanceValue.className = 'qpisql-qss-distance';
+      distanceValue.textContent = distance;
       summary.textContent = this.label('points') + ': ' + Number(result.points).toLocaleString() + ' / '
-        + Number(result.maxPoints).toLocaleString() + ' · ' + this.label('distance') + ': ' + distance;
+        + Number(result.maxPoints).toLocaleString() + ' · ' + this.label('distance') + ': ';
+      summary.appendChild(distanceValue);
       this.card.appendChild(summary);
-      this.renderCorrections(result);
+      const corrections = document.createElement('div');
+      corrections.className = 'qpisql-qss-corrections';
+      this.card.appendChild(corrections);
+      this.renderCorrections(result, corrections);
     }
     const details = document.createElement('details');
     const heading = document.createElement('summary');
@@ -285,25 +292,25 @@ class QSSShadow
     this.card.appendChild(details);
   }
 
-  renderCorrections(result)
+  renderCorrections(result, container)
   {
     const paragraph = text => {
       const p = document.createElement('p');
       p.textContent = text;
-      this.card.appendChild(p);
+      container.appendChild(p);
     };
     if (result.status === 'score-zero-certified') {
       paragraph(this.label('zeroThreshold'));
       return;
     }
-    const edits = (result.edits || []).slice(0, 50);
+    const edits = result.edits || [];
     if (!edits.length) {
       paragraph(this.label(result.distance === 0 ? 'noChanges' : 'traceMissing'));
       return;
     }
     const heading = document.createElement('strong');
     heading.textContent = this.label('correctionPath');
-    this.card.appendChild(heading);
+    container.appendChild(heading);
     const list = document.createElement('ol');
     list.className = 'qpisql-qss-changes';
     // Consecutive edits to the same clause can build an incomplete expression
@@ -337,6 +344,9 @@ class QSSShadow
         if (step.beforeSql) code(step.beforeSql);
         if (step.beforeSql && step.afterSql) item.append(' → ');
         if (step.afterSql) code(step.afterSql);
+      } else if (step.statementNumber > 0) {
+        const label = step.name.startsWith('remove') ? 'removeStatement' : 'insertStatement';
+        item.append(this.label(label).replace('%s', String(step.statementNumber)));
       } else {
         const field = step.scope?.split(',').at(-1);
         const clause = {columns: 'SELECT', where: 'WHERE', orderby: 'ORDER BY', groupby: 'GROUP BY', having: 'HAVING',
@@ -356,7 +366,7 @@ class QSSShadow
       if (Number.isFinite(step.cost)) item.append(' · ' + this.label('cost') + ': ' + step.cost.toLocaleString());
       list.appendChild(item);
     }
-    this.card.appendChild(list);
+    container.appendChild(list);
     if (Number.isFinite(result.scale) && result.distance > 0) {
       paragraph(this.label('scaleExplanation').replace('%s', result.scale.toLocaleString(undefined, {maximumSignificantDigits: 8})));
     }
@@ -403,6 +413,17 @@ class QSSShadow
         qss.message(qss.label('stale'), false);
       } else {
         qss.render(result);
+        if (required && (result.status === 'score-zero-certified' || result.editsTruncated
+            || result.distance > 0 && !result.edits?.length)) {
+          const corrections = qss.card.querySelector('.qpisql-qss-corrections');
+          if (container.dataset.qssPathRequest) {
+            QSSReviewPath.attach(qss, corrections, result, JSON.parse(container.dataset.qssPathRequest));
+          } else {
+            const note = document.createElement('p');
+            note.textContent = qss.label('pathUnavailable');
+            corrections.appendChild(note);
+          }
+        }
         if (container.dataset.qssSubmission && qss.card.querySelector('.qpisql-qss-score')) {
           const heading = document.createElement('strong');
           heading.textContent = qss.label('submission');

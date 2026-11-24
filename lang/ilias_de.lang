@@ -262,6 +262,15 @@ qss_correctionpath#:#So erreichen Sie die Musterlösung mit den geringsten Ände
 qss_nochanges#:#Ihre Antwort entspricht der Musterlösung. Es sind keine Änderungen nötig.
 qss_tracemissing#:#Für diese gespeicherte Bewertung sind keine einzelnen Schritte verfügbar.
 qss_traceshortened#:#Der gespeicherte Änderungspfad ist gekürzt.
+qss_removestatement#:#SQL-Anweisung an Position %s entfernen
+qss_insertstatement#:#SQL-Anweisung an Position %s einfügen
+qss_findpath#:#Günstigsten Änderungspfad berechnen
+qss_pathrunning#:#Der günstigste Änderungspfad wird gesucht.
+qss_pathcancelled#:#Suche abgebrochen.
+qss_cancelpath#:#Suche abbrechen
+qss_pathfailed#:#Der Pfad konnte nicht bestätigt werden. Sie können die Suche erneut starten.
+qss_pathunavailable#:#Mit der derzeit verfügbaren Frage und Modellversion lässt sich der ursprüngliche Pfad nicht nachberechnen.
+qss_pathready#:#Günstigster Änderungspfad berechnet.
 qss_zerothreshold#:#Die nachgewiesenen Mindestkosten reichen für den Abzug aller Punkte. Für diese Bewertung wurde kein vollständiger Änderungspfad ermittelt.
 qss_submission#:#Ihre abgegebene SQL-Anfrage
 qss_projection#:#Spaltenauswahl
