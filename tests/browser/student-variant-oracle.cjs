@@ -56,7 +56,7 @@ async function installOracle(page,plugin){
   const rows=async sql=>{const value=await exec(sql);if(value.error)throw new Error(value.error);return last(value)?.values||[];};
   async function state(){
    const tables=[];
-   for(const [name,type]of await rows("SELECT name,type FROM sqlite_master WHERE type IN('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY name")){
+   for(const [name,type]of await rows("SELECT name,type FROM sqlite_master WHERE type IN('table','view') AND lower(name) NOT GLOB 'sqlite_*' ORDER BY name")){
     let info;try{info=await rows('PRAGMA table_info('+identifier(name)+')');}
     catch(error){tables.push({name,type,catalog_error:String(error.message)});continue;}
     // Only the lexical spelling of a closed literal default is normalized.
@@ -81,7 +81,7 @@ async function installOracle(page,plugin){
     const result=await exec(a);if(result.error)throw new Error('Sequence A: '+result.error);
     const fk=(await rows('PRAGMA foreign_keys'))[0]?.[0]||0;
     const snapshot=await call({action:'export'});if(!snapshot.buffer)throw new Error('No SQLite snapshot');
-    const tables=[];for(const [name,type]of await rows("SELECT name,type FROM sqlite_master WHERE type IN('table','view') AND name NOT LIKE 'sqlite_%'")){
+    const tables=[];for(const [name,type]of await rows("SELECT name,type FROM sqlite_master WHERE type IN('table','view') AND lower(name) NOT GLOB 'sqlite_*'")){
      const info=await rows('PRAGMA table_info('+identifier(name)+')');tables.push({name,type,columns:info.map(v=>({name:v[1],type:v[2],notnull:!!v[3],pk:Number(v[5])}))});
     }
     prepared={buffer:snapshot.buffer,fk,c,ordered,observeState,freeLabels};return{schema:{tables}};

@@ -22,7 +22,42 @@ class SQLResult
     this.columns = resultArray["columns"];
 
     // Set the values
-    this.values = resultArray["values"];
+    this.values = resultArray.values;
+  }
+
+  static fromJSON(json)
+  {
+    const data = JSON.parse(json);
+    for (const row of data.values) {
+      for (let i = 0; i < row.length; i++) row[i] = SQLResult.restoreCell(row[i]);
+    }
+    return new SQLResult(data);
+  }
+
+  static restoreCell(value)
+  {
+    if (value === null || typeof value !== 'object' || value instanceof Uint8Array) return value;
+    if (value.type === 'blob' && typeof value.hex === 'string' && /^(?:[0-9a-f]{2})*$/i.test(value.hex)) {
+      return Uint8Array.from(value.hex.match(/../g) || [], pair => parseInt(pair, 16));
+    }
+    // Older answers stored JSON.stringify(Uint8Array), including {} for an empty BLOB.
+    const keys = Object.keys(value);
+    if (!Array.isArray(value) && keys.every((key, index) => key === String(index)
+      && Number.isInteger(value[key]) && value[key] >= 0 && value[key] <= 255)) {
+      return Uint8Array.from(Object.values(value));
+    }
+    return value;
+  }
+
+  static hex(bytes)
+  {
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+  }
+
+  static displayValue(value)
+  {
+    if (value instanceof Uint8Array) return "X'" + SQLResult.hex(value) + "'";
+    return value === null ? 'NULL' : value === '' ? "''" : String(value);
   }
 
   /**
@@ -32,7 +67,8 @@ class SQLResult
    */
   toJSON()
   {
-    return JSON.stringify({"columns": this.columns,"values": this.values});
+    return JSON.stringify({columns: this.columns, values: this.values}, (key, value) =>
+      value instanceof Uint8Array ? {type: 'blob', hex: SQLResult.hex(value)} : value);
   }
 
   /**
@@ -54,7 +90,7 @@ class SQLResult
     html += '</tr></thead><tbody>';
     this.values.slice(page * pageSize, (page + 1) * pageSize).forEach(row => {
       html += '<tr>';
-      row.forEach(value => { html += '<td>' + SQLResult.escapeHTML(value === null ? 'NULL' : value === '' ? "''" : value) + '</td>'; });
+      row.forEach(value => { html += '<td>' + SQLResult.escapeHTML(SQLResult.displayValue(value)) + '</td>'; });
       html += '</tr>';
     });
     return html + '</tbody></table>';
@@ -95,7 +131,7 @@ class SQLResult
         const row = body.insertRow();
         values.forEach(value => {
           const cell = row.insertCell();
-          cell.textContent = value === null ? 'NULL' : value === '' ? "''" : String(value);
+          cell.textContent = SQLResult.displayValue(value);
           if (value === null || value === '') {
             cell.className = 'qpisql-special-value';
             cell.title = value === null ? text('null', 'SQL NULL') : text('empty', 'Empty string');

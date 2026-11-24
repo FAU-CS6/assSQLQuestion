@@ -371,6 +371,18 @@ final class SQLQuestionIntegrationTest extends TestCase
             self::assertNull(ParticipantInput::fromJSON($submit['value1'])->getQssEvaluation());
             self::assertSame(5.0, (new ReflectionMethod(assSQLQuestion::class, 'calculateReachedPointsForSolution'))->invoke($question, $submit));
 
+            // A later mode switch applies to future submissions. Legacy answers
+            // have the metrics but no server-saved result_points.
+            $legacy = json_decode($submit['value1'], true, flags: JSON_THROW_ON_ERROR);
+            self::assertEquals(5.0, $legacy['result_points']);
+            unset($legacy['result_points']);
+            $score = new ReflectionMethod(assSQLQuestion::class, 'calculateReachedPointsForSolution');
+            $question->setAssessmentMode('qss');
+            self::assertSame(5.0, $score->invoke($question, $submit));
+            self::assertSame(5.0, $score->invoke($question, ['value1' => json_encode($legacy, JSON_THROW_ON_ERROR)]));
+            self::assertFalse(ParticipantInput::fromJSON($submit['value1'])->usesQssGrading('qss'));
+            $question->setAssessmentMode('result');
+
             $fields['qss_evaluation'] = '{malformed optional diagnostics';
             $_POST = new ILIAS\HTTP\Wrapper\SuperGlobalDropInReplacement($DIC->refinery(), $fields);
             $submit = (new ReflectionMethod(assSQLQuestion::class, 'getSolutionSubmit'))->invoke($question);

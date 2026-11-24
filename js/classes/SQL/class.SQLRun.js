@@ -16,7 +16,7 @@ class SQLRun
    * @param {string} sequenceA The first sql sequence
    * @param {string} sequenceB The second sql sequence
    * @param {string} sequenceC The third sql sequence
-   * @param {boolean} checkIntegrity If set to true, changes to the database are not allowed in b sequence - This is checked by hashing the database after a and before c and comparing their hash values
+   * @param {boolean} checkIntegrity If set to true, changes to the database are not allowed in b sequence
    * @param {ExecutionHandler} callback A handler implementing a callback function onResult (for results) and a callback function onError (for errors)
    */
   constructor(sequenceA, sequenceB, sequenceC, checkIntegrity, callback, schemaOnly = false)
@@ -112,7 +112,8 @@ class SQLRun
     this.worker.onmessage = (event) => {
       if (this.finished) return;
       if (event.data.error) {
-        this.fail(new SQLRunErrorRunningSequence(event.data.error, name));
+        this.fail(event.data.integrityViolation ? new SQLRunErrorIntegrityCheck('')
+          : new SQLRunErrorRunningSequence(event.data.error, name));
         return;
       }
       const results = event.data.results || [];
@@ -120,7 +121,9 @@ class SQLRun
       next.call(this);
     };
     try {
-      this.worker.postMessage({action: 'exec', sql: sequence});
+      const request = {action: 'exec', sql: sequence};
+      if (name === 'B' && this.checkIntegrity) request.readOnly = true;
+      this.worker.postMessage(request);
     } catch (error) {
       this.fail(new SQLRunErrorRunningSequence(error.message, name));
     }
@@ -156,7 +159,7 @@ class SQLRun
       if (this.schemaOnly) { this.finished = true; this.dispose(); }
       else this.executeSequenceB();
     };
-    read("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY rowid", result => {
+    read("SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND lower(name) NOT GLOB 'sqlite_*' ORDER BY rowid", result => {
       if (!result) { finish(); return; }
       const names = result.values.map(row => ({ name: String(row[0]), type: String(row[1]) }));
       const next = index => {
@@ -174,10 +177,6 @@ class SQLRun
 
   executeSequenceB()
   {
-    if (this.checkIntegrity && !this.checkIntegrityOfSequence(this.sequenceB)) {
-      this.fail(new SQLRunErrorIntegrityCheck(''));
-      return;
-    }
     this.executeSequence(this.sequenceB, 'B', this.executeSequenceC);
   }
 
@@ -185,66 +184,4 @@ class SQLRun
   {
     this.executeSequence(this.sequenceC, 'C', this.finish);
   }
-
-  /**
-   * Checks the integrity of a sequence by searching for patterns
-   * that would modify the database.
-   *
-   * @param {string} sequence The sql sequence to test
-   * @return {boolean} Whether the sequence passes the integrity test (true) or not (false)
-   */
-  checkIntegrityOfSequence(sequence)
-  {
-    // Check whether there is a CREATE TABLE statement
-    var createTablePattern = /create\s+table/i;
-
-    if(createTablePattern.test(sequence))
-    {
-      return false;
-    }
-
-    // Check whether there is a ALTER TABLE statement
-    var alterTablePattern = /alter\s+table/i;
-
-    if(alterTablePattern.test(sequence))
-    {
-      return false;
-    }
-
-    // Check whether there is a DROP TABLE statement
-    var dropTablePattern = /drop\s+table/i;
-
-    if(dropTablePattern.test(sequence))
-    {
-      return false;
-    }
-
-    // Check whether there is a INSERT INTO statement
-    var insertIntoPattern = /insert\s+into/i;
-
-    if(insertIntoPattern.test(sequence))
-    {
-      return false;
-    }
-
-    // Check whether there is a UPDATE statement
-    var updatePattern = /update/i;
-
-    if(updatePattern.test(sequence))
-    {
-      return false;
-    }
-
-    // Check whether there is a DELETE FROM statement
-    var deleteFromPattern = /delete\s+from/i;
-
-    if(deleteFromPattern.test(sequence))
-    {
-      return false;
-    }
-    
-    // No pattern matched, so the sequence is full of integrity
-    return true;
-  }
-
 }

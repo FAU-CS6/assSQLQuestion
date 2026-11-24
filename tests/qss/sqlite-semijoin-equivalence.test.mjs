@@ -15,7 +15,7 @@ const seed = "INSERT INTO parent VALUES(1,'one'),(2,'two'),(3,NULL);INSERT INTO 
 function database(sql = schemaSql, data = seed) { const db = new DatabaseSync(':memory:'); db.exec(sql + data); return db; }
 function schemaOf(sql = schemaSql) {
     const db = database(sql, '');
-    try { return {tables: db.prepare("SELECT name,type FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all()
+    try { return {tables: db.prepare("SELECT name,type FROM sqlite_master WHERE type='table' AND lower(name) NOT GLOB 'sqlite_*'").all()
         .map(table => ({...table, columns: db.prepare('PRAGMA table_info("' + table.name.replaceAll('"', '""') + '")').all()}))}; }
     finally { db.close(); }
 }

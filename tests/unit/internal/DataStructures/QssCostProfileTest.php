@@ -161,9 +161,16 @@ final class QssCostProfileTest extends TestCase
                 self::assertSame($id === 'changeSubqueryComparison' ? 1 : 0, $migrated[$id]);
             }
             self::assertSame(7, QssAssessment::profile($migrated)['version']);
-            self::assertSame('2.7.0', QssAssessment::profile($migrated)['modelVersion']);
+            self::assertSame('2.7.1', QssAssessment::profile($migrated)['modelVersion']);
             self::assertSame($migrated, QssAssessment::costsFromJSON(json_encode(QssAssessment::profile($migrated))));
         }
+    }
+
+    public function testVersionSevenProfileSurvivesThePositionalReferenceFix(): void
+    {
+        $costs = QssAssessment::costs(['rewriteExactIntegerConstant' => 3]);
+        $old = ['version' => 7, 'modelVersion' => '2.7.0', 'costs' => $costs];
+        self::assertSame($costs, QssAssessment::costsFromJSON(json_encode($old, JSON_THROW_ON_ERROR)));
     }
 
     public function testVersionSevenStepsAcceptFreeAndPaidAuthorOverrides(): void

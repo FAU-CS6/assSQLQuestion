@@ -126,9 +126,9 @@ The paid `relocateOuterJoinPredicate` edit also moves one pure conjunct between
 ON and WHERE while retaining a joining predicate. Its default cost is 1; outer
 join predicate relocation does not become a free equivalence.
 
-Graph model 2.7.0 uses cost-profile version 7 with 71 configurable entries:
+Graph model 2.7.1 uses cost-profile version 7 with 71 configurable entries:
 56 named SQL transformations/repairs and 15 basic operation categories.
-Profiles from models 2.1.1, 2.2.0, 2.3.0, 2.4.0, 2.5.0, 2.6.0 and 2.6.1 retain all their previous overrides;
+Profiles from models 2.1.1, 2.2.0, 2.3.0, 2.4.0, 2.5.0, 2.6.0, 2.6.1 and 2.7.0 retain all their previous overrides;
 new entries receive their defaults. Stored grades retain their saved model,
 scale and reference revision, including in the released solution view.
 Known inactive steps are accepted independently of the current AST pair.

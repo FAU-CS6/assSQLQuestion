@@ -300,3 +300,33 @@ test('explicit method constraints come from the question and cover comma joins a
  for(const e of graph.edits.filter(e=>e.cost===0))for(const n of e.apply(root))assert.equal(requirementState(n.root,req),requirementState(root,req));
  assert.deepEqual(questionRequirements('Bauen Sie dies durch zwei vereinigte LEFT OUTER JOIN Operationen nachbauen.').required,['left-join','union']);
 });
+
+test('integer folding respects positional ORDER BY and GROUP BY terms', async () => {
+ const db = new DatabaseSync(':memory:');
+ try {
+  db.exec('CREATE TABLE sample(x INTEGER); INSERT INTO sample VALUES (2),(1),(2)');
+  for (const clause of ['ORDER BY', 'GROUP BY']) {
+   const projection = clause === 'GROUP BY' ? 'x, COUNT(*) AS n' : 'x';
+   const prefix = 'SELECT ' + projection + ' FROM sample ' + clause + ' ';
+   const position = prefix + '1', constant = prefix + '(1+0)';
+   assert.notDeepEqual(db.prepare(position).all(), db.prepare(constant).all());
+   for (const [reference, answer] of [[position, constant], [constant, position]]) {
+    const result = await evaluate({reference, answer, schema, maxPoints: 1, scale: 1});
+    assert.equal(result.points, 0, reference);
+   }
+   const equal = await evaluate({reference: prefix + 'x + (1+0)', answer: prefix + 'x + 1', schema, maxPoints: 5});
+   assert.equal(equal.distance, 0, 'Nested scalar arithmetic remains free');
+  }
+ } finally { db.close(); }
+});
+
+test('a negated permission keeps the required Boolean group labels', async () => {
+ const reference = 'SELECT (x>1) AS gruppe,COUNT(*) AS n FROM sample GROUP BY gruppe';
+ const answer = 'SELECT NOT(x>1) AS gruppe,COUNT(*) AS n FROM sample GROUP BY gruppe';
+ for (const wording of ['nicht unerheblich', 'keineswegs unerheblich']) {
+  const questionText = 'Welche Werte in gruppe stehen, ist ' + wording + '. Die Gruppe mit x > 1 muss den Wert 1 tragen.';
+  assert.deepEqual(questionRequirements(questionText).freeLabels, []);
+  const result = await evaluate({reference, answer, questionText, schema, maxPoints: 1, scale: 1});
+  assert.equal(result.points, 0);
+ }
+});

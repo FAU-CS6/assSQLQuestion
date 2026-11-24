@@ -1,0 +1,3 @@
+[client]
+ssl-ca=/run/ilias-mysql-trust/server.pem
+ssl-verify-server-cert

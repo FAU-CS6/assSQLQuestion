@@ -11,6 +11,7 @@
     "test": "node scripts/test-browser.mjs"
   },
   "dependencies": {
+    "@noble/hashes": "2.4.0",
     "node-sql-parser": "5.4.0"
   },
   "devDependencies": {

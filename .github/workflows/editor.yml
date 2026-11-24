@@ -66,6 +66,7 @@ jobs:
       - name: Test question-local assessment barrier and worker lifecycle
         working-directory: .
         run: |
+          node tests/browser/sql-worker-results.cjs
           node tests/browser/qss-ui.cjs
           node tests/browser/qss-incomplete-results.cjs
           node tests/browser/test-form-token.cjs
@@ -77,3 +78,18 @@ jobs:
         run: docker run --rm -v "$PWD:/app:ro" -w /app composer:2 audit --locked --no-interaction
       - name: Audit bundled PHP minifier dependencies
         run: docker run --rm -v "$PWD:/app:ro" -w /app/lib/minify composer:2 audit --locked --no-interaction
+  compose-database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b
+      - name: Start the development database
+        run: docker compose up --wait mysql
+      - name: Verify the ILIAS startup client negotiates TLS
+        run: |
+          docker compose run --rm --no-deps -T --entrypoint sh ilias -es <<'CLIENT'
+          export MYSQL_PWD="$ILIAS_DB_PASSWORD"
+          status=$(mysql -h mysql -u "$ILIAS_DB_USER" ilias -BN -e "SHOW SESSION STATUS LIKE 'Ssl_cipher'")
+          test -n "$(printf '%s' "$status" | cut -sf2)"
+          CLIENT
+      - if: always()
+        run: docker compose down -v

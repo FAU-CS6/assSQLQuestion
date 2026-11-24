@@ -103,7 +103,7 @@
           }
           next();
         };
-        current.postMessage({action: 'exec', sql: "SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%' ORDER BY name;"});
+        current.postMessage({action: 'exec', sql: "SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND lower(name) NOT GLOB 'sqlite_*' ORDER BY name;"});
       };
       current.onmessage = event => {
         if (worker !== current) return;

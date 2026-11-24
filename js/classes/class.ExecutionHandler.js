@@ -119,6 +119,10 @@ class ExecutionHandler
               this.qss.clear();
               this.qss.message(this.qss.label('stale'), false);
             }
+          }).catch(() => {
+            if (token !== this.runToken || this.running || !this.isCurrent()) return;
+            this.qss.clear();
+            this.qss.message(this.qss.label('failed'), false);
           });
           return;
         }

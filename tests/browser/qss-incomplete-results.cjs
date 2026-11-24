@@ -103,7 +103,7 @@ async function main() {
     };
     const first = await prepare();
     assert.equal(first.terminated, true);
-    assert.deepEqual(first.sql, ['CREATE TABLE t(id)', "SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY rowid", 'PRAGMA table_info("t")']);
+    assert.deepEqual(first.sql, ['CREATE TABLE t(id)', "SELECT name, type FROM sqlite_master WHERE type IN ('table','view') AND lower(name) NOT GLOB 'sqlite_*' ORDER BY rowid", 'PRAGMA table_info("t")']);
     assert.equal(first.graph.exactDistance, true);
     assert.equal(first.graph.costs.baseRemoveStructural, 9);
     assert.equal(first.graph.schema.tables[0].columns[0].pk, 1);

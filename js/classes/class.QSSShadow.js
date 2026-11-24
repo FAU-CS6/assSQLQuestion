@@ -163,9 +163,15 @@ class QSSShadow
 
   static async digest(answer)
   {
-    if (!window.crypto || !window.crypto.subtle) return undefined;
-    const bytes = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(answer));
-    return Array.from(new Uint8Array(bytes), byte => byte.toString(16).padStart(2, '0')).join('');
+    const input = new TextEncoder().encode(answer.replace(/\r\n?/g, '\n'));
+    let bytes;
+    if (window.crypto?.subtle) {
+      bytes = new Uint8Array(await window.crypto.subtle.digest('SHA-256', input));
+    } else {
+      const {sha256} = await import(window.QPISQL_URL_PATH + '/lib/qss/answer-digest.mjs');
+      bytes = sha256(input);
+    }
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
   async evaluate(snapshot)
@@ -185,7 +191,7 @@ class QSSShadow
         this.dispose();
         this.resolve = null;
         result.referenceRevision = this.config.referenceRevision;
-        if (digest) result.answerDigest = digest;
+        result.answerDigest = digest;
         this.result = QSSShadow.sidecar(result);
         const input = document.getElementById('qpisql-qss-evaluation');
         if (input) input.value = JSON.stringify(this.result);

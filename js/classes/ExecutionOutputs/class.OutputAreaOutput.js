@@ -160,7 +160,7 @@ class OutputAreaOutput extends ExecutionOutput
         restored.toJSON = () => JSON.stringify(stored);
         this.onError(restored);
       } else if (executedBool === 'true' && relation) {
-        this.onResult(new SQLResult(JSON.parse(relation)));
+        this.onResult(SQLResult.fromJSON(relation));
       } else {
         this.onError(new SQLRunErrorNoExecution());
       }
@@ -180,7 +180,7 @@ class OutputAreaOutput extends ExecutionOutput
         errorArea.textContent = OutputAreaOutput.errorText(JSON.parse(container.dataset.error), labels);
         errorArea.style.display = 'block';
       } else if (container.dataset.executedBool === 'true' && container.dataset.relation) {
-        new SQLResult(JSON.parse(container.dataset.relation)).renderInto(resultArea, labels);
+        SQLResult.fromJSON(container.dataset.relation).renderInto(resultArea, labels);
         resultArea.style.display = 'block';
       } else {
         errorArea.textContent = labels.notExecuted;

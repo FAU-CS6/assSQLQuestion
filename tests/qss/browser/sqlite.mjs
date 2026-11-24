@@ -51,8 +51,6 @@ export class DatabaseSync {
             },
             columns() {
                 begin();
-                // This old SQL.js exposes names only after the first row.
-                if (!hasRow) throw new Error('Column metadata for an empty result is unavailable in the shipped SQL.js API.');
                 return names.map(name => ({name}));
             },
             setReadBigInts(value) { bigInts = value; }

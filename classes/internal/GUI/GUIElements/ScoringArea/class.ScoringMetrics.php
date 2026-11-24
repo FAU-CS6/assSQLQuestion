@@ -63,7 +63,8 @@ class ScoringMetrics extends GUIElement
      */
     public function getSolutionOutput($participant_input)
     {
-        if ($participant_input?->getQssGradingContext() !== null || $this->object->getAssessmentMode() === QssAssessment::QSS) { return ''; }
+        $mode = $this->object->getAssessmentMode();
+        if ($participant_input?->usesQssGrading($mode) ?? ($mode === QssAssessment::QSS)) { return ''; }
         $html = "";
 
         // Add the html code of all ScoringMetrics

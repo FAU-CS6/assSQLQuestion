@@ -14,9 +14,15 @@ services:
           - ILIAS_DB_PASSWORD=example
           - ILIAS_HTTP_PATH=http://localhost:8080
         volumes:
+          - mysql-trust:/run/ilias-mysql-trust:ro
+          - ./docker/mysql-client.cnf:/etc/mysql/conf.d/ilias-tls.cnf:ro
           - .:/var/www/html/public/Customizing/global/plugins/Modules/TestQuestionPool/Questions/assSQLQuestion:ro
     mysql:
         image: mariadb:10.11
+        entrypoint: ["/bin/sh", "/usr/local/bin/start-ilias-mariadb.sh"]
+        volumes:
+          - ./docker/start-mariadb.sh:/usr/local/bin/start-ilias-mariadb.sh:ro
+          - mysql-trust:/run/ilias-mysql-trust
         # ILIAS does not support UTF8MB4 (yet), see https://docu.ilias.de/ilias.php?baseClass=illmpresentationgui&cmd=resume&ref_id=367
         command: |
             --character-set-server=utf8
@@ -30,3 +36,6 @@ services:
           interval: 5s
           timeout: 5s
           retries: 30
+
+volumes:
+    mysql-trust:

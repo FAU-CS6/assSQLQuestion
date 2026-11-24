@@ -137,8 +137,7 @@ class Output extends GUIElement
         $this->setOutputLabels($tpl);
         $assessmentAnswer = $this->showQssFeedback ? ($participant_input ?? $this->previewAnswer) : null;
         $gradingContext = $assessmentAnswer?->getQssGradingContext();
-        $qssRequired = $assessmentAnswer !== null &&
-            ($gradingContext !== null || $this->object->getAssessmentMode() === QssAssessment::QSS);
+        $qssRequired = $assessmentAnswer?->usesQssGrading($this->object->getAssessmentMode()) ?? false;
         $qss = $qssRequired ? $assessmentAnswer->getQssEvaluation() : null;
         $answer = str_replace(["\r\n", "\r"], "\n", $assessmentAnswer?->getSequence() ?? '');
         $digest = $assessmentAnswer === null ? null : hash('sha256', $answer);

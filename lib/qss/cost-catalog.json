@@ -1,6 +1,6 @@
 {
   "version": 7,
-  "modelVersion": "2.7.0",
+  "modelVersion": "2.7.1",
   "steps": [
     {
       "id": "baseAddComponent",
@@ -528,6 +528,10 @@
     {
       "version": 6,
       "modelVersion": "2.6.1"
+    },
+    {
+      "version": 7,
+      "modelVersion": "2.7.0"
     }
   ]
 }

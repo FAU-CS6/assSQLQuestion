@@ -43,6 +43,8 @@ class ParticipantInput
     private ?array $qss_evaluation = null;
     /** Server-created grading revision for a submitted QSS answer. */
     private ?array $qss_grading_context = null;
+    /** Server-calculated result score, retained if the question later switches to QSS. */
+    private ?float $result_points = null;
 
     private const QSS_MAX_JSON_BYTES = 16384;
 
@@ -83,6 +85,9 @@ class ParticipantInput
 
         $arr['participant_metrics'] = $participant_metrics_json;
 
+        if ($this->result_points !== null) {
+            $arr['result_points'] = $this->result_points;
+        }
         if ($this->qss_evaluation !== null) {
             $arr['qss_evaluation'] = $this->qss_evaluation;
         }
@@ -164,6 +169,10 @@ class ParticipantInput
             throw new Exception("We need the participant_metrics to decode a JSON into a ParticipantInput");
         }
 
+        $points = $decoded_json['result_points'] ?? null;
+        if ((is_int($points) || is_float($points)) && is_finite($points) && $points >= 0) {
+            $participant_input->setResultPoints((float) $points);
+        }
         if (isset($decoded_json['qss_evaluation']) && is_array($decoded_json['qss_evaluation'])) {
             $participant_input->setQssEvaluation($decoded_json['qss_evaluation']);
         }
@@ -172,6 +181,22 @@ class ParticipantInput
         }
 
         return $participant_input;
+    }
+
+    public function getResultPoints(): ?float { return $this->result_points; }
+    public function setResultPoints(float $points): void { $this->result_points = $points; }
+
+    public function usesQssGrading(string $currentMode): bool
+    {
+        if ($this->qss_grading_context !== null) {
+            return true;
+        }
+        // Pre-QSS submissions stored result metrics. Some also carry optional
+        // shadow diagnostics, which never determined their official grade.
+        if ($this->result_points !== null || $this->participant_metrics !== []) {
+            return false;
+        }
+        return $currentMode === QssAssessment::QSS;
     }
 
     public function getQssEvaluation(): ?array

@@ -57,6 +57,22 @@ final class QssSolutionOutputTest extends TestCase
         self::assertStringContainsString('ai_sca_so_name', $result['SCORING_INFO']);
     }
 
+    public function testHistoricalResultAnswersKeepResultFeedbackAfterChangingModes(): void
+    {
+        $input = new ParticipantInput();
+        $input->setSingleParticipantMetric(new ParticipantMetric('result_lines', '2'));
+        foreach ([null, 0.0, 5.0] as $points) {
+            if ($points !== null) {
+                $input->setResultPoints($points);
+            }
+            $saved = ParticipantInput::fromJSON($input->toJSON());
+            self::assertSame($points, $saved->getResultPoints());
+            $result = $this->render('qss', $saved);
+            self::assertSame('false', $result['QSS_REQUIRED']);
+            self::assertStringContainsString('ai_sca_so_name', $result['SCORING_INFO']);
+        }
+    }
+
     public function testCheckedPreviewKeepsModelOutputAndBindsFeedbackToTheSubmittedAnswer(): void
     {
         $answer = new ParticipantInput();

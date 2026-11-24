@@ -48,7 +48,7 @@ im [technischen Katalog](../../lib/qss/README.md#provisional-costs-and-linear-gr
 ## Speichern und Übertragen
 
 Die Frage speichert Bewertungsart, QSS-Maximalpunkte, Katalogversion und vollständig
-aufgelöste Kosten. Das Profil verwendet Version 7 zum Graphmodell 2.7.0. Ältere Profile der
+aufgelöste Kosten. Das Profil verwendet Version 7 zum Graphmodell 2.7.1. Kostenprofile aus Modell 2.7.0 bleiben kompatibel. Ältere Profile der
 Versionen 1 (Modell 2.1.1), 2 (Modell 2.2.0), 3 (Modell 2.3.0), 4 (Modell 2.4.0),
 5 (Modell 2.5.0) und 6 (Modelle 2.6.0 und 2.6.1) behalten alle eingestellten Kosten;
 neu hinzugekommene Schritte erhalten ihre Standardwerte. Bekannte

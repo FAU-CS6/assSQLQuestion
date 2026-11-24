@@ -48,7 +48,8 @@ class ScoringInfo extends GUIElement
      */
     public function getSolutionOutput($participant_input)
     {
-        if ($participant_input?->getQssGradingContext() !== null || $this->object->getAssessmentMode() === QssAssessment::QSS) {
+        $mode = $this->object->getAssessmentMode();
+        if ($participant_input?->usesQssGrading($mode) ?? ($mode === QssAssessment::QSS)) {
             return '';
         }
         return "<div class='help-block'><b>" . $this->plugin->txt('ai_sca_so_name') . ":</b></div>";

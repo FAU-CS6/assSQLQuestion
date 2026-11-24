@@ -387,6 +387,8 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
                 'referenceExecutionValid' => $this->getExecutedBool() && !$this->getErrorBool(),
                 'costProfile'=>QssAssessment::profile($this->getQssCosts())
             ]);
+        } else {
+            $participant_input->setResultPoints($this->calculateResultPoints($participant_input));
         }
         // Set value1 to be $participant_input serialized to JSON
         $value1 = $participant_input->toJSON();
@@ -459,10 +461,18 @@ class assSQLQuestion extends assQuestion implements QuestionAutosaveable
             return round($context['points'],4);
         }
 
-        if ($this->getAssessmentMode() === QssAssessment::QSS) {
+        $mode = $this->getAssessmentMode();
+        if ($participant_input->usesQssGrading($mode)) {
             return QssAssessment::points($this, $participant_input);
         }
+        if ($mode === QssAssessment::QSS && $participant_input->getResultPoints() !== null) {
+            return $participant_input->getResultPoints();
+        }
+        return $this->calculateResultPoints($participant_input);
+    }
 
+    private function calculateResultPoints(ParticipantInput $participant_input): float
+    {
         if (!$participant_input->getExecutedBool() || $participant_input->getErrorBool()) {
             return 0.0;
         }

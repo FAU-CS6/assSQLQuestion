@@ -66,7 +66,9 @@ async function main() {
       instances[2].onerror({ message: 'missing', preventDefault() { prevented = true; } });
       const invalidCleanup = instances[2].terminated && invalid.finished;
       new SQLRun('', 'UPDATE people SET id = 1', '', true, callback);
-      const integrityCleanup = instances[3].terminated;
+      const protectedRequest = instances[3].message.readOnly === true;
+      instances[3].onmessage({data: {error: 'attempt to write a readonly database', integrityViolation: true}});
+      const integrityCleanup = protectedRequest && instances[3].terminated;
       const handler = new ExecutionHandler();
       handler.inputs = [
         { getName: () => 'sequence_a', getValue: () => '' },
