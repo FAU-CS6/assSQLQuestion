@@ -81,7 +81,7 @@ jobs:
   compose-database:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Start the development database
         run: docker compose up --wait mysql
       - name: Verify the ILIAS startup client negotiates TLS
