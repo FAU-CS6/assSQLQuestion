@@ -11,5 +11,5 @@ $ilias_min_version = "11.0";
 $ilias_max_version = "11.999";
 
 // Main Responsible Person
-$responsible = "Dominik Probst";
-$responsible_mail = "dominik.probst@fau.de";
+$responsible = "Felix Hanika";
+$responsible_mail = "felix.hanika@fau.de";
