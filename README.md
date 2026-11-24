@@ -133,3 +133,5 @@ Additionally to the in source documentation there is a documentation educating a
 ## Additional Information
 
 ***QPI-SQL*** is a project started by Dominik Probst (https://cs6.tf.fau.eu/dp) as part of his master's degree in 2018. The accompanying chair is the [*Chair of Computer Science 6*](https://www.cs6.tf.fau.eu) at [*Friedrich-Alexander University Erlangen-Nuremberg*](https://www.fau.eu/).
+
+For ILIAS 11 and later, the primary contact for the plugin is Felix Hanika (<felix.hanika@fau.de>).
