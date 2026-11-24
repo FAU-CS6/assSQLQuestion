@@ -257,7 +257,7 @@ Prüfgrenzen, den gefundenen Bewertungsfehler und die reproduzierbaren Werkzeuge
 ## Testergebnis vom 4. November 2026
 
 Ergänzend wurden am 5. November drei vollständige Testversuche im installierten
-Google Chrome durchgeführt. Siehe [Chrome-Abnahme](chrome-abnahme-2026-11-05.md)
+Google Chrome durchgeführt. Siehe [Chrome-Abnahme](../v0.1.0/chrome-abnahme-2026-11-05.md)
 für die Ergebnisse 10/10, 2/10 und 5/10 sowie den echten Autosave- und
 Datenbankabgleich.
 

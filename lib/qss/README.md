@@ -82,12 +82,12 @@ coverage is not a fallback for the default engine. It uses the same linear score
 mapping below.
 
 The previous `sqlite-syntax-edit-graph-v1` and its Cap-5 score are no longer
-accepted assessment models. The [9 November report](../../docs/qss-abnahme-2026-11-09.md)
+accepted assessment models. The [9 November report](../../docs/v0.2.0/qss-abnahme-2026-11-09.md)
 records that historical syntax experiment; it is not acceptance evidence for the
 current Graph-based QSS engine. The
-[graph acceptance report](../../docs/qss-graph-abnahme-2026-11-09.md) records
-model 2.0.1. The [student-answer matrix report](../../docs/qss-studentenvarianten-2026-11-10.md)
-records model 2.1.0. The [answer-robustness report](../../docs/qss-robustheit-2026-11-10.md)
+[graph acceptance report](../../docs/v0.2.1/qss-graph-abnahme-2026-11-09.md) records
+model 2.0.1. The [student-answer matrix report](../../docs/v0.2.2/qss-studentenvarianten-2026-11-10.md)
+records model 2.1.0. The [answer-robustness report](../../docs/v0.2.2/qss-robustheit-2026-11-10.md)
 confirms model 2.1.1 with 6,812 fresh native Chrome cases on all 699 unchanged
 questions, 132 additional anonymous semantic cases, saved grades and five pool
 round trips. It records phase timings, variant-coverage gaps and calibration limits.
@@ -138,8 +138,8 @@ column definitions. Other metadata-sensitive DDL edits and EXPLAIN remain
 guarded. Historical scores keep their saved model and are not recomputed.
 Basic-operation category costs apply to the generated atomic edits; an explicit
 pair-specific atomic `costs` API entry still takes precedence. See
-[cost profiles](../../docs/qss-kostenkonfiguration.md) and
-[native grading acceptance](../../docs/qss-bewertung.md).
+[cost profiles](../../docs/v0.3.0/qss-kostenkonfiguration.md) and
+[native grading acceptance](../../docs/v0.3.0/qss-bewertung.md).
 
 Model 2.7.0 adds seven independently configurable directed edits. Existing
 costs are unchanged; six additions default to 0 and one repair defaults to 1:
@@ -196,7 +196,7 @@ maximum of 4.035 s; QSS-worker time has a median of 91.8 ms and a maximum of
 measurements cover that regression matrix, not all possible SQL answers or
 reference SQL execution times. The earlier 100 official random test attempts
 retain their historical model versions and grades. See the dated
-[assessment report](../../docs/qss-bewertung.md).
+[assessment report](../../docs/v0.3.0/qss-bewertung.md).
 
 The final native author-form self-check also covers all 699 unchanged model
 answers: 351 QSS answers return exact distance zero and full points, and 348

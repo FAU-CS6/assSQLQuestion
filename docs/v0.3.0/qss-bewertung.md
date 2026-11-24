@@ -85,7 +85,7 @@ Angaben. Ungültige oder unbekannte neue Profile werden abgewiesen.
 
 Für die Installation sind wie bisher der aktualisierte ILIAS-Autoloader und
 `php cli/setup.php update --legacy-plugin assSQLQuestion` erforderlich. Details
-stehen im [ILIAS-11-Upgrade-Leitfaden](ilias-11.md).
+stehen im [ILIAS-11-Upgrade-Leitfaden](../v0.1.1/ilias-11.md).
 
 ## Native Nachprüfung von Modell 2.7.0 am 13. November 2026
 
@@ -95,7 +95,7 @@ unverändert; ältere Profile einschließlich 2.6.0 und 2.6.1 behalten ihre Over
 Sechs neue Schritte sind standardmäßig kostenlos, der Wechsel zwischen IN/NOT IN
 und einem skalaren Unterabfragevergleich kostet 1. Die
 [Kostenbeschreibung](qss-kostenkonfiguration.md) und der
-[technische Katalog](../lib/qss/README.md) erläutern die sieben Regeln und ihre
+[technische Katalog](../../lib/qss/README.md) erläutern die sieben Regeln und ihre
 Bindungs-, Eindeutigkeits-, NULL-, Duplikat- und Affinitätsbedingungen.
 
 Die bestehende AND-/OR-Vertauschung deckt zusätzlich genau eine nachweislich

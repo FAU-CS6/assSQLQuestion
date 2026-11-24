@@ -20,7 +20,7 @@ eine Suche nach dem kostenminimalen gerichteten Pfad von der Studentenantwort
 zur Musterlösung.
 
 Der frühere Commit `b04c305` verwendete dagegen eine generische Distanz zwischen
-normalisierten Syntaxbäumen. Der [damalige Bericht](qss-abnahme-2026-11-09.md)
+normalisierten Syntaxbäumen. Der [damalige Bericht](../v0.2.0/qss-abnahme-2026-11-09.md)
 ist ausdrücklich historisch gekennzeichnet. Seine erfolgreichen Durchläufe und
 Bewertungssummen gelten nicht als Nachweis für diese neue Implementierung.
 Weder die alte Baumdistanz noch deren Cap-5-Punkteskala werden weiter als
@@ -217,7 +217,7 @@ regulär durch den Studentenaccount abgeschlossenen Tests:
 | 526–699 | 174 | 455/455 |
 | Gesamt | 699 | 2259/2259 |
 
-Das [lesende Abdeckungsgate](../tests/qss/verify-native-ranges.cjs) bestätigt die
+Das [lesende Abdeckungsgate](../../tests/qss/verify-native-ranges.cjs) bestätigt die
 lückenlose disjunkte Quellabdeckung, 699 unterschiedliche Originalfragen und
 699 unterschiedliche native Testfragen. Browser- und gespeicherte Datenbankbelege
 stimmen überein: 699 autorisierte Antworten, 699 aktuelle QSS-Diagnosen,
@@ -229,10 +229,10 @@ und Ergebnisansicht; sie wird nicht zu den 699 Quellfragen hinzugezählt.
 
 ### Vollständiger Chrome-Korpusvergleich
 
-Der [Korpusrunner](../tests/browser/qss-corpus.cjs) hat jede der 699 Quellfragen
+Der [Korpusrunner](../../tests/browser/qss-corpus.cjs) hat jede der 699 Quellfragen
 mit ihrer Musterlösung, einer sicheren Formatvariante und einer gezielt falschen
 Antwort geprüft: **2097 Vergleiche aus den Quellfragen**. Vier vollständig
-abgeschlossene Quellbereiche wurden durch das [Merge-Gate](../tests/qss/merge-corpus.cjs)
+abgeschlossene Quellbereiche wurden durch das [Merge-Gate](../../tests/qss/merge-corpus.cjs)
 zusammengeführt. Es prüft Quellidentität, unveränderte Bundle-Hashes,
 Modellidentität, Punkteformel und Editkosten beziehungsweise Nullpunktzertifikate.
 Alle 699 Originalschlüssel sind genau einmal abgedeckt. Die Rohbelege wurden
@@ -397,6 +397,6 @@ Prüfungsfreigabe mit geheimer Musterlösung und kein automatischer Notenersatz.
 Taxonomieknoten sind StudOn-Zusatzfelder ohne Speichergegenstück im offiziellen
 ILIAS-Modell. Die StudOn-Core-Erweiterung muss sie bei der Migration erhalten;
 der neue QSS-Vergleich löst diese unabhängige Einschränkung nicht. Der lesende
-[Taxonomie-Vorabcheck](../tests/ilias11/check-taxonomy-import.php) und die
-[Migrationshinweise](ilias-11.md#studon-zusatzdaten-in-taxonomien-vor-der-migration-prüfen)
+[Taxonomie-Vorabcheck](../../tests/ilias11/check-taxonomy-import.php) und die
+[Migrationshinweise](../v0.1.1/ilias-11.md#studon-zusatzdaten-in-taxonomien-vor-der-migration-prüfen)
 erkennen und erklären den Fall.

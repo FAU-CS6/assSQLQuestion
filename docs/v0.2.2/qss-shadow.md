@@ -2,7 +2,7 @@
 
 **Historischer Stand bis 10. November 2026.** Seit Plugin 0.3.0 wird pro Frage
 zwischen Ergebnisbewertung und echter QSS-Bewertung gewählt. Die aktuelle
-Bedienung, Kompatibilität und Abnahme stehen in [QSS-Bewertung](qss-bewertung.md).
+Bedienung, Kompatibilität und Abnahme stehen in [QSS-Bewertung](../v0.3.0/qss-bewertung.md).
 Die folgende Beschreibung dokumentiert den vorherigen Parallelbetrieb.
 
 Der Branch `ilias-11-update-with-qss` ergänzt Graph-based QSS als
@@ -38,7 +38,7 @@ neue Antworten noch deren Diagnosefelder verändern.
 Dieser technische Modellabschnitt ist auf 2.7.0 aktualisiert; der oben beschriebene
 Parallelbetrieb bleibt historisch. Für aktuelle native Abnahme, exklusive
 Bewertung, neutrale Studentenanzeige und Altimporte siehe
-[QSS-Bewertung](qss-bewertung.md).
+[QSS-Bewertung](../v0.3.0/qss-bewertung.md).
 
 Das Modell `graph-qss-sqlite-v2` folgt den Abschnitten 4.2–4.7 von
 [Graph-based QSS](https://www.cs6.tf.fau.eu/files/2025/03/Koeberlein-Graph-based_QSS-141_b.pdf).
@@ -129,9 +129,9 @@ zulässige Startzustände. Nicht repräsentierbare Grammatik bleibt ausdrücklic
 `unsupported`; es erfolgt kein Wechsel auf String- oder Syntaxbaumähnlichkeit.
 Die vorhandene reguläre Fehlerbehandlung bleibt unabhängig davon erhalten.
 
-Der [Bericht vom 9. November](qss-abnahme-2026-11-09.md) beschreibt das vorherige
+Der [Bericht vom 9. November](../v0.2.0/qss-abnahme-2026-11-09.md) beschreibt das vorherige
 Syntaxexperiment und belegt keine Abnahme dieser neuen Graph-QSS-Implementierung.
-Der [Graph-QSS-Abnahmebericht](qss-graph-abnahme-2026-11-09.md) dokumentiert die
+Der [Graph-QSS-Abnahmebericht](../v0.2.1/qss-graph-abnahme-2026-11-09.md) dokumentiert die
 erneute vollständige Chrome-Prüfung aller 699 Originalfragen auf Modell 2.0.1,
 gespeicherte native Studentenabgaben und gezielt falsche Varianten. Er trennt
 diese technischen Nachweise von der noch ausstehenden menschlichen Kalibrierung
@@ -143,11 +143,11 @@ unveränderten Originalfragen, 132 zusätzlichen anonymen Fällen, gespeicherten
 Noten und fünf Pool-Roundtrips. Er enthält getrennte Laufzeitmessungen sowie
 verbleibende Varianten-, Laufzeit- und Kalibrierungsgrenzen.
 Die damals formulierten Anforderungen an
-[konfigurierbare Editkosten](qss-kostenkonfiguration.md) sind inzwischen als
+[konfigurierbare Editkosten](../v0.3.0/qss-kostenkonfiguration.md) sind inzwischen als
 eigene Bewertungsalternative umgesetzt. Der aktuelle Ablauf und seine native
-Abnahme stehen in [Ergebnisbewertung oder Graph-QSS](qss-bewertung.md).
+Abnahme stehen in [Ergebnisbewertung oder Graph-QSS](../v0.3.0/qss-bewertung.md).
 Modell, Schnittstelle und reproduzierbare Builds stehen in
-[lib/qss/README.md](../lib/qss/README.md).
+[lib/qss/README.md](../../lib/qss/README.md).
 
 ## Browser-Konfiguration und Vertrauensgrenze
 

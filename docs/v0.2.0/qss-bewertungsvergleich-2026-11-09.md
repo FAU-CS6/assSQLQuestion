@@ -8,7 +8,7 @@ Die folgenden elf anonymisierten Vergleichsfälle sind automatisch erzeugte Änd
 
 Verglichen wird die bisherige Bewertung über Zeilenzahl, Spaltennamen und funktionale Abhängigkeiten mit dem **SQLite-Syntax-Editgraph**, einer ausdrücklich benannten Erweiterung. Diese Punktzahlen stammen nicht aus dem semantischen Original-Graph-QSS-Modell. Verwendet wurden die endgültige Vergleichsorientierung und der Worker mit SHA-256 `be7c702cbf37e7a277c1b793843f6a12a0debaced4234289a44b24565c5c1efe`.
 
-Die vorläufige Formel lautet `Maximalpunkte × max(0, 1 − Distanz / min(Leerantwortdistanz, 5))`. Ein einzelner Edit mit Kosten 1 zieht damit mindestens 20 % ab. Ein sicher vergleichbarer umgekehrter Vergleichsoperator kostet 2; eine äquivalente Spiegelung kostet 0. Die vollständige [Modellbeschreibung](../lib/qss/README.md) erklärt Operationen, Einschränkungen und Abbruchzustände. Punktzahlen in der Tabelle bedeuten **erreicht / maximal**.
+Die vorläufige Formel lautet `Maximalpunkte × max(0, 1 − Distanz / min(Leerantwortdistanz, 5))`. Ein einzelner Edit mit Kosten 1 zieht damit mindestens 20 % ab. Ein sicher vergleichbarer umgekehrter Vergleichsoperator kostet 2; eine äquivalente Spiegelung kostet 0. Die vollständige [Modellbeschreibung](../../lib/qss/README.md) erklärt Operationen, Einschränkungen und Abbruchzustände. Punktzahlen in der Tabelle bedeuten **erreicht / maximal**.
 
 | Fall | Fehlerklasse | Legacy | Shadow-QSS | Belegter SQLite-Unterschied und Einordnung |
 |---|---|---:|---:|---|

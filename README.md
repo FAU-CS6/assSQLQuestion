@@ -25,7 +25,7 @@ progress indicator. ILIAS controls access to the score and feedback. The QSS
 model answer is available to the browser, and ILIAS uses browser-generated
 evidence to calculate the stored grade.
 
-See the [grading guide](docs/qss-bewertung.md) and [QSS cost settings](docs/qss-kostenkonfiguration.md)
+See the [grading guide](docs/v0.3.0/qss-bewertung.md) and [QSS cost settings](docs/v0.3.0/qss-kostenkonfiguration.md)
 for configuration examples and details on copying, importing and exporting questions.
 
 ## Installation
@@ -48,9 +48,9 @@ see the [v0.0.83 source and installation instructions](https://github.com/FAU-CS
 
 4. Check the plugin status under **Administration → Extending ILIAS → Plugins**.
 
-The [ILIAS 11 upgrade guide](docs/ilias-11.md) covers migration, including the
-[question-pool fix for ILIAS 11.5](docs/ilias-11.md#erforderliche-ilias-kernkorrektur)
-and [StudOn taxonomy data](docs/ilias-11.md#studon-zusatzdaten-in-taxonomien-vor-der-migration-prüfen).
+The [ILIAS 11 upgrade guide](docs/v0.1.1/ilias-11.md) covers migration, including the
+[question-pool fix for ILIAS 11.5](docs/v0.1.1/ilias-11.md#erforderliche-ilias-kernkorrektur)
+and [StudOn taxonomy data](docs/v0.1.1/ilias-11.md#studon-zusatzdaten-in-taxonomien-vor-der-migration-prüfen).
 
 ### Try it locally with Docker Compose
 
@@ -72,7 +72,7 @@ docker compose -p ass_sql_ilias11 exec -u www-data ilias php cli/setup.php insta
 ## Development
 
 - Run the **PHP unit tests** with `composer install` and `composer test` from the plugin root. The
-  [integration test instructions](docs/ilias-11.md#reproduzierbare-tests) use the
+  [integration test instructions](docs/v0.1.1/ilias-11.md#reproduzierbare-tests) use the
   PHPUnit executable provided by ILIAS. The browser-facing PHP minifier has its
   own Composer dependencies, maintained in `lib/minify/` and shipped with the plugin.
 - The plugin ships the **CodeMirror editor and QSS bundles**.
@@ -93,14 +93,16 @@ docker compose -p ass_sql_ilias11 exec -u www-data ilias php cli/setup.php insta
 
 ## Documentation
 
+The [documentation archive](docs/) is organized by plugin version.
+
 - The [QSS model and edit catalogue](lib/qss/README.md) describes how the
   search works and which SQL transformations it supports.
-- The [Chrome test report](docs/chrome-abnahme-2026-11-06.md) records tests on a
+- The [Chrome test report](docs/v0.1.1/chrome-abnahme-2026-11-06.md) records tests on a
   local ILIAS installation using 699 questions imported from StudOn. The
-  [QSS assessment report](docs/qss-bewertung.md#native-nachprüfung-von-modell-270-am-13-november-2026)
+  [QSS assessment report](docs/v0.3.0/qss-bewertung.md#native-nachprüfung-von-modell-270-am-13-november-2026)
   records the grading and compatibility checks for specific model versions.
-- The [original technical documentation](docs/dokumentation.tex) is in German.
-  To build it, run `pdflatex dokumentation.tex` from `docs/`.
+- The [original project documentation for v0.0.73](docs/v0.0.73/dokumentation.tex) is in German.
+  To build the PDF with its bibliography, run `latexmk -pdf dokumentation.tex` from `docs/v0.0.73/` with Biber installed.
 
 ## Additional Information
 

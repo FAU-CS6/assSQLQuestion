@@ -246,6 +246,6 @@ finalisierte Versuche und sämtliche eingefrorenen Quelldateien.
 ## Spätere konfigurierbare Bewertung
 
 Für die spätere Freischaltung einer QSS-Bewertungsalternative sind
-[konfigurierbare Kosten und ausdrückliche Methodenvorgaben](qss-kostenkonfiguration.md)
+[konfigurierbare Kosten und ausdrückliche Methodenvorgaben](../v0.3.0/qss-kostenkonfiguration.md)
 festgehalten. Die aktuelle Dozentenoberfläche bietet diese Einstellung noch
 nicht an. Diese Abnahme verwendet die Standardkosten.

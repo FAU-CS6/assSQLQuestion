@@ -43,7 +43,7 @@ Er wechselt zwischen IN/NOT IN und einem skalaren Unterabfragevergleich, ohne
 die innere Abfrage zu verändern. Er ist eine Reparatur, keine allgemeine
 Äquivalenz: mehrere Treffer und NULL können das Ergebnis verändern. Alle sieben
 Preise sind unabhängig einstellbar. Die einzelnen IDs und ihre Grenzen stehen
-im [technischen Katalog](../lib/qss/README.md#provisional-costs-and-linear-grading).
+im [technischen Katalog](../../lib/qss/README.md#provisional-costs-and-linear-grading).
 
 ## Speichern und Übertragen
 

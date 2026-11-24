@@ -161,7 +161,7 @@ ein Zusatzfeld ohne Gegenstück im offiziellen ILIAS-Modell.** Sie lassen sich
 in einer unveränderten ILIAS-Installation nicht verlustfrei ablegen. Dafür muss
 die StudOn-Core-Erweiterung bei der Migration beibehalten werden; dies wurde nicht
 heimlich im Fragenplugin oder in Kerndateien nachgebaut. Der neue lesende
-[Taxonomie-Vorabcheck](../tests/ilias11/check-taxonomy-import.php) erkennt diesen
+[Taxonomie-Vorabcheck](../../tests/ilias11/check-taxonomy-import.php) erkennt diesen
 Fall und angepasste DataSet-Deklarationen. Sechs weitere Zuordnungen verweisen
 bereits im Original auf nicht enthaltene Fragen und sind keine neue Regression.
 Neun alte leere Editormodi verwenden den dokumentierten ILIAS-RTE-Standard.
