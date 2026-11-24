@@ -286,8 +286,22 @@ class QSSShadow
     const model = document.createElement('p');
     model.textContent = this.label('model') + ': ' + String(result.engine || '') + ' · ' + String(result.version || '');
     details.appendChild(model);
+    const citation = 'Köberlein et al.';
     for (const text of (result.limitations || []).slice(0, 12)) {
-      const item = document.createElement('p'); item.textContent = String(text); details.appendChild(item);
+      const item = document.createElement('p');
+      const note = String(text);
+      const start = note.indexOf(citation);
+      if (start === -1) {
+        item.textContent = note;
+      } else {
+        const paper = document.createElement('a');
+        paper.href = 'https://doi.org/10.18420/BTW2025-13';
+        paper.textContent = citation + ' (BTW 2025)';
+        paper.target = '_blank';
+        paper.rel = 'noopener noreferrer';
+        item.append(note.slice(0, start), paper, note.slice(start + citation.length));
+      }
+      details.appendChild(item);
     }
     this.card.appendChild(details);
   }
