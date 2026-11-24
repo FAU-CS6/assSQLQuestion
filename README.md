@@ -108,4 +108,6 @@ The [documentation archive](docs/) is organized by plugin version.
 
 ***QPI-SQL*** is a project started by Dominik Probst (https://cs6.tf.fau.eu/dp) as part of his master's degree in 2018. The accompanying chair is the [*Chair of Computer Science 6*](https://www.cs6.tf.fau.eu) at [*Friedrich-Alexander University Erlangen-Nuremberg*](https://www.fau.eu/).
 
+In his 2025 master's project, Marco Angerer adapted the plugin for ILIAS 9 and upgraded its SQL editor to CodeMirror 6. His [project report (PDF)](docs/v0.0.82/ausarbeitung.pdf) and [presentation (PDF)](docs/v0.0.82/praesentation.pdf) document the work on plugin version 0.0.82.
+
 For ILIAS 11 and later, the primary contact for the plugin is Felix Hanika (<felix.hanika@fau.de>).
