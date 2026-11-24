@@ -40,7 +40,9 @@ final class QssSolutionOutputTest extends TestCase
             public function getAllSolutionMetricsAsJSON(): string { return '[]'; }
         };
         try {
-            return json_decode((new Output($plugin, $question, $preview, $released))->getSolutionOutput($input), true, flags: JSON_THROW_ON_ERROR);
+            $output = json_decode((new Output($plugin, $question, $preview, $released))->getSolutionOutput($input), true, flags: JSON_THROW_ON_ERROR);
+            $output['SCORING_INFO'] = (new ScoringInfo($plugin, $question))->getSolutionOutput($input);
+            return $output;
         } finally { $DIC = $previous; }
     }
 
@@ -50,7 +52,9 @@ final class QssSolutionOutputTest extends TestCase
         self::assertSame('true', $this->render('qss', $input)['QSS_REQUIRED']);
         self::assertSame('', $this->render('qss', $input)['QSS_EVALUATION']);
         self::assertSame('false', $this->render('qss', null)['QSS_REQUIRED']);
-        self::assertSame('false', $this->render('result', $input)['QSS_REQUIRED']);
+        $result = $this->render('result', $input);
+        self::assertSame('false', $result['QSS_REQUIRED']);
+        self::assertStringContainsString('ai_sca_so_name', $result['SCORING_INFO']);
     }
 
     public function testCheckedPreviewKeepsModelOutputAndBindsFeedbackToTheSubmittedAnswer(): void
@@ -60,6 +64,7 @@ final class QssSolutionOutputTest extends TestCase
         $output = $this->render('qss', null, $answer);
         self::assertSame('id1cor1', $output['ID']);
         self::assertSame('true', $output['QSS_REQUIRED']);
+        self::assertSame('', $output['SCORING_INFO']);
         $submission = json_decode(html_entity_decode($output['QSS_SUBMISSION'], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
         self::assertSame($answer->getSequence(), $submission['sql']);
         $model = json_decode(html_entity_decode($output['QSS_STORED_MODEL'], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
@@ -105,6 +110,7 @@ final class QssSolutionOutputTest extends TestCase
             'referenceRevision' => str_repeat('a', 64), 'engineVersion' => '2.1.1', 'rubric' => JsBlock::QSS_RUBRIC, 'scale' => 2]);
         $rendered = $this->render('result', $input);
         self::assertSame('true', $rendered['QSS_REQUIRED']);
+        self::assertSame('', $rendered['SCORING_INFO']);
         self::assertSame(str_repeat('a', 64), $rendered['QSS_REFERENCE_REVISION']);
         $model = json_decode(html_entity_decode($rendered['QSS_STORED_MODEL'], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
         self::assertSame('2.1.1', $model['engineVersion']);
