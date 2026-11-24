@@ -19,7 +19,7 @@ class OutputArea extends GUIArea
      * @param assSQLQuestion $object The question object
      * @access public
      */
-    public function __construct($plugin, $object)
+    public function __construct($plugin, $object, ?ParticipantInput $previewAnswer = null)
     {
         // Use the GUIArea constructor
         parent::__construct(
@@ -37,8 +37,9 @@ class OutputArea extends GUIArea
 
         // Output area
         $this->addSubElement(new Output(
-            $plugin, // Plugin
-            $object // Object
+            $plugin,
+            $object,
+            $previewAnswer
         ));
 
         // Set Title, Information and Required

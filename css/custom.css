@@ -207,6 +207,8 @@
   overflow-wrap: anywhere;
 }
 .qpisql-qss-shadow p { margin: 4px 0; }
+.qpisql-qss-changes { padding-inline-start: 1.7em; }
+.qpisql-qss-changes li { margin-block: .45em; }
 .qpisql-qss-note { color: #555; }
 .qpisql-qss-status { margin: 6px 0; }
 .qpisql-qss-score { font-weight: 600; }

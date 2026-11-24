@@ -295,8 +295,8 @@ class ParticipantInput
                     // Replay operations may contain complete ASTs. Retain only
                     // their compact feedback, never query/state snapshots.
                     $edit = array_intersect_key($edit, array_fill_keys(
-                        ['type', 'name', 'description', 'path', 'cost'], true));
-                    foreach (['type', 'name', 'description', 'path'] as $key) {
+                        ['type', 'name', 'description', 'path', 'beforeSql', 'afterSql', 'beforeToken', 'afterToken', 'cost'], true));
+                    foreach (['type', 'name', 'description', 'path', 'beforeSql', 'afterSql', 'beforeToken', 'afterToken'] as $key) {
                         if (isset($edit[$key]) && !is_string($edit[$key])) {
                             return null;
                         }

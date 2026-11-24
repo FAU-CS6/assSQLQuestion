@@ -137,6 +137,7 @@ final class ParticipantInputTest extends TestCase
                 'type' => 'sql-edit', 'name' => 'setLiteral',
                 'description' => str_repeat('Bound SQL literal. ', 50),
                 'path' => '/statements/0/where/right', 'cost' => 1,
+                'beforeSql' => 'WHERE x = 1', 'afterSql' => 'WHERE x = 2',
                 'operation' => ['root' => ['kind' => 'select', 'privateSql' => 'never persist']],
                 'before' => ['fullAst' => ['private']], 'after' => ['fullAst' => ['private']],
             ]),
@@ -152,6 +153,8 @@ final class ParticipantInputTest extends TestCase
         self::assertTrue($saved['editsTruncated']);
         self::assertGreaterThan(0, count($saved['edits']));
         self::assertLessThan(50, count($saved['edits']));
+        self::assertSame('WHERE x = 1', $saved['edits'][0]['beforeSql']);
+        self::assertSame('WHERE x = 2', $saved['edits'][0]['afterSql']);
         self::assertArrayNotHasKey('operation', $saved['edits'][0]);
         self::assertArrayNotHasKey('before', $saved['edits'][0]);
         self::assertArrayNotHasKey('after', $saved['edits'][0]);

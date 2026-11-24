@@ -4,12 +4,17 @@ use PHPUnit\Framework\TestCase;
 
 final class QssSolutionOutputTest extends TestCase
 {
-    private function render(string $mode, ?ParticipantInput $input): array
+    private function render(string $mode, ?ParticipantInput $input, ?ParticipantInput $preview = null): array
     {
         global $DIC;
         $previous = $DIC ?? null;
         $DIC = new class {
-            public function language(): object { return new class { public function txt(string $key): string { return $key; } }; }
+            public function language(): object {
+                return new class {
+                    public function txt(string $key): string { return $key; }
+                    public function getLangKey(): string { return 'de'; }
+                };
+            }
         };
         $plugin = new class {
             public function txt(string $key): string { return $key; }
@@ -34,7 +39,7 @@ final class QssSolutionOutputTest extends TestCase
             public function getAllSolutionMetricsAsJSON(): string { return '[]'; }
         };
         try {
-            return json_decode((new Output($plugin, $question))->getSolutionOutput($input), true, flags: JSON_THROW_ON_ERROR);
+            return json_decode((new Output($plugin, $question, $preview))->getSolutionOutput($input), true, flags: JSON_THROW_ON_ERROR);
         } finally { $DIC = $previous; }
     }
 
@@ -45,6 +50,21 @@ final class QssSolutionOutputTest extends TestCase
         self::assertSame('', $this->render('qss', $input)['QSS_EVALUATION']);
         self::assertSame('false', $this->render('qss', null)['QSS_REQUIRED']);
         self::assertSame('false', $this->render('result', $input)['QSS_REQUIRED']);
+    }
+
+    public function testCheckedPreviewKeepsModelOutputAndBindsFeedbackToTheSubmittedAnswer(): void
+    {
+        $answer = new ParticipantInput();
+        $answer->setSequence("SELECT '{TOKEN}'");
+        $output = $this->render('qss', null, $answer);
+        self::assertSame('id1cor1', $output['ID']);
+        self::assertSame('true', $output['QSS_REQUIRED']);
+        $submission = json_decode(html_entity_decode($output['QSS_SUBMISSION'], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame($answer->getSequence(), $submission['sql']);
+        $model = json_decode(html_entity_decode($output['QSS_STORED_MODEL'], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame(hash('sha256', $answer->getSequence()), $model['answerDigest']);
+        $labels = json_decode(html_entity_decode($output['QSS_LABELS'], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame(array_column(QssAssessment::catalog()['steps'], 'de', 'id'), $labels['stepNames']);
     }
 
     public function testHistoricalContextKeepsItsModelAndRequiresMissingEvidence(): void

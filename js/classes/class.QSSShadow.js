@@ -50,7 +50,7 @@ class QSSShadow
     saved.edits = (result.edits || []).slice(0, 50).map(edit => {
       if (!edit || typeof edit !== 'object') return String(edit).slice(0, 256);
       const summary = {};
-      for (const key of ['type', 'name', 'description', 'path']) {
+      for (const key of ['type', 'name', 'description', 'path', 'beforeSql', 'afterSql', 'beforeToken', 'afterToken']) {
         if (edit[key] !== undefined) summary[key] = String(edit[key]).slice(0, key === 'description' ? 512 : 256);
       }
       if (Number.isFinite(edit.cost)) summary.cost = edit.cost;
@@ -137,20 +137,28 @@ class QSSShadow
 
   progress(data)
   {
+    const card = this.mount();
+    if (!card) return;
     if (!this.showsAssessmentDetails()) {
-      this.message('', true);
+      // Replacing an indeterminate progress element restarts its native animation.
+      if (card.getAttribute('aria-busy') !== 'true') this.message('', true);
       return;
     }
     const phase = this.labels[data.phase] ? data.phase : 'comparing';
     const parts = [this.label(phase)];
     if (Number.isFinite(data.visited)) parts.push(this.label('visited') + ': ' + data.visited.toLocaleString());
     if (Number.isFinite(data.lowerBound)) parts.push(this.label('lowerBound') + ': ' + data.lowerBound);
-    this.message(parts.join(' · '), true);
-    const progress = this.card && this.card.querySelector('progress');
+    const text = parts.join(' · ');
+    if (card.getAttribute('aria-busy') !== 'true') this.message(text, true);
+    else {
+      const status = card.querySelector('.qpisql-qss-status');
+      if (status.textContent !== text) status.textContent = text;
+    }
+    const progress = card.querySelector('progress');
     if (progress && Number.isFinite(data.completed) && Number.isFinite(data.total) && data.total > 0) {
       progress.max = data.total;
       progress.value = data.completed;
-    }
+    } else if (progress) progress.removeAttribute('value');
   }
 
   static async digest(answer)
@@ -250,7 +258,8 @@ class QSSShadow
       this.message(this.label('stale'), false);
       return;
     }
-    this.message(this.label(success ? 'completed' : result.status === 'unsupported' ? 'unsupported'
+    if (success && this.config.context === 'solution' && this.card) this.card.replaceChildren();
+    else this.message(this.label(success ? 'completed' : result.status === 'unsupported' ? 'unsupported'
       : result.status === 'cancelled' ? 'cancelled' : 'failed'), false);
     if (!this.card || !this.showsAssessmentDetails()) return;
     if (success) {
@@ -261,6 +270,7 @@ class QSSShadow
       summary.textContent = this.label('points') + ': ' + Number(result.points).toLocaleString() + ' / '
         + Number(result.maxPoints).toLocaleString() + ' · ' + this.label('distance') + ': ' + distance;
       this.card.appendChild(summary);
+      this.renderCorrections(result);
     }
     const details = document.createElement('details');
     const heading = document.createElement('summary');
@@ -272,23 +282,85 @@ class QSSShadow
     for (const text of (result.limitations || []).slice(0, 12)) {
       const item = document.createElement('p'); item.textContent = String(text); details.appendChild(item);
     }
+    this.card.appendChild(details);
+  }
+
+  renderCorrections(result)
+  {
+    const paragraph = text => {
+      const p = document.createElement('p');
+      p.textContent = text;
+      this.card.appendChild(p);
+    };
+    if (result.status === 'score-zero-certified') {
+      paragraph(this.label('zeroThreshold'));
+      return;
+    }
+    const edits = (result.edits || []).slice(0, 50);
+    if (!edits.length) {
+      paragraph(this.label(result.distance === 0 ? 'noChanges' : 'traceMissing'));
+      return;
+    }
+    const heading = document.createElement('strong');
+    heading.textContent = this.label('correctionPath');
+    this.card.appendChild(heading);
     const list = document.createElement('ol');
-    for (const edit of (result.edits || []).slice(0, 50)) {
+    list.className = 'qpisql-qss-changes';
+    // Consecutive edits to the same clause can build an incomplete expression
+    // in the middle. Show the net change and sum their actual edge costs.
+    const steps = [];
+    for (const edit of edits) {
+      const previous = steps.at(-1);
+      const path = String(edit?.path || '').split(',');
+      const clause = path.findLastIndex(field => ['where', 'orderby', 'having', 'columns', 'groupby', 'on', 'set', 'returning'].includes(field));
+      const scope = clause >= 0 ? path.slice(0, clause + 1).join(',') : '';
+      if (scope && previous?.scope === scope && edit.beforeSql && edit.beforeSql === previous.afterSql
+          && typeof edit.afterSql === 'string' && previous.beforeSql !== edit.afterSql
+          && edit.cost > 0 && previous.cost > 0) {
+        previous.afterSql = edit.afterSql;
+        previous.cost += edit.cost;
+      } else steps.push(typeof edit === 'object' && edit ? {...edit, scope} : {description: String(edit)});
+    }
+    for (const step of steps) {
       const item = document.createElement('li');
-      if (edit === null || typeof edit !== 'object') item.textContent = String(edit);
-      else if (edit.description || edit.name) item.textContent = String(edit.description || edit.name)
-        + ' · ' + this.label('cost') + ': ' + Number(edit.cost || 0);
-      else {
-        const labels = { insert: 'editInsert', delete: 'editDelete', replace: 'editReplace' };
-        const before = edit.before ? String(edit.before.value || edit.before.kind || '') : '';
-        const after = edit.after ? String(edit.after.value || edit.after.kind || '') : '';
-        item.textContent = this.label(labels[edit.type] || 'edits') + ': ' + before
-          + (before && after ? ' → ' : '') + after + ' · ' + this.label('cost') + ': ' + Number(edit.cost || 0);
+      const code = text => {
+        const element = document.createElement('code');
+        element.textContent = text;
+        item.appendChild(element);
+      };
+      if (typeof step.beforeSql === 'string' && typeof step.afterSql === 'string') {
+        const clause = (step.afterSql || step.beforeSql).match(/^(ORDER BY|GROUP BY|SELECT|WHERE|HAVING|SET|ON|RETURNING) /)?.[1];
+        const title = document.createElement('strong');
+        const actions = {SELECT: 'projection', WHERE: 'filter', 'ORDER BY': 'sort', 'GROUP BY': 'group', HAVING: 'groupFilter'};
+        title.textContent = this.labels[actions[clause]] || clause || this.label('edits');
+        item.append(title, ' · ' + this.label(step.beforeSql ? step.afterSql ? 'editReplace' : 'editDelete' : 'editInsert') + ' ');
+        if (step.beforeSql) code(step.beforeSql);
+        if (step.beforeSql && step.afterSql) item.append(' → ');
+        if (step.afterSql) code(step.afterSql);
+      } else {
+        const field = step.scope?.split(',').at(-1);
+        const clause = {columns: 'SELECT', where: 'WHERE', orderby: 'ORDER BY', groupby: 'GROUP BY', having: 'HAVING',
+          on: 'ON', set: 'SET', returning: 'RETURNING'}[field];
+        const verb = /^(add|set[A-Z])/.test(step.name) ? 'editInsert'
+          : /^(remove|unset)/.test(step.name) ? 'editDelete' : /^change/.test(step.name) ? 'editReplace' : null;
+        const name = this.labels.stepNames?.[step.name] || (clause && verb ? clause + ' · ' + this.label(verb)
+          : step.description || step.name || this.label('edits'));
+        item.append(String(name));
+        if (typeof step.beforeToken === 'string' && typeof step.afterToken === 'string') {
+          item.append(' ');
+          if (step.beforeToken) code(step.beforeToken);
+          if (step.beforeToken && step.afterToken) item.append(' → ');
+          if (step.afterToken) code(step.afterToken);
+        }
       }
+      if (Number.isFinite(step.cost)) item.append(' · ' + this.label('cost') + ': ' + step.cost.toLocaleString());
       list.appendChild(item);
     }
-    if (list.childElementCount) details.appendChild(list);
-    this.card.appendChild(details);
+    this.card.appendChild(list);
+    if (Number.isFinite(result.scale) && result.distance > 0) {
+      paragraph(this.label('scaleExplanation').replace('%s', result.scale.toLocaleString(undefined, {maximumSignificantDigits: 8})));
+    }
+    if (result.editsTruncated) paragraph(this.label('traceShortened'));
   }
 
   static renderStored(container)
@@ -329,7 +401,18 @@ class QSSShadow
       if (!QSSShadow.isCurrentModel(result, model) || (container.dataset.qssReferenceRevision
         && result.referenceRevision !== container.dataset.qssReferenceRevision)) {
         qss.message(qss.label('stale'), false);
-      } else qss.render(result);
+      } else {
+        qss.render(result);
+        if (container.dataset.qssSubmission && qss.card.querySelector('.qpisql-qss-score')) {
+          const heading = document.createElement('strong');
+          heading.textContent = qss.label('submission');
+          const code = document.createElement('code');
+          code.textContent = JSON.parse(container.dataset.qssSubmission).sql;
+          const pre = document.createElement('pre');
+          pre.appendChild(code);
+          qss.card.querySelector('.qpisql-qss-score').before(heading, pre);
+        }
+      }
     } catch (error) { /* Older answers and malformed sidecars retain their ordinary result. */ }
   }
 }

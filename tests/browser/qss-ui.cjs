@@ -90,15 +90,18 @@ async function main() {
       const user = new SubmitEvent('submit', { cancelable: true, submitter: document.getElementById('next') });
       const automatic = new SubmitEvent('submit', { cancelable: true });
       form.dispatchEvent(user); form.dispatchEvent(automatic);
+      const bar = document.querySelector('#qpisql-qss-shadow progress');
       workers[1].onmessage({ data: { type: 'progress', id: workers[1].message.id, phase: 'comparing', visited: 42, lowerBound: 1,
         completed: 8, total: 10 } });
       const card = document.getElementById('qpisql-qss-shadow');
       return { userBlocked: user.defaultPrevented, automaticBlocked: automatic.defaultPrevented, status: card.textContent,
         label: card.getAttribute('aria-label'), progressLabel: card.querySelector('progress').getAttribute('aria-label'),
+        sameBar: card.querySelector('progress') === bar, sqlStatus: document.getElementById('qpisql-execution-status').textContent,
+        sqlRunning: document.getElementById('qpisql-output-area-execution-running').style.display,
         determinate: card.querySelector('progress').hasAttribute('value') };
     });
     assert.deepEqual(guard, { userBlocked: true, automaticBlocked: false, status: 'Your answer is being assessed. Please wait.',
-      label: 'Assessment', progressLabel: 'Your answer is being assessed. Please wait.', determinate: false });
+      label: 'Assessment', progressLabel: 'Your answer is being assessed. Please wait.', sameBar: true, sqlStatus: '', sqlRunning: 'none', determinate: false });
     await page.evaluate(() => workers[1].onmessage({ data: { type: 'result', id: workers[1].message.id,
       result: { status: 'exact', engine: 'graph-qss-sqlite-v2', version: '2.1.1', rubric: 'paper-linear-v2', scale: 1, distance: 0, points: 3, maxPoints: 3,
         exactWithinModel: true, limitations: ['<img src=x onerror=alert(1)>'],
@@ -215,6 +218,26 @@ async function main() {
       return { cards, currentPoints, oldModelPoints, oldVersionPoints, stalePoints: !!container.querySelector('.qpisql-qss-score') };
     });
     assert.deepEqual(restored, { cards: 1, currentPoints: true, oldModelPoints: false, oldVersionPoints: false, stalePoints: false });
+
+    const corrections = await page.evaluate(() => {
+      const config = {...QSSShadow.configuration(), context: 'solution'};
+      const qss = new QSSShadow(config);
+      const result = {status: 'exact', engine: 'graph-qss-sqlite-v2', version: '2.1.1', rubric: 'paper-linear-v2',
+        scale: 1, points: 3, maxPoints: 5, distance: 2, edits: [
+          {beforeSql: '', afterSql: 'WHERE tag', path: ['slots', 'where'], cost: 1},
+          {beforeSql: 'WHERE tag', afterSql: "WHERE tag = '<img>'", path: ['slots', 'where'], cost: 1}
+        ]};
+      const saved = QSSShadow.sidecar(result);
+      qss.card = document.createElement('section');
+      qss.render(saved);
+      const step = qss.card.querySelector('.qpisql-qss-changes li');
+      const actual = {count: qss.card.querySelectorAll('li').length, text: step.textContent,
+        sql: step.querySelector('code').textContent, collapsed: !!step.closest('details'), images: step.querySelectorAll('img').length};
+      qss.render({...saved, status: 'score-zero-certified', distance: null, lowerBound: 5, points: 0, edits: []});
+      return {...actual, cutoff: qss.card.textContent.includes('zeroThreshold') && !qss.card.querySelector('li')};
+    });
+    assert.deepEqual({...corrections, text: null}, {count: 1, text: null, sql: "WHERE tag = '<img>'", collapsed: false, images: 0, cutoff: true});
+    assert.match(corrections.text, /Cost: 2/);
 
     const staleEditor = await page.evaluate(async () => {
       const saved = { status: 'exact', engine: 'sqlite-syntax-edit-graph-v1', version: '1.0.0',

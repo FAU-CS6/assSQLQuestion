@@ -286,6 +286,17 @@ class assSQLQuestionGUI extends assQuestionGUI
             $participant_input = isset($solution["value1"]) ? ParticipantInput::fromJSON($solution["value1"]) : new ParticipantInput();
         }
 
+        // The checked ILIAS preview requests the model solution. Its session
+        // still holds the answer whose grade ILIAS just displayed.
+        $previewAnswer = null;
+        if ($active_id === 0 && $show_correct_solution && $this->getPreviewSession() &&
+            $this->object->getAssessmentMode() === QssAssessment::QSS) {
+            $solution = $this->getPreviewSession()->getParticipantsSolution();
+            if (isset($solution['value1'])) {
+                $previewAnswer = ParticipantInput::fromJSON($solution['value1']);
+            }
+        }
+
         // Prepare the template
         $this->prepareTemplate();
 
@@ -297,7 +308,7 @@ class assSQLQuestionGUI extends assQuestionGUI
         array_push($guiAreas, new JsBlockArea($this->plugin, $this->object));
         array_push($guiAreas, new QuestionArea($this->plugin, $this->object));
         array_push($guiAreas, new SequenceArea($this->plugin, $this->object));
-        array_push($guiAreas, new OutputArea($this->plugin, $this->object));
+        array_push($guiAreas, new OutputArea($this->plugin, $this->object, $previewAnswer));
         array_push($guiAreas, new ScoringArea($this->plugin, $this->object));
 
         foreach ($guiAreas as $guiArea) {

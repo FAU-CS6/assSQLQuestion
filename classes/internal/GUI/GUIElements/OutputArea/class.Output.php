@@ -12,6 +12,11 @@ declare(strict_types=1);
  */
 class Output extends GUIElement
 {
+    public function __construct($plugin, $object, private ?ParticipantInput $previewAnswer = null)
+    {
+        parent::__construct($plugin, $object);
+    }
+
     /*
      * Functions used to get the html code for edit, question and solution output
      */
@@ -130,13 +135,15 @@ class Output extends GUIElement
         $tpl->setVariable("OUTPUT_RELATION", htmlspecialchars($output_relation, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $tpl->setVariable("ERROR_NO_EXECUTION", $this->plugin->txt('ai_oa_er_no_exec'));
         $this->setOutputLabels($tpl);
-        $gradingContext = $participant_input?->getQssGradingContext();
-        $qssRequired = $participant_input !== null &&
+        $assessmentAnswer = $participant_input ?? $this->previewAnswer;
+        $gradingContext = $assessmentAnswer?->getQssGradingContext();
+        $qssRequired = $assessmentAnswer !== null &&
             ($gradingContext !== null || $this->object->getAssessmentMode() === QssAssessment::QSS);
-        $qss = $qssRequired ? $participant_input->getQssEvaluation() : null;
+        $qss = $qssRequired ? $assessmentAnswer->getQssEvaluation() : null;
+        $tpl->setVariable('QSS_SUBMISSION', $this->previewAnswer === null ? '' : JsBlock::jsonAttribute(['sql' => $this->previewAnswer->getSequence()]));
         $tpl->setVariable('QSS_REQUIRED', $qssRequired ? 'true' : 'false');
         $tpl->setVariable('QSS_EVALUATION', $qss === null ? '' : JsBlock::jsonAttribute($qss));
-        $labels = JsBlock::getQssLabels($this->plugin);
+        $labels = JsBlock::getQssLabels($this->plugin, $qssRequired);
         $labels['shadow'] = strip_tags($this->plugin->txt('assessment_qss_active'));
         $labels['notCompleted'] = strip_tags($this->plugin->txt('qss_notcompleted'));
         $tpl->setVariable('QSS_LABELS', JsBlock::jsonAttribute($labels));
@@ -147,8 +154,8 @@ class Output extends GUIElement
             'rubric' => $gradingContext['rubric'] ?? JsBlock::QSS_RUBRIC,
             'scale' => $gradingContext['scale'] ?? JsBlock::getQssScale($this->object->getMaximumPoints()),
             'maxPoints' => $gradingContext['maxPoints'] ?? $this->object->getMaximumPoints(),
-            'answerDigest' => $participant_input === null ? null : hash('sha256',
-                str_replace(["\r\n", "\r"], "\n", $participant_input->getSequence())),
+            'answerDigest' => $assessmentAnswer === null ? null : hash('sha256',
+                str_replace(["\r\n", "\r"], "\n", $assessmentAnswer->getSequence())),
         ]));
         return $tpl->get();
     }

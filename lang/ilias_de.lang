@@ -258,6 +258,18 @@ qss_details#:#Details zur QSS-Auswertung
 qss_editinsert#:#Einfügen
 qss_editdelete#:#Entfernen
 qss_editreplace#:#Ersetzen
+qss_correctionpath#:#So erreichen Sie die Musterlösung mit den geringsten Änderungskosten
+qss_nochanges#:#Ihre Antwort entspricht der Musterlösung. Es sind keine Änderungen nötig.
+qss_tracemissing#:#Für diese gespeicherte Bewertung sind keine einzelnen Schritte verfügbar.
+qss_traceshortened#:#Der gespeicherte Änderungspfad ist gekürzt.
+qss_zerothreshold#:#Die nachgewiesenen Mindestkosten reichen für den Abzug aller Punkte. Für diese Bewertung wurde kein vollständiger Änderungspfad ermittelt.
+qss_submission#:#Ihre abgegebene SQL-Anfrage
+qss_projection#:#Spaltenauswahl
+qss_filter#:#Zeilenfilter
+qss_sort#:#Sortierung
+qss_group#:#Gruppierung
+qss_groupfilter#:#Gruppenfilter
+qss_scaleexplanation#:#Punktabzug je Kosteneinheit: %s.
 qss_cost#:#Kosten
 qss_participanttitle#:#Bewertung
 qss_participantrunning#:#Ihre Antwort wird bewertet. Bitte warten Sie, bis die Bewertung abgeschlossen ist.

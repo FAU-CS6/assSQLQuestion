@@ -93,6 +93,12 @@ class OutputAreaOutput extends ExecutionOutput
     this.changed();
   }
 
+  onAssessmentStart()
+  {
+    document.getElementById('qpisql-execution-status').textContent = '';
+    document.getElementById('qpisql-output-area-execution-running').style.display = 'none';
+  }
+
   onError(error)
   {
     this.setFields(error, null);

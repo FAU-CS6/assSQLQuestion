@@ -101,7 +101,7 @@ class JsBlock extends GUIElement
                 'referenceSql' => $context === 'author' || $this->object->getAssessmentMode() !== QssAssessment::QSS ? null : $this->object->getSequence('sequence_b'),
                 'maxPoints' => $this->object->getMaximumPoints(),
                 'referenceRevision' => self::getQssReferenceRevision($this->object),
-                'labels' => self::getQssLabels($this->plugin),
+                'labels' => self::getQssLabels($this->plugin, $context === 'author' && $this->object->getAssessmentMode() === QssAssessment::QSS),
             ];
             $config['labels']['shadow'] = strip_tags($this->plugin->txt('assessment_qss_active'));
             if ($context === 'participant') {
@@ -141,15 +141,22 @@ class JsBlock extends GUIElement
         ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE));
     }
 
-    public static function getQssLabels($plugin): array
+    public static function getQssLabels($plugin, bool $includeStepNames = false): array
     {
         $labels = [];
         foreach (['title', 'shadow', 'sqlRunning', 'parsing', 'normalizing', 'comparing',
             'completed', 'unsupported', 'failed', 'cancelled', 'notEvaluated', 'distance',
             'points', 'edits', 'model', 'visited', 'lowerBound', 'waiting', 'stale', 'details',
             'editInsert', 'editDelete', 'editReplace', 'cost', 'participantTitle', 'participantRunning',
-            'participantCompleted', 'participantPending', 'participantCancelled', 'participantFailed'] as $key) {
+            'participantCompleted', 'participantPending', 'participantCancelled', 'participantFailed',
+            'correctionPath', 'noChanges', 'traceMissing', 'traceShortened', 'zeroThreshold', 'submission',
+            'projection', 'filter', 'sort', 'group', 'groupFilter', 'scaleExplanation'] as $key) {
             $labels[$key] = strip_tags($plugin->txt('qss_' . strtolower($key)));
+        }
+        if ($includeStepNames) {
+            global $DIC;
+            $language = isset($DIC) && $DIC->language()->getLangKey() === 'de' ? 'de' : 'en';
+            $labels['stepNames'] = array_column(QssAssessment::catalog()['steps'], $language, 'id');
         }
         return $labels;
     }

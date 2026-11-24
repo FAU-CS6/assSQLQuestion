@@ -141,6 +141,7 @@ class ExecutionHandler
       return;
     }
     this.phase = 'qss';
+    for (const output of this.outputs) output.onAssessmentStart?.();
     // Historical shadow mode published the result grade before QSS. An actual
     // QSS assessment publishes its completed evidence once, after the graph job;
     // an early SQL-result autosave must not race that authoritative submission.
